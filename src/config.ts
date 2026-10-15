@@ -2,6 +2,13 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+function readNumberEnv(name: string, fallback: number): number {
+  const raw = process.env[name]?.trim();
+  if (!raw) return fallback;
+  const value = Number(raw);
+  return Number.isFinite(value) && value >= 0 ? value : fallback;
+}
+
 export const config = {
   token: process.env.DISCORD_TOKEN?.trim() || "",
   logChannelId: process.env.LOG_CHANNEL_ID?.trim() || "",
@@ -10,6 +17,13 @@ export const config = {
     // Varsayılan olarak sadece bu bilgisayardan erişilebilir
     host: process.env.DASHBOARD_HOST?.trim() || "127.0.0.1",
     password: process.env.DASHBOARD_PASSWORD?.trim() || "",
+  },
+  /** RAM optimizasyonu: discord.js mesaj önbelleği ayarları */
+  cache: {
+    /** Kanal başına bellekte tutulacak en fazla mesaj sayısı (discord.js varsayılanı 200) */
+    messagesPerChannel: Math.round(readNumberEnv("MESSAGE_CACHE_SIZE", 100)),
+    /** Bu süreden (saat) eski mesajlar önbellekten temizlenir. 0 = süre sınırı yok */
+    messageLifetimeHours: readNumberEnv("MESSAGE_CACHE_LIFETIME_HOURS", 12),
   },
 };
 

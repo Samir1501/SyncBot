@@ -1,7 +1,24 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { createCanvas, loadImage, type Image, type SKRSContext2D } from "@napi-rs/canvas";
+import type { Image, SKRSContext2D } from "@napi-rs/canvas";
 import { UPLOADS_DIR, type CardSettings, type TextLayer } from "../settings.js";
+
+/**
+ * @napi-rs/canvas yerel (native) Skia modülünü içerdiği için açılışta yüklendiğinde
+ * kayda değer RAM tüketir. Modül yalnızca ilk kart çiziminde (tembel / lazy) yüklenir.
+ */
+type CanvasModule = typeof import("@napi-rs/canvas");
+let canvasModulePromise: Promise<CanvasModule> | null = null;
+
+function getCanvasModule(): Promise<CanvasModule> {
+  if (!canvasModulePromise) {
+    canvasModulePromise = import("@napi-rs/canvas").catch((error) => {
+      canvasModulePromise = null;
+      throw error;
+    });
+  }
+  return canvasModulePromise;
+}
 
 /** Panel ve bot aynı yazı tipini kullansın diye ortak tanım */
 export const FONT_FAMILY = "Segoe UI, Arial, sans-serif";
@@ -26,6 +43,7 @@ export function applyPlaceholders(text: string, data: CardData): string {
 async function loadImageSource(src: string): Promise<Image | null> {
   if (!src) return null;
   try {
+    const { loadImage } = await getCanvasModule();
     if (src.startsWith("/uploads/")) {
       // path.basename ile klasör dışına çıkma (path traversal) engellenir
       const filePath = path.join(UPLOADS_DIR, path.basename(src));
@@ -102,6 +120,7 @@ function drawText(ctx: SKRSContext2D, layer: TextLayer, data: CardData): void {
 
 export async function renderWelcomeCard(card: CardSettings, data: CardData): Promise<Buffer> {
   const { width, height, background, avatar } = card;
+  const { createCanvas } = await getCanvasModule();
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 

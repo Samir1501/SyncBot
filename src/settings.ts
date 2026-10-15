@@ -321,18 +321,26 @@ function persistToDisk(): void {
 }
 
 /**
+ * Ayarı kaydedilmemiş sunucular için kullanılan varsayılan ayarların önbelleği.
+ * Önceden her çağrıda (ör. her mesaj olayında) structuredClone ile yeni bir kopya
+ * üretiliyordu; bu gereksiz bellek tahsisi ve GC yükü oluşturuyordu.
+ * NOT: Dönen nesne salt-okunur kabul edilmelidir; değiştirmek için saveGuildSettings kullanın.
+ */
+let fallbackCache: GuildSettings | null = null;
+
+/**
  * Belirtilen sunucunun ayarlarını getirir.
- * Eğer sunucuya özel ayar henüz kaydedilmemişse, varsayılan/default şablonu kopyalayarak döner.
+ * Eğer sunucuya özel ayar henüz kaydedilmemişse, varsayılan/default şablonu döner.
  */
 export function getGuildSettings(guildId?: string | null): GuildSettings {
   if (guildId && store[guildId]) {
     return store[guildId];
   }
   // Eğer henüz bu guildId yoksa ama "default" ayarımız varsa onu baz al
-  if (store.default) {
-    return structuredClone(store.default);
+  if (!fallbackCache) {
+    fallbackCache = structuredClone(store.default ?? defaultSettings);
   }
-  return structuredClone(defaultSettings);
+  return fallbackCache;
 }
 
 /**
@@ -341,6 +349,7 @@ export function getGuildSettings(guildId?: string | null): GuildSettings {
 export function saveGuildSettings(guildId: string, input: unknown): GuildSettings {
   const sanitized = sanitizeGuildSettings(input);
   store[guildId] = sanitized;
+  if (guildId === "default") fallbackCache = null;
   persistToDisk();
   return sanitized;
 }

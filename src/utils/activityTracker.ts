@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DATA_DIR } from "../settings.js";
+import { createDebouncedJsonWriter } from "./jsonFile.js";
 
 export interface ActivityEvent {
   id: string;
@@ -43,15 +44,15 @@ if (activities.length === 0) {
   });
 }
 
+const activityWriter = createDebouncedJsonWriter(ACTIVITIES_FILE, () => activities, 1000, "ActivityTracker");
+
 function persistActivities(): void {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    fs.writeFileSync(ACTIVITIES_FILE, JSON.stringify(activities, null, 2), "utf-8");
-  } catch (err) {
-    console.error("[ActivityTracker] Aktiviteler diske kaydedilemedi:", err);
-  }
+  activityWriter.schedule();
+}
+
+/** Bekleyen aktiviteleri hemen diske yazar (bot kapanırken çağrılır) */
+export function flushActivities(): void {
+  activityWriter.flushSync();
 }
 
 export function addActivity(event: Omit<ActivityEvent, "id" | "time">): void {

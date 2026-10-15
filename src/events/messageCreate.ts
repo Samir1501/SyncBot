@@ -15,13 +15,24 @@ import { addActivity } from "../utils/activityTracker.js";
 /**
  * Gönderi akışına iletilmiş olan mesaj ve thread kimliklerini (ID) takip eden önbellek.
  * Aynı gönderinin birden fazla kez akışa gönderilmesini önler.
+ * Anahtar: kimlik, Değer: son geçerlilik zamanı (ms). Her kimlik için ayrı zamanlayıcı
+ * oluşturmak yerine tek bir periyodik temizleyici kullanılır (daha az bellek / timer).
  */
-export const recentlyPostedFeedIds = new Set<string>();
+const FEED_DEDUP_TTL_MS = 10 * 60 * 1000; // 10 dakika TTL
+export const recentlyPostedFeedIds = new Map<string, number>();
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, expiresAt] of recentlyPostedFeedIds) {
+    if (expiresAt <= now) recentlyPostedFeedIds.delete(id);
+  }
+}, 60 * 1000).unref();
 
 export function markAndCheckPosted(id: string): boolean {
-  if (recentlyPostedFeedIds.has(id)) return true;
-  recentlyPostedFeedIds.add(id);
-  setTimeout(() => recentlyPostedFeedIds.delete(id), 10 * 60 * 1000); // 10 dakika TTL
+  const now = Date.now();
+  const expiresAt = recentlyPostedFeedIds.get(id);
+  if (expiresAt !== undefined && expiresAt > now) return true;
+  recentlyPostedFeedIds.set(id, now + FEED_DEDUP_TTL_MS);
   return false;
 }
 

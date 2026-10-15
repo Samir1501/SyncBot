@@ -404,11 +404,15 @@ function applyPlaceholders(text) {
     .replaceAll("{memberCount}", String(b.memberCount ?? 100));
 }
 
-// Görsel önbelleği: yüklenince tuvali yeniden çizer
+// Görsel önbelleği: yüklenince tuvali yeniden çizer (sınırsız büyümesin diye en fazla 20 görsel)
+const IMAGE_CACHE_MAX = 20;
 const imageCache = new Map();
 function getImage(src) {
   if (!src) return null;
   if (!imageCache.has(src)) {
+    if (imageCache.size >= IMAGE_CACHE_MAX) {
+      imageCache.delete(imageCache.keys().next().value);
+    }
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => draw();
@@ -1330,9 +1334,14 @@ function bindForms() {
 
   const mainLogCh = $("#logging-channel");
   if (mainLogCh) {
-    mainLogCh.addEventListener("change", () => {
+    // bindForms birden çok kez çağrıldığı için önceki dinleyiciyi kaldır (birikme/sızıntı önlenir)
+    if (mainLogCh._syncDefaultChannel) {
+      mainLogCh.removeEventListener("change", mainLogCh._syncDefaultChannel);
+    }
+    mainLogCh._syncDefaultChannel = () => {
       s.logging.channels.default = mainLogCh.value;
-    });
+    };
+    mainLogCh.addEventListener("change", mainLogCh._syncDefaultChannel);
   }
 
   // 2. Çoklu Kanallar (Multi-Channel Routing)
@@ -1828,7 +1837,7 @@ function initAuditLogControls() {
     clearLogBtn.onclick = async () => {
       if (!confirm("Kayıtlı tüm denetim loglarını temizlemek istediğinize emin misiniz?")) return;
       try {
-        await apiFetch(`/api/logs/clear?guildId=${state.selectedGuildId || ""}`, { method: "POST" });
+        await api(`/api/logs/clear?guildId=${state.selectedGuildId || ""}`, { method: "POST" });
         toast("Denetim kayıtları temizlendi.");
         loadLogs();
       } catch (err) {
@@ -2246,7 +2255,9 @@ $("#server-preview-btn").onclick = async () => {
       body: JSON.stringify({ card: card() }),
     });
     const blob = await res.blob();
-    $("#preview-img").src = URL.createObjectURL(blob);
+    const previewImg = $("#preview-img");
+    if (previewImg.src.startsWith("blob:")) URL.revokeObjectURL(previewImg.src);
+    previewImg.src = URL.createObjectURL(blob);
     $("#preview-modal").classList.remove("hidden");
   } catch (err) {
     toast(err.message, "error");

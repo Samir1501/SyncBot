@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import express, { type NextFunction, type Request, type Response } from "express";
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, EmbedBuilder, PermissionFlagsBits, type Client } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, EmbedBuilder, PermissionFlagsBits, version as djsVersion, type Client, type Guild } from "discord.js";
 import { config } from "../config.js";
 import { getGuildSettings, saveGuildSettings, sanitizeGuildSettings, UPLOADS_DIR } from "../settings.js";
 import { renderWelcomeCard, type CardData } from "../welcome/cardRenderer.js";
@@ -13,6 +13,40 @@ import { queryLogs, clearLogs } from "../utils/logStore.js";
 import { sendLog } from "../utils/logger.js";
 
 const PUBLIC_DIR = path.join(process.cwd(), "public");
+
+/**
+ * Tüm üye listesini Discord'dan çekme (guild.members.fetch) maliyetli bir işlemdir:
+ * gateway hız limitine tabidir ve büyük sunucularda anlık bellek sıçramasına yol açar.
+ * - Aynı sunucu için eşzamanlı istekler tek bir fetch'te birleştirilir.
+ * - Önbellek eksik kalsa bile (memberCount sapması vb.) kısa süre içinde tekrar tekrar fetch yapılmaz.
+ */
+const MEMBER_FETCH_COOLDOWN_MS = 60 * 1000;
+const MEMBER_FORCE_FETCH_COOLDOWN_MS = 10 * 1000;
+const lastMemberFetchAt = new Map<string, number>();
+const pendingMemberFetches = new Map<string, Promise<void>>();
+
+async function ensureMembersCached(guild: Guild, force = false): Promise<void> {
+  if (!force && guild.members.cache.size >= guild.memberCount) return;
+
+  const pending = pendingMemberFetches.get(guild.id);
+  if (pending) return pending;
+
+  const cooldown = force ? MEMBER_FORCE_FETCH_COOLDOWN_MS : MEMBER_FETCH_COOLDOWN_MS;
+  if (Date.now() - (lastMemberFetchAt.get(guild.id) ?? 0) < cooldown) return;
+
+  lastMemberFetchAt.set(guild.id, Date.now());
+  const task = guild.members
+    .fetch()
+    .then(() => undefined)
+    .catch((err) => {
+      console.warn("[Panel] guild.members.fetch uyarısı:", err);
+    })
+    .finally(() => {
+      pendingMemberFetches.delete(guild.id);
+    });
+  pendingMemberFetches.set(guild.id, task);
+  return task;
+}
 
 function basicAuth(req: Request, res: Response, next: NextFunction): void {
   const password = config.dashboard.password;
@@ -94,8 +128,8 @@ export function startDashboard(client: Client): void {
     const rolesCount = guild?.roles.cache.size || 0;
 
     // Üyeleri eksiksiz önbelleğe al (Tüm botlar ve gerçek insanlar tam sayılsın)
-    if (guild && guild.members.cache.size < guild.memberCount) {
-      await guild.members.fetch().catch(() => null);
+    if (guild) {
+      await ensureMembersCached(guild);
     }
 
     // Üye Dağılımı (İnsan vs Bot)
@@ -162,7 +196,7 @@ export function startDashboard(client: Client): void {
         memoryTotalMB: totalMem,
         memoryPercent: memPercent,
         nodeVersion: process.version,
-        djsVersion: "14.17.3",
+        djsVersion,
         platform: process.platform === "win32" ? "Windows" : process.platform,
       },
       guild: guild
@@ -506,12 +540,8 @@ export function startDashboard(client: Client): void {
         return;
       }
 
-      // Üyeleri Discord'dan eksiksiz çek
-      if (req.query.forceRefresh === "true" || guild.members.cache.size < guild.memberCount) {
-        await guild.members.fetch().catch((err) => {
-          console.warn("[Members API] guild.members.fetch uyarısı:", err);
-        });
-      }
+      // Üyeleri Discord'dan eksiksiz çek (eşzamanlı istekler birleştirilir, sık tekrar engellenir)
+      await ensureMembersCached(guild, req.query.forceRefresh === "true");
 
       // Sunucu rolleri (En yüksek rolden en düşüğe, @everyone hariç)
       const roles = guild.roles.cache

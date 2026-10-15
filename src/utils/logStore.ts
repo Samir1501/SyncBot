@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DATA_DIR } from "../settings.js";
+import { createDebouncedJsonWriter } from "./jsonFile.js";
 
 export type LogCategory = "messages" | "members" | "voice" | "moderation";
 
@@ -63,21 +64,15 @@ try {
   logStore = [];
 }
 
-let saveTimer: NodeJS.Timeout | null = null;
+const logWriter = createDebouncedJsonWriter(LOGS_FILE, () => logStore, 2000, "LogStore");
 
 function scheduleSave(): void {
-  if (saveTimer) return;
-  saveTimer = setTimeout(() => {
-    saveTimer = null;
-    try {
-      if (!fs.existsSync(DATA_DIR)) {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
-      }
-      fs.writeFileSync(LOGS_FILE, JSON.stringify(logStore, null, 2), "utf-8");
-    } catch (err) {
-      console.error("[LogStore] Loglar diske kaydedilemedi:", err);
-    }
-  }, 500); // 500ms debounce disk yazma
+  logWriter.schedule();
+}
+
+/** Bekleyen log kayıtlarını hemen diske yazar (bot kapanırken çağrılır) */
+export function flushLogStore(): void {
+  logWriter.flushSync();
 }
 
 /**

@@ -7,6 +7,7 @@
 ## Dosya İşlemleri & İzinler
 - **Doğrudan Dosya Araçları Kullanımı**: Kod ve dosya okuma, arama ve düzenleme işlemleri için kabuk komutları (`run_command` üzerinden `Get-Content`, `cat`, `grep`, `findstr`, `node` dosya betikleri vb.) **KULLANILMAMALIDIR**.
 - Kullanıcıdan her seferinde terminal izni istememek adına doğrudan IDE'nin yerleşik araçları (`view_file`, `replace_file_content`, `write_to_file`) tercih edilmelidir.
+- **Tam Yetki**: Bu projede izin gerektiren her işlem (dosya okuma/yazma/silme, düzenleme, terminal komutları, build, test vb.) için kullanıcı tarafından önceden tam yetki verilmiştir. Hiçbir işlem için ayrıca izin veya onay istenmez; işlemler doğrudan uygulanır.
 
 ## Tasarım & Stil Standartları
 
