@@ -2,6 +2,9 @@
 
 Windows üzerinde kodda bir değişiklik yapıp GitHub'a gönderdikten (`git push`) sonra, Linux (CachyOS) cihazınızda bu değişikliklerin geçerli olması için yapmanız gereken adımlar aşağıda özetlenmiştir.
 
+* **Bot Adı / Servis Adı:** `syncbot`
+* **Proje Dizin Yolu:** `~/Projeler/SyncBot/`
+
 ---
 
 ## ⚡ Hızlı Güncelleme (Tek Satırlık Komut)
@@ -9,20 +12,41 @@ Windows üzerinde kodda bir değişiklik yapıp GitHub'a gönderdikten (`git pus
 Linux terminalinde proje dizinindeyken şu tek satırlık komutu çalıştırmanız tüm güncellemeyi tamamlar:
 
 ```bash
-git pull && npm install && npm run build && sudo systemctl restart discordbot
+cd ~/Projeler/SyncBot && git pull && npm install && npm run build && sudo systemctl restart syncbot
 ```
 
-*(Eğer `pm2` kullanıyorsanız: `git pull && npm install && npm run build && pm2 restart discordbot`)*
+*(Eğer `pm2` kullanıyorsanız: `cd ~/Projeler/SyncBot && git pull && npm install && npm run build && pm2 restart syncbot`)*
 
 ---
 
-## 📋 Adım Adım Güncelleme İşlemi
+## 💡 En Kolay Yöntem: Tek Tuşla Güncelleme Betiği (`update.sh`)
+
+Projeye sizin için hazır bir `update.sh` betiği eklendi. Linux tarafında ilk sefere mahsus çalıştırma izni verdikten sonra tüm güncellemeleri tek komutla yapabilirsiniz:
+
+```bash
+# İlk sefere mahsus izin verme (yalnızca 1 kez):
+cd ~/Projeler/SyncBot
+chmod +x update.sh
+
+# Güncellemek istediğinizde çalıştırmanız gereken tek komut:
+./update.sh
+```
+
+Bu betik otomatik olarak:
+1. `~/Projeler/SyncBot` klasörüne geçer.
+2. `git pull` ile GitHub'daki en güncel kodları çeker.
+3. `npm install` ile bağımlılıkları günceller.
+4. `npm run build` ile TypeScript kodlarını derler (`dist/`).
+5. `syncbot` servisinizi (`systemd` veya `pm2`) otomatik algılayıp yeniden başlatır.
+
+---
+
+## 📋 Adım Adım Güncelleme İşlemi (Manuel)
 
 ### 1. Adım: Proje Klasörüne Geçiş Yapın
 ```bash
-cd ~/DiscordBot
+cd ~/Projeler/SyncBot
 ```
-*(Klasör yolunuz farklıysa kendi dizin yolunuzu yazın).*
 
 ---
 
@@ -54,16 +78,16 @@ npm run build
 
 #### A) Eğer `systemd` ile çalıştırıyorsanız (Önerilen):
 ```bash
-sudo systemctl restart discordbot
+sudo systemctl restart syncbot
 ```
 Çalışma durumunu kontrol etmek için:
 ```bash
-sudo systemctl status discordbot
+sudo systemctl status syncbot
 ```
 
 #### B) Eğer `pm2` ile çalıştırıyorsanız:
 ```bash
-pm2 restart discordbot
+pm2 restart syncbot
 ```
 Çalışma durumunu kontrol etmek için:
 ```bash
@@ -74,17 +98,17 @@ pm2 status
 
 ## 🔍 Logları ve Hataları Canlı İzleme
 
-Güncelleme sonrası botun sorunsuz açıldığını doğrulamak veya olası bir hatayı görmek için terminalden canlı logları izleyebilirsiniz:
+Güncelleme sonrası botun sorunsuz açıldığını doğrulamak veya canlı hareketleri/hataları görmek için terminalden logları izleyebilirsiniz:
 
 * **`systemd` için canlı log:**
   ```bash
-  journalctl -u discordbot -f -n 50
+  journalctl -u syncbot -f -n 50
   ```
   *(Çıkmak için: `Ctrl + C`)*
 
 * **`pm2` için canlı log:**
   ```bash
-  pm2 logs discordbot
+  pm2 logs syncbot
   ```
   *(Çıkmak için: `Ctrl + C`)*
 
@@ -106,23 +130,3 @@ git reset --hard origin/main
 git pull
 ```
 *(Not: Bu işlem `.env` dosyanızı silmez, çünkü `.env` git takibinde değildir).*
-
----
-
-## 💡 En Kolay Yöntem: Tek Tuşla Güncelleme Betiği (`update.sh`)
-
-Projeye sizin için hazır bir `update.sh` betiği eklendi. Linux tarafında ilk sefere mahsus çalıştırma izni verdikten sonra tüm güncellemeleri tek komutla yapabilirsiniz:
-
-```bash
-# İlk sefere mahsus izin verme:
-chmod +x update.sh
-
-# Güncellemek istediğinizde çalıştırmanız gereken tek komut:
-./update.sh
-```
-
-Bu betik otomatik olarak:
-1. `git pull` ile yeni kodları çeker.
-2. `npm install` ile bağımlılıkları kontrol eder.
-3. `npm run build` ile TypeScript kodlarını derler.
-4. Bot servisinizi (`systemd` veya `pm2`) otomatik algılayıp yeniden başlatır.
