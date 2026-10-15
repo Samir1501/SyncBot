@@ -61,6 +61,12 @@ export async function sendLog(
     return;
   }
 
+  // Olay bazlı özel renk veya genel varsayılan renk
+  let chosenColor = logging.appearance?.embedColor || "#FFE000";
+  if (options?.eventType && logging.appearance?.eventColors && (logging.appearance.eventColors as Record<string, string>)[options.eventType]) {
+    chosenColor = (logging.appearance.eventColors as Record<string, string>)[options.eventType];
+  }
+
   // 4. Canlı Panel Günlüğü (Web Log Explorer) için kaydet
   if (guildId && options?.record) {
     addLogRecord({
@@ -72,7 +78,7 @@ export async function sendLog(
       user: options.user,
       channel: options.channelId ? { id: options.channelId, name: options.channelName || "kanal" } : undefined,
       details: options.record.details,
-      color: options.record.color || "#FFE000",
+      color: chosenColor || options.record.color || "#FFE000",
     });
   }
 
@@ -97,8 +103,8 @@ export async function sendLog(
     // Kompakt modda gereksiz büyük görselleri kaldır
     embed.setImage(null);
   }
-  if (logging.appearance?.embedColor && logging.appearance.embedColor.startsWith("#")) {
-    const rawHex = logging.appearance.embedColor.replace("#", "");
+  if (chosenColor && chosenColor.startsWith("#")) {
+    const rawHex = chosenColor.replace("#", "");
     const hexNum = parseInt(rawHex, 16);
     if (!isNaN(hexNum)) {
       embed.setColor(hexNum);

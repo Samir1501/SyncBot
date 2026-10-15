@@ -18,374 +18,17 @@
     };
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" referrerpolicy="no-referrer" />
-  <style type="text/tailwindcss">
-    body, input, button, select, textarea, optgroup, p, span, div, h1, h2, h3, h4, h5, h6, strong, b, label {
-      font-family: "Segoe UI", sans-serif;
-    }
-    .fa, .fas, .far, .fal, .fad, .fab, .fa-solid, .fa-regular, .fa-brands, [class*="fa-"] {
-      font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
-    }
-    body { background-color: #141414; color: #F1F1F1; }
-    .field-label { @apply text-xs font-semibold uppercase tracking-wide text-zinc-400; }
-    #card-canvas { cursor: default; image-rendering: auto; }
-    input[type="color"] {
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      appearance: none;
-      border: none;
-      outline: none;
-      background: transparent;
-      cursor: pointer;
-    }
-    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-    input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
-    input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
-    .tab-btn {
-      color: #a1a1aa;
-      transition: all 0.15s ease;
-      outline: none;
-    }
-    .tab-btn:not(.active):hover {
-      background-color: #262626;
-      color: #F1F1F1;
-    }
-    .tab-btn.active {
-      background-color: rgba(255, 224, 0, 0.12) !important;
-      color: #FFE000 !important;
-    }
-    .tab-btn.active:hover {
-      background-color: rgba(255, 224, 0, 0.2) !important;
-      color: #FFE000 !important;
-    }
-    .tab-btn.active i, .tab-btn.active:hover i {
-      color: #FFE000 !important;
-    }
-
-    .layer-btn {
-      color: #F1F1F1;
-      transition: all 0.15s ease;
-      outline: none;
-    }
-    .layer-btn:not(.active):hover {
-      background-color: #262626;
-      color: #F1F1F1;
-    }
-    .layer-btn.active {
-      background-color: rgba(255, 224, 0, 0.12) !important;
-      color: #FFE000 !important;
-    }
-    .layer-btn.active:hover {
-      background-color: rgba(255, 224, 0, 0.2) !important;
-      color: #FFE000 !important;
-    }
-    .layer-btn.active i, .layer-btn.active:hover i {
-      color: #FFE000 !important;
-    }
-    .tab-btn .fa-solid, .tab-btn .fa-regular { width: 1.25rem; text-align: center; }
-
-    /* Modern Kayan Switch (FFE000 & 141414) */
-    .switch {
-      @apply relative inline-flex items-center cursor-pointer shrink-0 select-none;
-    }
-    .switch input {
-      @apply sr-only;
-    }
-    .switch-track {
-      @apply w-11 h-6 bg-zinc-800 border border-zinc-700 rounded-full transition-colors duration-200 ease-in-out;
-    }
-    .switch-thumb {
-      @apply absolute left-0.5 top-0.5 w-5 h-5 bg-[#F1F1F1] rounded-full transition-transform duration-200 ease-in-out shadow-md;
-    }
-    .switch input:checked + .switch-track {
-      background-color: #FFE000;
-      border-color: #FFE000;
-    }
-    .switch input:checked ~ .switch-thumb {
-      transform: translateX(20px);
-      background-color: #141414;
-    }
-    .switch input:focus-visible + .switch-track {
-      @apply ring-2 ring-offset-2 ring-offset-[#141414] ring-[#FFE000];
-    }
-
-    /* Özel Modern Slider (FFE000 & 141414) */
-    input[type="range"].modern-slider {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      height: 6px;
-      background: #141414;
-      border-radius: 9999px;
-      outline: none;
-      cursor: pointer;
-    }
-    input[type="range"].modern-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #FFE000;
-      border: 2px solid #141414;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-      cursor: pointer;
-      transition: transform 0.15s ease, background-color 0.15s ease;
-    }
-    input[type="range"].modern-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.18);
-      background: #fff066;
-    }
-    input[type="range"].modern-slider::-webkit-slider-thumb:active {
-      transform: scale(0.95);
-      background: #FFE000;
-    }
-    input[type="range"].modern-slider::-moz-range-thumb {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #FFE000;
-      border: 2px solid #141414;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-      cursor: pointer;
-    }
-
-    /* Özel Dropdown (Select & Option) Stili */
-    select {
-      background-color: #141414;
-      color: #F1F1F1;
-      border: 1px solid #262626;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23FFE000'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 0.75rem center;
-      background-size: 1rem;
-      padding-right: 2.25rem !important;
-      font-size: 0.875rem;
-      font-weight: 500;
-      transition: all 0.15s ease;
-    }
-    select:hover {
-      border-color: #3b3b3b;
-      background-color: #181818;
-    }
-    select:focus {
-      outline: none;
-      border-color: #FFE000;
-      box-shadow: 0 0 0 1px #FFE000;
-      background-color: #181818;
-    }
-    select optgroup {
-      background-color: #1a1a1a;
-      color: #FFE000;
-      font-weight: 700;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 8px 6px;
-    }
-    select option {
-      background-color: #141414;
-      color: #F1F1F1;
-      padding: 10px 14px;
-      font-size: 0.875rem;
-      font-weight: 500;
-      line-height: 1.5;
-    }
-    select option:checked {
-      background-color: #FFE000 !important;
-      color: #141414 !important;
-      font-weight: 700;
-    }
-    select option:hover {
-      background-color: #222222;
-      color: #FFE000;
-    }
-
-    /* Özel Number Input Stili */
-    input[type="number"] {
-      background-color: #141414;
-      color: #F1F1F1;
-      border: 1px solid #262626;
-      border-radius: 0.5rem;
-      font-family: "Segoe UI", sans-serif;
-      font-weight: 600;
-      transition: all 0.15s ease;
-    }
-    input[type="number"]:hover {
-      border-color: #3b3b3b;
-      background-color: #181818;
-    }
-    input[type="number"]:focus {
-      outline: none;
-      border-color: #FFE000;
-      box-shadow: 0 0 0 1px #FFE000;
-      background-color: #181818;
-    }
-
-    /* Özel Number Stepper Okları - Modern Koyu & Sarı Vurgulu */
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-      opacity: 0.6;
-      cursor: pointer;
-      margin-right: 2px;
-      height: 24px;
-      filter: invert(0.85) sepia(1) saturate(5) hue-rotate(10deg);
-      transition: opacity 0.15s ease;
-    }
-    input[type="number"]:hover::-webkit-inner-spin-button,
-    input[type="number"]:hover::-webkit-outer-spin-button,
-    input[type="number"]:focus::-webkit-inner-spin-button {
-      opacity: 1;
-    }
-
-    /* Özel Scrollbar (Kaydırma Çubuğu) - Tema Uyumu: #141414 & #FFE000 */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #141414;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #2b2b2b;
-      border-radius: 4px;
-      border: 2px solid #141414;
-      transition: background 0.15s ease;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #FFE000;
-    }
-    /* Firefox İçin Scrollbar */
-    * {
-      scrollbar-width: thin;
-      scrollbar-color: #2b2b2b #141414;
-    }
-
-    /* Modern Özel Seçim Menüsü (Custom Dropdown) */
-    .custom-select-wrapper {
-      position: relative;
-      user-select: none;
-      width: 100%;
-    }
-    .custom-select-trigger {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
-      background-color: #141414;
-      color: #F1F1F1;
-      border: 1px solid #262626;
-      border-radius: 0.5rem;
-      padding: 0.55rem 0.85rem;
-      font-size: 0.875rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      min-height: 42px;
-      box-sizing: border-box;
-    }
-    .custom-select-trigger:hover {
-      border-color: #3b3b3b;
-      background-color: #181818;
-    }
-    .custom-select-wrapper.open {
-      z-index: 50;
-    }
-    .custom-select-wrapper.open .custom-select-trigger {
-      border-color: #FFE000;
-      box-shadow: 0 0 0 1px #FFE000;
-      background-color: #181818;
-    }
-    .custom-select-trigger .arrow-icon {
-      color: #FFE000;
-      font-size: 0.75rem;
-      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .custom-select-wrapper.open .arrow-icon {
-      transform: rotate(180deg);
-    }
-    .custom-select-menu {
-      position: absolute;
-      top: calc(100% + 5px);
-      left: 0;
-      right: 0;
-      max-height: 250px;
-      overflow-y: auto;
-      background-color: #181818;
-      border: 1px solid #2b2b2b;
-      border-radius: 0.6rem;
-      box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 224, 0, 0.1);
-      z-index: 100;
-      display: none;
-      padding: 4px;
-    }
-    .custom-select-wrapper.open .custom-select-menu {
-      display: block;
-      animation: selectDropdownIn 0.15s ease-out forwards;
-    }
-    @keyframes selectDropdownIn {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .custom-select-option {
-      padding: 8px 12px;
-      font-size: 0.875rem;
-      color: #F1F1F1;
-      border-radius: 0.375rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      transition: all 0.12s ease;
-    }
-    .custom-select-option:hover {
-      background-color: #242424;
-      color: #FFE000;
-    }
-    .custom-select-option.selected {
-      background-color: rgba(255, 224, 0, 0.15);
-      color: #FFE000;
-      font-weight: 600;
-    }
-
-    /* Kenar Çubuğu (Sidebar) Açılıp Kapanma Stili */
-    #sidebar {
-      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    #sidebar.collapsed {
-      width: 4.5rem; /* 72px */
-    }
-    #sidebar.collapsed .sidebar-text {
-      display: none;
-    }
-    #sidebar.collapsed .tab-btn {
-      justify-content: center;
-      padding-left: 0;
-      padding-right: 0;
-    }
-    #sidebar.collapsed .tab-btn i {
-      margin: 0;
-      font-size: 1.15rem;
-    }
-    #sidebar.collapsed #sidebar-profile {
-      justify-content: center;
-      padding-left: 0.5rem;
-      padding-right: 0.5rem;
-    }
-  </style>
+  <link rel="stylesheet" href="/css/base.css?v=1.1" />
+  <link rel="stylesheet" href="/css/components.css?v=1.1" />
+  <link rel="stylesheet" href="/css/layout.css?v=1.1" />
 </head>
-<body class="bg-[#141414] text-[#F1F1F1] min-h-screen flex">
+<body class="bg-[#141414] text-[#F1F1F1] h-screen overflow-hidden flex">
 
   <!-- Kenar Çubuğu -->
-  <aside id="sidebar" class="w-60 bg-[#1c1c1c] border-r border-[#262626] flex flex-col shrink-0 relative overflow-hidden">
-    <div id="sidebar-profile" class="p-4 border-b border-[#262626] flex items-center gap-3 h-16">
+  <aside id="sidebar" class="w-60 h-screen bg-[#1c1c1c] border-r border-[#262626] flex flex-col shrink-0 relative overflow-hidden">
+    <div id="sidebar-profile" class="p-4 border-b border-[#262626] flex items-center gap-3 h-16 shrink-0">
       <div class="relative shrink-0 flex items-center justify-center">
-        <img id="bot-avatar" class="w-10 h-10 rounded-full bg-zinc-800 border border-[#262626]" alt="" />
+        <img id="bot-avatar" class="w-10 h-10 rounded-full bg-zinc-800 border border-[#262626] object-cover shrink-0" alt="" />
         <span id="bot-status-badge" class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#1c1c1c] bg-zinc-500 cursor-help" title="Bağlanıyor..."></span>
       </div>
       <div class="min-w-0 sidebar-text">
@@ -393,10 +36,14 @@
         <div id="bot-server" class="text-xs text-zinc-400 truncate">Discord Bot</div>
       </div>
     </div>
-    <nav class="p-2 space-y-1">
+    <nav class="p-2 space-y-1 flex-1 overflow-y-auto">
       <button class="tab-btn active w-full text-left px-3 py-2.5 rounded flex items-center gap-3 transition" data-tab="dashboard" data-title="Genel Bakış" title="Genel Bakış">
         <i class="fa-solid fa-chart-pie"></i>
         <span class="sidebar-text truncate">Genel Bakış</span>
+      </button>
+      <button class="tab-btn w-full text-left px-3 py-2.5 rounded flex items-center gap-3 transition" data-tab="members" data-title="Sunucu Üyeleri" title="Sunucu Üyeleri">
+        <i class="fa-solid fa-users"></i>
+        <span class="sidebar-text truncate">Sunucu Üyeleri</span>
       </button>
       <button class="tab-btn w-full text-left px-3 py-2.5 rounded flex items-center gap-3 transition" data-tab="general" data-title="Genel Ayarlar" title="Genel Ayarlar">
         <i class="fa-solid fa-sliders"></i>
@@ -418,11 +65,11 @@
   </aside>
 
   <!-- Ana İçerik -->
-  <main class="flex-1 flex flex-col min-w-0">
-    <header class="h-16 px-6 flex items-center justify-between border-b border-[#262626] bg-[#1c1c1c]">
+  <main class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+    <header class="h-16 shrink-0 px-6 flex items-center justify-between border-b border-[#262626] bg-[#1c1c1c] z-10">
       <div class="flex items-center gap-4">
-        <button id="sidebar-toggle" class="w-9 h-9 rounded flex items-center justify-center text-zinc-400 hover:text-[#FFE000] hover:bg-[#262626] border border-transparent hover:border-[#333333] transition" title="Menüyü Aç/Kapat">
-          <i class="fa-solid fa-bars text-lg"></i>
+        <button id="sidebar-toggle" class="btn" title="Menüyü Aç/Kapat">
+          <i class="fa-solid fa-bars text-base"></i>
         </button>
         <h1 id="page-title" class="font-semibold text-lg text-[#F1F1F1]">Genel Ayarlar</h1>
       </div>
@@ -435,23 +82,23 @@
         </div>
 
         <span id="save-status" class="text-sm text-zinc-400"></span>
-        <button id="save-btn" class="bg-[#FFE000] hover:bg-[#ebd000] text-[#141414] font-semibold px-4 py-1.5 rounded transition shadow-sm"><i class="fa-solid fa-floppy-disk mr-1"></i> Kaydet</button>
+        <button id="save-btn" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Kaydet</button>
       </div>
     </header>
 
-    <div class="flex-1 overflow-auto bg-[#141414] p-6">
+    <div id="main-content" class="flex-1 overflow-y-auto bg-[#141414] p-6">
 
       <!-- DASHBOARD (GENEL BAKIŞ) -->
       <section id="tab-dashboard" class="space-y-6 max-w-6xl">
         <!-- Sunucu Karşılama Kartı Banner -->
-        <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-6 flex flex-wrap items-center justify-between gap-4">
+        <div class="card p-6 flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-4">
-            <img id="dash-guild-icon" class="w-16 h-16 rounded-2xl bg-zinc-800 border-2 border-[#262626] shadow-md object-cover" alt="" />
+            <img id="dash-guild-icon" class="w-16 h-16 rounded-2xl bg-zinc-800 border-2 border-[#262626] shadow-md object-cover shrink-0" alt="" />
             <div>
               <div class="flex items-center gap-2">
                 <h2 id="dash-guild-name" class="text-2xl font-bold text-[#F1F1F1]">Sunucu</h2>
                 <span class="text-xs bg-[#FFE000]/10 text-[#FFE000] border border-[#FFE000]/30 font-semibold px-2 py-0.5 rounded-full">Aktif Sunucu</span>
-                <button id="dash-copy-id-banner" class="text-xs text-zinc-500 hover:text-[#FFE000] transition flex items-center gap-1 bg-[#141414] px-2 py-0.5 rounded border border-[#262626]" title="Sunucu ID'sini Kopyala">
+                <button id="dash-copy-id-banner" class="btn btn-sm" title="Sunucu ID'sini Kopyala">
                   <i class="fa-regular fa-copy"></i> <span id="dash-guild-id-text">ID</span>
                 </button>
               </div>
@@ -459,7 +106,7 @@
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button id="dash-refresh-btn" class="bg-zinc-800 hover:bg-zinc-700 text-[#F1F1F1] border border-[#262626] px-3.5 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+            <button id="dash-refresh-btn" class="btn">
               <i class="fa-solid fa-arrows-rotate"></i> Yenile
             </button>
           </div>
@@ -467,43 +114,43 @@
 
         <!-- HIZLI EYLEMLER (QUICK ACTIONS) -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <button id="qa-send-msg" class="bg-[#1c1c1c] hover:bg-zinc-800/80 border border-[#262626] hover:border-[#FFE000]/40 rounded-xl p-3.5 flex items-center gap-3 transition group text-left">
-            <div class="w-10 h-10 rounded-lg bg-[#FFE000]/10 border border-[#FFE000]/20 flex items-center justify-center text-[#FFE000] group-hover:scale-110 transition shrink-0">
+          <button id="qa-send-msg" class="quick-action group">
+            <div class="quick-action-icon text-[#FFE000]">
               <i class="fa-solid fa-paper-plane"></i>
             </div>
             <div class="min-w-0">
-              <div class="text-sm font-bold text-[#F1F1F1] group-hover:text-[#FFE000] transition truncate">Duyuru Gönder</div>
-              <div class="text-xs text-zinc-500 truncate">Kanala mesaj bas</div>
+              <div class="quick-action-title">Duyuru Gönder</div>
+              <div class="quick-action-subtitle">Kanala mesaj bas</div>
             </div>
           </button>
 
-          <button id="qa-edit-welcome" class="bg-[#1c1c1c] hover:bg-zinc-800/80 border border-[#262626] hover:border-[#FFE000]/40 rounded-xl p-3.5 flex items-center gap-3 transition group text-left">
-            <div class="w-10 h-10 rounded-lg bg-zinc-800 border border-[#262626] flex items-center justify-center text-[#FFE000] group-hover:scale-110 transition shrink-0">
+          <button id="qa-edit-welcome" class="quick-action group">
+            <div class="quick-action-icon text-[#FFE000]">
               <i class="fa-solid fa-palette"></i>
             </div>
             <div class="min-w-0">
-              <div class="text-sm font-bold text-[#F1F1F1] group-hover:text-[#FFE000] transition truncate">Kart Tasarla</div>
-              <div class="text-xs text-zinc-500 truncate">Karşılama kartı</div>
+              <div class="quick-action-title">Kart Tasarla</div>
+              <div class="quick-action-subtitle">Karşılama kartı</div>
             </div>
           </button>
 
-          <button id="qa-test-welcome" class="bg-[#1c1c1c] hover:bg-zinc-800/80 border border-[#262626] hover:border-[#FFE000]/40 rounded-xl p-3.5 flex items-center gap-3 transition group text-left">
-            <div class="w-10 h-10 rounded-lg bg-zinc-800 border border-[#262626] flex items-center justify-center text-green-400 group-hover:scale-110 transition shrink-0">
+          <button id="qa-test-welcome" class="quick-action group">
+            <div class="quick-action-icon text-green-400">
               <i class="fa-solid fa-vial"></i>
             </div>
             <div class="min-w-0">
-              <div class="text-sm font-bold text-[#F1F1F1] group-hover:text-green-400 transition truncate">Kartı Test Et</div>
-              <div class="text-xs text-zinc-500 truncate">Kanala örnek gönder</div>
+              <div class="quick-action-title group-hover:!text-green-400">Kartı Test Et</div>
+              <div class="quick-action-subtitle">Kanala örnek gönder</div>
             </div>
           </button>
 
-          <button id="qa-copy-id" class="bg-[#1c1c1c] hover:bg-zinc-800/80 border border-[#262626] hover:border-[#FFE000]/40 rounded-xl p-3.5 flex items-center gap-3 transition group text-left">
-            <div class="w-10 h-10 rounded-lg bg-zinc-800 border border-[#262626] flex items-center justify-center text-sky-400 group-hover:scale-110 transition shrink-0">
+          <button id="qa-copy-id" class="quick-action group">
+            <div class="quick-action-icon text-sky-400">
               <i class="fa-solid fa-copy"></i>
             </div>
             <div class="min-w-0">
-              <div id="qa-copy-id-title" class="text-sm font-bold text-[#F1F1F1] group-hover:text-sky-400 transition truncate">ID Kopyala</div>
-              <div class="text-xs text-zinc-500 truncate">Sunucu kimliği</div>
+              <div id="qa-copy-id-title" class="quick-action-title group-hover:!text-sky-400">ID Kopyala</div>
+              <div class="quick-action-subtitle">Sunucu kimliği</div>
             </div>
           </button>
         </div>
@@ -511,49 +158,52 @@
         <!-- İstatistik Kartları Grid (4 Kart) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <!-- Üye Sayısı -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 flex items-center justify-between">
+          <div id="stat-members-card" class="stat-card stat-card-interactive group" title="Üyeleri görüntüle ve filtrele">
             <div>
-              <span class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Toplam Üye</span>
-              <div id="stat-members" class="text-3xl font-extrabold text-[#FFE000] mt-1.5">0</div>
-              <span class="text-xs text-zinc-500 mt-1 block">Sunucudaki kayıtlı üyeler</span>
+              <div class="flex items-center gap-1.5">
+                <span class="stat-card-title">Toplam Üye</span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-zinc-500 group-hover:text-[#FFE000] transition"></i>
+              </div>
+              <div id="stat-members" class="stat-card-value text-[#FFE000]">0</div>
+              <span class="stat-card-sub">Tüm üyeleri filtrelemek için tıkla</span>
             </div>
-            <div class="w-12 h-12 rounded-xl bg-[#FFE000]/10 border border-[#FFE000]/20 flex items-center justify-center text-[#FFE000] text-xl">
+            <div class="stat-card-icon !bg-[#FFE000]/10 !border-[#FFE000]/20 !text-[#FFE000]">
               <i class="fa-solid fa-users"></i>
             </div>
           </div>
 
           <!-- Metin Kanalları -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 flex items-center justify-between">
+          <div class="stat-card">
             <div>
-              <span class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Metin Kanalları</span>
-              <div id="stat-text-channels" class="text-3xl font-extrabold text-[#F1F1F1] mt-1.5">0</div>
-              <span class="text-xs text-zinc-500 mt-1 block">Sohbet ve duyuru odaları</span>
+              <span class="stat-card-title">Metin Kanalları</span>
+              <div id="stat-text-channels" class="stat-card-value text-[#F1F1F1]">0</div>
+              <span class="stat-card-sub">Sohbet ve duyuru odaları</span>
             </div>
-            <div class="w-12 h-12 rounded-xl bg-zinc-800/80 border border-[#262626] flex items-center justify-center text-zinc-300 text-xl">
+            <div class="stat-card-icon">
               <i class="fa-solid fa-hashtag"></i>
             </div>
           </div>
 
           <!-- Ses Kanalları -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 flex items-center justify-between">
+          <div class="stat-card">
             <div>
-              <span class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Ses Kanalları</span>
-              <div id="stat-voice-channels" class="text-3xl font-extrabold text-[#F1F1F1] mt-1.5">0</div>
-              <span class="text-xs text-zinc-500 mt-1 block">Sesli konuşma odaları</span>
+              <span class="stat-card-title">Ses Kanalları</span>
+              <div id="stat-voice-channels" class="stat-card-value text-[#F1F1F1]">0</div>
+              <span class="stat-card-sub">Sesli konuşma odaları</span>
             </div>
-            <div class="w-12 h-12 rounded-xl bg-zinc-800/80 border border-[#262626] flex items-center justify-center text-zinc-300 text-xl">
+            <div class="stat-card-icon">
               <i class="fa-solid fa-volume-high"></i>
             </div>
           </div>
 
           <!-- Rol Sayısı -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 flex items-center justify-between">
+          <div class="stat-card">
             <div>
-              <span class="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Sunucu Rolleri</span>
-              <div id="stat-roles" class="text-3xl font-extrabold text-[#F1F1F1] mt-1.5">0</div>
-              <span class="text-xs text-zinc-500 mt-1 block">Yetki ve üye rolleri</span>
+              <span class="stat-card-title">Sunucu Rolleri</span>
+              <div id="stat-roles" class="stat-card-value text-[#F1F1F1]">0</div>
+              <span class="stat-card-sub">Yetki ve üye rolleri</span>
             </div>
-            <div class="w-12 h-12 rounded-xl bg-zinc-800/80 border border-[#262626] flex items-center justify-center text-zinc-300 text-xl">
+            <div class="stat-card-icon">
               <i class="fa-solid fa-shield-cat"></i>
             </div>
           </div>
@@ -562,7 +212,7 @@
         <!-- ÜYE DAĞILIMI & NITRO BOOST -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Üye Dağılımı (İnsan vs Bot) -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
+          <div class="card space-y-4">
             <div class="flex items-center justify-between">
               <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
                 <i class="fa-solid fa-chart-pie text-[#FFE000]"></i> Topluluk & Üye Dağılımı
@@ -579,9 +229,9 @@
                   <span class="w-2.5 h-2.5 rounded-full bg-zinc-600"></span> Botlar: <strong id="stat-bots-count" class="text-zinc-300">0</strong>
                 </span>
               </div>
-              <div class="w-full h-3 rounded-full bg-[#141414] border border-[#262626] overflow-hidden flex">
-                <div id="stat-humans-bar" class="h-full bg-[#FFE000] transition-all duration-500" style="width: 50%;"></div>
-                <div id="stat-bots-bar" class="h-full bg-zinc-700 transition-all duration-500" style="width: 50%;"></div>
+              <div class="progress-track h-3">
+                <div id="stat-humans-bar" class="progress-fill !rounded-none duration-500" style="width: 50%;"></div>
+                <div id="stat-bots-bar" class="progress-fill !bg-zinc-700 !rounded-none duration-500" style="width: 50%;"></div>
               </div>
               <div class="flex justify-between text-[11px] text-zinc-500">
                 <span id="stat-humans-pct">%0 Gerçek</span>
@@ -591,7 +241,7 @@
           </div>
 
           <!-- Nitro Boost Durumu -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
+          <div class="card space-y-4">
             <div class="flex items-center justify-between">
               <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
                 <i class="fa-solid fa-gem text-pink-400"></i> Nitro Boost Durumu
@@ -604,8 +254,8 @@
                 <span class="text-zinc-400">Toplam Basılan Boost:</span>
                 <span id="dash-boost-count" class="font-bold text-pink-400 text-sm">0 Boost</span>
               </div>
-              <div class="w-full h-3 rounded-full bg-[#141414] border border-[#262626] overflow-hidden">
-                <div id="dash-boost-bar" class="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-500" style="width: 0%;"></div>
+              <div class="progress-track h-3">
+                <div id="dash-boost-bar" class="progress-fill progress-fill-pink !rounded-none duration-500" style="width: 0%;"></div>
               </div>
               <div class="flex justify-between items-center text-[11px] text-zinc-500">
                 <span id="dash-boost-target-text">Sonraki seviye için kalan</span>
@@ -618,12 +268,12 @@
         <!-- SUNUCU KİMLİĞİ & GÜVENLİK ÖZETİ -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Sunucu Sahibi & Kimlik -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
+          <div class="card space-y-4">
             <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
               <i class="fa-solid fa-crown text-[#FFE000]"></i> Sunucu Kurucusu & Tarihçe
             </h3>
-            <div class="flex items-center gap-3.5 p-3.5 rounded-lg bg-[#141414] border border-[#262626]">
-              <img id="dash-owner-avatar" class="w-12 h-12 rounded-full border border-[#262626] bg-zinc-800 object-cover" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="" />
+            <div class="card-sub flex items-center gap-3.5">
+              <img id="dash-owner-avatar" class="w-12 h-12 rounded-full border border-[#262626] bg-zinc-800 object-cover shrink-0" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="" />
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">
                   <div id="dash-owner-name" class="font-bold text-sm text-[#F1F1F1] truncate">Kurucu</div>
@@ -635,18 +285,18 @@
           </div>
 
           <!-- Güvenlik & Doğrulama Düzeyi -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
+          <div class="card space-y-4">
             <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
               <i class="fa-solid fa-shield-halved text-[#FFE000]"></i> Sunucu Güvenlik Seviyesi
             </h3>
             <div class="grid grid-cols-2 gap-3">
-              <div class="py-2.5 px-3.5 rounded-lg bg-[#141414] border border-[#262626]">
-                <span class="text-xs text-zinc-400 block"><i class="fa-solid fa-user-shield text-[#FFE000] mr-1"></i> Doğrulama</span>
-                <div id="dash-sec-verify" class="text-sm font-bold text-[#F1F1F1] mt-1 truncate">Orta</div>
+              <div class="info-tile">
+                <span class="info-tile-label"><i class="fa-solid fa-user-shield text-[#FFE000] mr-1"></i> Doğrulama</span>
+                <div id="dash-sec-verify" class="info-tile-value">Orta</div>
               </div>
-              <div class="py-2.5 px-3.5 rounded-lg bg-[#141414] border border-[#262626]">
-                <span class="text-xs text-zinc-400 block"><i class="fa-solid fa-filter text-[#FFE000] mr-1"></i> İçerik Filtresi</span>
-                <div id="dash-sec-filter" class="text-sm font-bold text-[#F1F1F1] mt-1 truncate">Aktif</div>
+              <div class="info-tile">
+                <span class="info-tile-label"><i class="fa-solid fa-filter text-[#FFE000] mr-1"></i> İçerik Filtresi</span>
+                <div id="dash-sec-filter" class="info-tile-value">Aktif</div>
               </div>
             </div>
           </div>
@@ -655,79 +305,79 @@
         <!-- MODÜL DURUMLARI & BOT DONANIM DURUMU -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Modül Durumları -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
+          <div class="card space-y-4">
             <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
               <i class="fa-solid fa-cubes text-[#FFE000]"></i> Modül Durumları
             </h3>
             <div class="space-y-3">
               <!-- Log Modülü Durumu -->
-              <div id="dash-log-module-card" class="flex items-center justify-between p-3.5 rounded-lg bg-[#141414] border border-[#262626] hover:border-[#FFE000]/40 transition cursor-pointer group">
+              <div id="dash-log-module-card" class="module-row group">
                 <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-lg bg-zinc-800 flex items-center justify-center text-[#FFE000]">
+                  <div class="module-row-icon">
                     <i class="fa-solid fa-shield-halved"></i>
                   </div>
                   <div>
-                    <div class="font-semibold text-sm text-[#F1F1F1] group-hover:text-[#FFE000] transition">Denetim Kaydı (Loglama)</div>
-                    <div id="dash-log-channel-name" class="text-xs text-zinc-400">Kanal: Seçilmedi</div>
+                    <div class="module-row-title">Denetim Kaydı (Loglama)</div>
+                    <div id="dash-log-channel-name" class="module-row-sub">Kanal: Seçilmedi</div>
                   </div>
                 </div>
-                <span id="dash-log-status-badge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-400 border border-[#262626]">Pasif</span>
+                <span id="dash-log-status-badge" class="badge badge-neutral">Pasif</span>
               </div>
 
               <!-- Karşılama Modülü Durumu -->
-              <div id="dash-welcome-module-card" class="flex items-center justify-between p-3.5 rounded-lg bg-[#141414] border border-[#262626] hover:border-[#FFE000]/40 transition cursor-pointer group">
+              <div id="dash-welcome-module-card" class="module-row group">
                 <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-lg bg-zinc-800 flex items-center justify-center text-[#FFE000]">
+                  <div class="module-row-icon">
                     <i class="fa-solid fa-hand-sparkles"></i>
                   </div>
                   <div>
-                    <div class="font-semibold text-sm text-[#F1F1F1] group-hover:text-[#FFE000] transition">Karşılama Kartı</div>
-                    <div id="dash-welcome-channel-name" class="text-xs text-zinc-400">Kanal: Seçilmedi</div>
+                    <div class="module-row-title">Karşılama Kartı</div>
+                    <div id="dash-welcome-channel-name" class="module-row-sub">Kanal: Seçilmedi</div>
                   </div>
                 </div>
-                <span id="dash-welcome-status-badge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-400 border border-[#262626]">Pasif</span>
+                <span id="dash-welcome-status-badge" class="badge badge-neutral">Pasif</span>
               </div>
 
               <!-- Ana Sayfa Akışı Modülü Durumu -->
-              <div id="dash-feed-module-card" class="flex items-center justify-between p-3.5 rounded-lg bg-[#141414] border border-[#262626] hover:border-[#FFE000]/40 transition cursor-pointer group">
+              <div id="dash-feed-module-card" class="module-row group">
                 <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-lg bg-zinc-800 flex items-center justify-center text-[#FFE000]">
+                  <div class="module-row-icon">
                     <i class="fa-solid fa-newspaper"></i>
                   </div>
                   <div>
-                    <div class="font-semibold text-sm text-[#F1F1F1] group-hover:text-[#FFE000] transition">Ana Sayfa Gönderi Akışı</div>
-                    <div id="dash-feed-channel-name" class="text-xs text-zinc-400">Hedef Kanal: Seçilmedi</div>
+                    <div class="module-row-title">Ana Sayfa Gönderi Akışı</div>
+                    <div id="dash-feed-channel-name" class="module-row-sub">Hedef Kanal: Seçilmedi</div>
                   </div>
                 </div>
-                <span id="dash-feed-status-badge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-400 border border-[#262626]">Pasif</span>
+                <span id="dash-feed-status-badge" class="badge badge-neutral">Pasif</span>
               </div>
             </div>
           </div>
 
           <!-- Bot Sistem & Donanım Durumu -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
+          <div class="card space-y-4">
             <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
               <i class="fa-solid fa-microchip text-[#FFE000]"></i> Bot & Sistem Durumu
             </h3>
             <div class="grid grid-cols-2 gap-3">
-              <div class="py-2.5 px-3.5 rounded-lg bg-[#141414] border border-[#262626]">
-                <span class="text-xs text-zinc-400 flex items-center justify-between">
+              <div class="info-tile">
+                <span class="info-tile-label">
                   <span>Gecikme (Ping)</span>
                   <span id="bot-ping-dot" class="w-2 h-2 rounded-full bg-green-500"></span>
                 </span>
-                <div id="bot-ping" class="text-lg font-bold text-[#F1F1F1] mt-1">0 ms</div>
+                <div id="bot-ping" class="info-tile-value !text-lg">0 ms</div>
               </div>
-              <div class="py-2.5 px-3.5 rounded-lg bg-[#141414] border border-[#262626]">
-                <span class="text-xs text-zinc-400">Bellek (RAM)</span>
-                <div id="bot-memory" class="text-lg font-bold text-[#F1F1F1] mt-1">0 MB</div>
+              <div class="info-tile">
+                <span class="info-tile-label">Bellek (RAM)</span>
+                <div id="bot-memory" class="info-tile-value !text-lg">0 MB</div>
               </div>
-              <div class="py-2.5 px-3.5 rounded-lg bg-[#141414] border border-[#262626]">
-                <span class="text-xs text-zinc-400">Toplam Sunucu</span>
-                <div id="bot-total-guilds" class="text-lg font-bold text-[#FFE000] mt-1">0</div>
+              <div class="info-tile">
+                <span class="info-tile-label">Toplam Sunucu</span>
+                <div id="bot-total-guilds" class="info-tile-value !text-lg text-[#FFE000]">0</div>
               </div>
-              <div class="py-2.5 px-3.5 rounded-lg bg-[#141414] border border-[#262626]">
-                <span class="text-xs text-zinc-400">Çalışma Süresi</span>
-                <div id="bot-uptime" class="text-lg font-bold text-[#F1F1F1] mt-1">0s</div>
+              <div class="info-tile">
+                <span class="info-tile-label">Çalışma Süresi</span>
+                <div id="bot-uptime" class="info-tile-value !text-lg">0s</div>
               </div>
             </div>
             <!-- Minik Sistem Rozetleri -->
@@ -742,25 +392,367 @@
         <!-- CANLI AKIŞ & SON KATILANLAR -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Canlı Akış (Recent Activity) -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
+          <div class="card space-y-4">
             <h3 class="font-bold text-base text-[#F1F1F1] flex items-center justify-between">
               <span class="flex items-center gap-2"><i class="fa-solid fa-bolt text-[#FFE000]"></i> Son Hareketler & Canlı Akış</span>
               <span class="text-xs text-zinc-500 font-normal">Son olaylar</span>
             </h3>
             <div id="dash-activity-list" class="space-y-2.5">
-              <div class="text-xs text-zinc-500 p-3 text-center bg-[#141414] rounded-lg border border-[#262626]">Henüz kayıtlı hareket bulunmuyor.</div>
+              <div class="card-sub text-xs text-zinc-500 text-center">Henüz kayıtlı hareket bulunmuyor.</div>
             </div>
           </div>
 
           <!-- Son Katılan Üyeler -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
+          <div class="card space-y-4">
             <h3 class="font-bold text-base text-[#F1F1F1] flex items-center justify-between">
               <span class="flex items-center gap-2"><i class="fa-solid fa-user-plus text-[#FFE000]"></i> Son Katılan Üyeler</span>
               <span class="text-xs text-zinc-500 font-normal">En son giriş yapanlar</span>
             </h3>
             <div id="dash-recent-members" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-              <div class="col-span-full text-xs text-zinc-500 p-3 text-center bg-[#141414] rounded-lg border border-[#262626]">Kayıtlı üye verisi bekleniyor.</div>
+              <div class="card-sub col-span-full text-xs text-zinc-500 text-center">Kayıtlı üye verisi bekleniyor.</div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUNUCU ÜYELERİ & GENİŞ FİLTRE MERKEZİ -->
+      <section id="tab-members" class="hidden max-w-7xl space-y-6">
+        <!-- 1. Üst Banner & Kontrol Kartı -->
+        <div class="card flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-[#FFE000]/10 border border-[#FFE000]/20 flex items-center justify-center text-[#FFE000] text-2xl shadow-sm shrink-0">
+              <i class="fa-solid fa-users-gear"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-xl font-bold text-[#F1F1F1]">Sunucu Üyeleri & Filtreleme Merkezi</h2>
+                <span id="members-live-badge" class="badge badge-green flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span> Canlı Veri
+                </span>
+              </div>
+              <p class="text-xs text-zinc-400 mt-1">Geniş filtreler ile üyeleri arayın, rolleri, katılım tarihlerini, hesap yaşlarını ve durumlarını ayrıntılı analiz edin.</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <!-- Görünüm Seçici -->
+            <div class="flex items-center p-1 rounded-lg bg-[#141414] border border-[#262626]">
+              <button id="members-view-table-btn" type="button" class="btn btn-primary btn-sm" title="Tablo Görünümü">
+                <i class="fa-solid fa-table-list"></i> Tablo
+              </button>
+              <button id="members-view-grid-btn" type="button" class="btn btn-sm" title="Kart Görünümü">
+                <i class="fa-solid fa-border-all"></i> Kartlar
+              </button>
+            </div>
+
+            <!-- Dışa Aktar Dropdown / Menü -->
+            <div class="relative inline-block text-left" id="export-dropdown-wrapper">
+              <button id="members-export-btn" type="button" class="btn btn-sm">
+                <i class="fa-solid fa-file-arrow-down"></i> Dışa Aktar <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 text-zinc-400"></i>
+              </button>
+              <div id="members-export-menu" class="hidden absolute right-0 mt-1.5 w-48 bg-[#181818] border border-[#2b2b2b] rounded-lg shadow-xl z-30 p-1.5 space-y-1">
+                <button id="export-csv-btn" type="button" class="w-full text-left px-3 py-2 text-xs font-medium text-zinc-300 hover:text-[#FFE000] hover:bg-[#242424] rounded flex items-center gap-2 transition">
+                  <i class="fa-solid fa-file-csv text-green-400 text-sm"></i> CSV Olarak İndir (.csv)
+                </button>
+                <button id="export-json-btn" type="button" class="w-full text-left px-3 py-2 text-xs font-medium text-zinc-300 hover:text-[#FFE000] hover:bg-[#242424] rounded flex items-center gap-2 transition">
+                  <i class="fa-solid fa-file-code text-sky-400 text-sm"></i> JSON Olarak İndir (.json)
+                </button>
+              </div>
+            </div>
+
+            <!-- Yenile Butonu -->
+            <button id="members-refresh-btn" type="button" class="btn btn-sm" title="Discord'dan canlı verileri tekrar çek">
+              <i class="fa-solid fa-arrows-rotate"></i> Yenile
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Hızlı Filtre İstatistik KPI Kartları Grid (Tıklanabilir Filtreler) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-3">
+          <!-- Tümü -->
+          <button id="filter-card-all" class="kpi-card member-filter-card active group" data-status-filter="">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-[#FFE000]">Toplam</span>
+              <i class="fa-solid fa-users text-xs text-[#FFE000]"></i>
+            </div>
+            <div id="mf-stat-total" class="text-xl font-extrabold text-[#FFE000] mt-1">0</div>
+            <span class="text-[10px] text-zinc-500 block truncate mt-0.5">Tüm Üyeler</span>
+          </button>
+
+          <!-- Gerçek Kullanıcılar -->
+          <button id="filter-card-humans" class="kpi-card kpi-card-green member-filter-card group" data-type-filter="human">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-green-400">İnsan</span>
+              <i class="fa-solid fa-user text-xs text-green-400"></i>
+            </div>
+            <div id="mf-stat-humans" class="text-xl font-extrabold text-green-400 mt-1">0</div>
+            <span class="text-[10px] text-zinc-500 block truncate mt-0.5">Gerçek Kişiler</span>
+          </button>
+
+          <!-- Botlar -->
+          <button id="filter-card-bots" class="kpi-card kpi-card-purple member-filter-card group" data-type-filter="bot">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-purple-400">Botlar</span>
+              <i class="fa-solid fa-robot text-xs text-purple-400"></i>
+            </div>
+            <div id="mf-stat-bots" class="text-xl font-extrabold text-purple-400 mt-1">0</div>
+            <span class="text-[10px] text-zinc-500 block truncate mt-0.5">Otomasyon</span>
+          </button>
+
+          <!-- Boosters -->
+          <button id="filter-card-boosters" class="kpi-card kpi-card-pink member-filter-card group" data-status-filter="boosters">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-pink-400">Takviye</span>
+              <i class="fa-solid fa-bolt text-xs text-pink-400"></i>
+            </div>
+            <div id="mf-stat-boosters" class="text-xl font-extrabold text-pink-400 mt-1">0</div>
+            <span class="text-[10px] text-zinc-500 block truncate mt-0.5">Server Booster</span>
+          </button>
+
+          <!-- Seste Olanlar -->
+          <button id="filter-card-voice" class="kpi-card kpi-card-emerald member-filter-card group" data-status-filter="voice">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-emerald-400">Seste</span>
+              <i class="fa-solid fa-headphones text-xs text-emerald-400"></i>
+            </div>
+            <div id="mf-stat-voice" class="text-xl font-extrabold text-emerald-400 mt-1">0</div>
+            <span class="text-[10px] text-zinc-500 block truncate mt-0.5">Ses Kanalında</span>
+          </button>
+
+          <!-- Yöneticiler -->
+          <button id="filter-card-admins" class="kpi-card kpi-card-amber member-filter-card group" data-status-filter="admin">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-amber-400">Yetkili</span>
+              <i class="fa-solid fa-shield-halved text-xs text-amber-400"></i>
+            </div>
+            <div id="mf-stat-admins" class="text-xl font-extrabold text-amber-400 mt-1">0</div>
+            <span class="text-[10px] text-zinc-500 block truncate mt-0.5">Yöneticiler</span>
+          </button>
+
+          <!-- Zamanaşımı (Cezalılar) -->
+          <button id="filter-card-timeout" class="kpi-card kpi-card-red member-filter-card group" data-status-filter="timedout">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-red-400">Cezalı</span>
+              <i class="fa-solid fa-hourglass-half text-xs text-red-400"></i>
+            </div>
+            <div id="mf-stat-timeout" class="text-xl font-extrabold text-red-400 mt-1">0</div>
+            <span class="text-[10px] text-zinc-500 block truncate mt-0.5">Zamanaşımı</span>
+          </button>
+
+          <!-- Yeni Katılanlar (Son 7 Gün) -->
+          <button id="filter-card-recent" class="kpi-card kpi-card-sky member-filter-card group" data-status-filter="recent7d">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 group-hover:text-sky-400">Yeni</span>
+              <i class="fa-solid fa-calendar-plus text-xs text-sky-400"></i>
+            </div>
+            <div id="mf-stat-recent" class="text-xl font-extrabold text-sky-400 mt-1">0</div>
+            <span class="text-[10px] text-zinc-500 block truncate mt-0.5">Son 7 Gün</span>
+          </button>
+        </div>
+
+        <!-- 3. Geniş Filtre Paneli (Advanced Filter Box) -->
+        <div class="card space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[#262626] pb-3">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-sliders text-[#FFE000]"></i>
+              <h3 class="font-bold text-sm text-[#F1F1F1]">Ayrıntılı Filtreleme & Arama Kriterleri</h3>
+            </div>
+            <button id="members-reset-filters-btn" type="button" class="btn btn-sm">
+              <i class="fa-solid fa-rotate-left"></i> Filtreleri Temizle
+            </button>
+          </div>
+
+          <!-- Filtre Girişleri Satır 1 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <!-- Arama Kutusu -->
+            <div class="space-y-1.5">
+              <span class="field-label flex items-center gap-1.5">
+                <i class="fa-solid fa-magnifying-glass text-[#FFE000]"></i> Kullanıcı / ID Ara
+              </span>
+              <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input
+                  id="members-search-input"
+                  type="text"
+                  placeholder="Kullanıcı adı, takma ad veya ID..."
+                  class="form-control"
+                />
+                <button id="members-search-clear" type="button" class="hidden search-clear-btn" title="Aramayı Temizle">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Hesap Türü -->
+            <div class="space-y-1.5">
+              <span class="field-label flex items-center gap-1.5">
+                <i class="fa-solid fa-user-tag text-[#FFE000]"></i> Hesap Türü
+              </span>
+              <select id="members-type-filter" class="form-control">
+                <option value="all" data-icon="fa-solid fa-users">Tümü (Gerçek & Bot)</option>
+                <option value="human" data-icon="fa-solid fa-user">Sadece Gerçek Kullanıcılar</option>
+                <option value="bot" data-icon="fa-solid fa-robot">Sadece Botlar</option>
+              </select>
+            </div>
+
+            <!-- Rol Filtresi -->
+            <div class="space-y-1.5">
+              <span class="field-label flex items-center gap-1.5">
+                <i class="fa-solid fa-shield text-[#FFE000]"></i> Sunucu Rolü
+              </span>
+              <select id="members-role-filter" class="form-control">
+                <option value="all" data-icon="fa-solid fa-shield">Tüm Roller (Hepsi)</option>
+                <option value="no_roles" data-icon="fa-solid fa-user-slash">Rolsüz Üyeler</option>
+              </select>
+            </div>
+
+            <!-- Özel Durum Filtresi -->
+            <div class="space-y-1.5">
+              <span class="field-label flex items-center gap-1.5">
+                <i class="fa-solid fa-star text-[#FFE000]"></i> Özel Durum / Rozet
+              </span>
+              <select id="members-status-filter" class="form-control">
+                <option value="all" data-icon="fa-solid fa-filter">Tümü (Filtresiz)</option>
+                <option value="boosters" data-icon="fa-solid fa-bolt">Server Booster (Takviyeci)</option>
+                <option value="voice" data-icon="fa-solid fa-headphones">Ses Kanalında Olanlar</option>
+                <option value="admin" data-icon="fa-solid fa-crown">Yönetici İzni Olanlar</option>
+                <option value="timedout" data-icon="fa-solid fa-hourglass-half">Zamanaşımı / Cezalılar</option>
+                <option value="recent24h" data-icon="fa-solid fa-clock">Son 24 Saatte Katılanlar</option>
+                <option value="recent7d" data-icon="fa-solid fa-calendar-day">Son 7 Günde Katılanlar</option>
+                <option value="newAccounts" data-icon="fa-solid fa-triangle-exclamation">Yeni Hesaplar (&lt; 30 Gün)</option>
+                <option value="pending" data-icon="fa-solid fa-clipboard-check">Kuralları Bekleyenler</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Filtre Girişleri Satır 2 -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
+            <!-- Katılma Tarihi Aralığı -->
+            <div class="space-y-1.5">
+              <span class="field-label flex items-center gap-1.5">
+                <i class="fa-solid fa-calendar text-[#FFE000]"></i> Sunucuya Katılma Zamanı
+              </span>
+              <select id="members-join-date-filter" class="form-control">
+                <option value="all" data-icon="fa-solid fa-calendar">Tüm Zamanlar</option>
+                <option value="today" data-icon="fa-solid fa-calendar-day">Bugün Katılanlar</option>
+                <option value="3d" data-icon="fa-solid fa-calendar-week">Son 3 Gün</option>
+                <option value="7d" data-icon="fa-solid fa-calendar-week">Son 7 Gün</option>
+                <option value="30d" data-icon="fa-solid fa-calendar-days">Son 30 Gün</option>
+                <option value="90d" data-icon="fa-solid fa-calendar-check">Son 90 Gün</option>
+              </select>
+            </div>
+
+            <!-- Hesap Yaşı -->
+            <div class="space-y-1.5">
+              <span class="field-label flex items-center gap-1.5">
+                <i class="fa-solid fa-cake-candles text-[#FFE000]"></i> Discord Hesap Yaşı
+              </span>
+              <select id="members-age-filter" class="form-control">
+                <option value="all" data-icon="fa-solid fa-cake-candles">Tüm Hesap Yaşları</option>
+                <option value="very_new" data-icon="fa-solid fa-triangle-exclamation">Çok Yeni (&lt; 7 Gün)</option>
+                <option value="new" data-icon="fa-solid fa-seedling">Yeni (&lt; 30 Gün)</option>
+                <option value="medium" data-icon="fa-solid fa-user-clock">Orta (1 - 6 Ay)</option>
+                <option value="old" data-icon="fa-solid fa-award">Kıdemli (&gt; 1 Yıl)</option>
+                <option value="veteran" data-icon="fa-solid fa-medal">Eski (&gt; 3 Yıl)</option>
+              </select>
+            </div>
+
+            <!-- Sıralama Ölçütü -->
+            <div class="space-y-1.5">
+              <span class="field-label flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-down-wide-short text-[#FFE000]"></i> Sıralama Ölçütü
+              </span>
+              <select id="members-sort-filter" class="form-control">
+                <option value="joined_desc" data-icon="fa-solid fa-arrow-down-wide-short">Katılma Tarihi: En Yeni → En Eski</option>
+                <option value="joined_asc" data-icon="fa-solid fa-arrow-up-wide-short">Katılma Tarihi: En Eski → En Yeni</option>
+                <option value="created_desc" data-icon="fa-solid fa-clock-rotate-left">Hesap Açılışı: En Yeni → En Eski</option>
+                <option value="created_asc" data-icon="fa-solid fa-clock">Hesap Açılışı: En Eski → En Yeni</option>
+                <option value="name_asc" data-icon="fa-solid fa-arrow-down-a-z">İsim: A → Z</option>
+                <option value="name_desc" data-icon="fa-solid fa-arrow-up-z-a">İsim: Z → A</option>
+                <option value="role_rank" data-icon="fa-solid fa-shield-halved">Rol Hiyerarşisi (En Yetkili)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Aktif Filtre Etiketleri (Active Filters Chips) -->
+          <div id="members-active-filter-tags-container" class="hidden pt-2 border-t border-[#262626] flex items-center gap-2 flex-wrap">
+            <span class="text-[11px] font-semibold text-zinc-400">Aktif Filtreler:</span>
+            <div id="members-active-filter-tags" class="flex items-center gap-1.5 flex-wrap"></div>
+          </div>
+        </div>
+
+        <!-- 4. Sonuç Bilgisi, Sayfa Başı Limit & Hızlı Dışa Aktarma Çubuğu -->
+        <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex items-center gap-2">
+            <span id="members-count-badge" class="font-bold text-[#F1F1F1] bg-[#1c1c1c] border border-[#262626] px-3 py-1.5 rounded-lg shadow-sm">
+              0 üye bulundu
+            </span>
+            <span id="members-filter-summary" class="text-zinc-400"></span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-1.5">
+              <span class="text-zinc-400 font-medium">Sayfa başına:</span>
+              <select id="members-per-page" class="form-control w-auto !py-1">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="all">Tümü</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Yükleniyor İskeleti (Skeleton) -->
+        <div id="members-loading-skeleton" class="hidden space-y-3">
+          <div class="card p-6 text-center animate-pulse space-y-3">
+            <div class="w-12 h-12 bg-zinc-800 rounded-full mx-auto"></div>
+            <div class="h-4 bg-zinc-800 rounded w-48 mx-auto"></div>
+            <div class="h-3 bg-zinc-800 rounded w-72 mx-auto"></div>
+          </div>
+        </div>
+
+        <!-- 6. Boş Sonuç Durumu (Empty State) -->
+        <div id="members-empty-state" class="empty-state hidden">
+          <div class="empty-state-icon">
+            <i class="fa-solid fa-user-slash"></i>
+          </div>
+          <div>
+            <h3 class="empty-state-title">Aramanıza Uygun Üye Bulunamadı</h3>
+            <p class="empty-state-desc mt-1">Seçtiğiniz filtreleme kriterlerine uyan herhangi bir sunucu üyesi bulunamadı. Filtreleri temizleyerek tekrar deneyebilirsiniz.</p>
+          </div>
+          <button id="members-empty-reset-btn" type="button" class="btn btn-primary">
+            <i class="fa-solid fa-rotate-left"></i> Filtreleri Temizle
+          </button>
+        </div>
+
+        <!-- 7. Tablo Görünümü (List View) -->
+        <div id="members-table-container" class="data-table shadow-sm">
+          <table>
+            <thead>
+              <tr>
+                <th>Üye</th>
+                <th>En Yüksek Rol & Roller</th>
+                <th>Katılma Tarihi</th>
+                <th>Hesap Yaşı</th>
+                <th>Durum / Rozetler</th>
+                <th class="text-right">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody id="members-table-body" class="divide-y divide-[#242424] text-[#F1F1F1]">
+              <!-- Dinamik satırlar buraya render edilecek -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 8. Kart Görünümü (Grid Cards View) -->
+        <div id="members-grid-container" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <!-- Dinamik kartlar buraya render edilecek -->
+        </div>
+
+        <!-- 9. Alt Sayfalama (Pagination Bar) -->
+        <div id="members-pagination-container" class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <span id="members-pagination-info" class="text-zinc-400 font-medium">Sayfa 1 / 1</span>
+          <div id="members-pagination-buttons" class="flex items-center gap-1.5">
+            <!-- Dinamik sayfalama butonları -->
           </div>
         </div>
       </section>
@@ -814,7 +806,7 @@
         </div>
 
         <!-- 2. Kanallara Göre Ayrıştırma (Multi-Channel Routing) -->
-        <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
+        <div class="card space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
@@ -824,10 +816,10 @@
             </div>
             <!-- Mod Seçim Butonları -->
             <div class="flex items-center gap-1.5 p-1 rounded-lg bg-[#141414] border border-[#262626]">
-              <button id="log-mode-single-btn" type="button" class="px-3 py-1.5 rounded text-xs font-semibold transition bg-[#FFE000] text-[#141414] shadow-sm flex items-center gap-1.5">
+              <button id="log-mode-single-btn" type="button" class="btn btn-primary btn-sm">
                 <i class="fa-solid fa-layer-group"></i> Tek Kanal Modu
               </button>
-              <button id="log-mode-multi-btn" type="button" class="px-3 py-1.5 rounded text-xs font-semibold transition text-zinc-400 hover:text-[#F1F1F1] flex items-center gap-1.5">
+              <button id="log-mode-multi-btn" type="button" class="btn btn-sm">
                 <i class="fa-solid fa-diagram-project"></i> Ayrı Kanallar (Kategoriye Özel)
               </button>
             </div>
@@ -836,7 +828,7 @@
           <!-- TEK KANAL GÖRÜNÜMÜ -->
           <div id="log-single-channel-container" class="space-y-2 pt-2">
             <span class="field-label">Genel Log Kanalı (Tüm Kayıtlar)</span>
-            <select id="logging-channel" class="channel-select w-full bg-[#141414] border border-[#262626] text-[#F1F1F1] rounded-lg px-3.5 py-2.5"></select>
+            <select id="logging-channel" class="form-control channel-select"></select>
             <p class="text-[11px] text-zinc-500">Tüm mesaj, üye, ses ve ceza olayları bu kanala gönderilir.</p>
           </div>
 
@@ -844,65 +836,65 @@
           <div id="log-multi-channel-container" class="hidden space-y-4 pt-2">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <!-- Mesaj Kanalı -->
-              <div class="p-3.5 rounded-lg bg-[#141414] border border-[#262626] space-y-2">
+              <div class="card-sub space-y-2">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-[#F1F1F1] flex items-center gap-1.5">
                     <i class="fa-solid fa-message text-[#FFE000]"></i> Mesaj Olayları Kanalı
                   </span>
                   <span class="text-[10px] text-zinc-500 font-medium">Silinen & Düzenlenen Mesajlar</span>
                 </div>
-                <select id="logging-channel-messages" class="channel-select w-full bg-[#1c1c1c] border border-[#262626] text-[#F1F1F1] rounded px-3 py-2 text-xs"></select>
+                <select id="logging-channel-messages" class="form-control channel-select"></select>
               </div>
 
               <!-- Üye Kanalı -->
-              <div class="p-3.5 rounded-lg bg-[#141414] border border-[#262626] space-y-2">
+              <div class="card-sub space-y-2">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-[#F1F1F1] flex items-center gap-1.5">
                     <i class="fa-solid fa-user-gear text-[#FFE000]"></i> Üye & Profil Olayları Kanalı
                   </span>
                   <span class="text-[10px] text-zinc-500 font-medium">Giriş, Çıkış, Rol ve Nick</span>
                 </div>
-                <select id="logging-channel-members" class="channel-select w-full bg-[#1c1c1c] border border-[#262626] text-[#F1F1F1] rounded px-3 py-2 text-xs"></select>
+                <select id="logging-channel-members" class="form-control channel-select"></select>
               </div>
 
               <!-- Ses Kanalı -->
-              <div class="p-3.5 rounded-lg bg-[#141414] border border-[#262626] space-y-2">
+              <div class="card-sub space-y-2">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-[#F1F1F1] flex items-center gap-1.5">
                     <i class="fa-solid fa-volume-high text-[#FFE000]"></i> Ses Odası Olayları Kanalı
                   </span>
                   <span class="text-[10px] text-zinc-500 font-medium">Odaya Giriş, Ayrılma, Susturma</span>
                 </div>
-                <select id="logging-channel-voice" class="channel-select w-full bg-[#1c1c1c] border border-[#262626] text-[#F1F1F1] rounded px-3 py-2 text-xs"></select>
+                <select id="logging-channel-voice" class="form-control channel-select"></select>
               </div>
 
               <!-- Moderasyon & Ceza Kanalı -->
-              <div class="p-3.5 rounded-lg bg-[#141414] border border-[#262626] space-y-2">
+              <div class="card-sub space-y-2">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-[#F1F1F1] flex items-center gap-1.5">
                     <i class="fa-solid fa-gavel text-[#FFE000]"></i> Moderasyon & Ceza Kanalı
                   </span>
                   <span class="text-[10px] text-zinc-500 font-medium">Ban, Unban ve Zaman Aşımı</span>
                 </div>
-                <select id="logging-channel-moderation" class="channel-select w-full bg-[#1c1c1c] border border-[#262626] text-[#F1F1F1] rounded px-3 py-2 text-xs"></select>
+                <select id="logging-channel-moderation" class="form-control channel-select"></select>
               </div>
             </div>
 
             <!-- Yedek / Varsayılan Kanal -->
-            <div class="p-3 rounded-lg bg-[#141414] border border-[#262626] flex flex-wrap items-center justify-between gap-3">
+            <div class="card-sub flex flex-wrap items-center justify-between gap-3">
               <div>
                 <span class="text-xs font-bold text-[#F1F1F1] block">Varsayılan / Kategori Dışı Olay Kanalı</span>
                 <span class="text-[11px] text-zinc-500">Kanalı atanmamış olaylar otomatik buraya düşer</span>
               </div>
               <div class="w-full sm:w-64">
-                <select id="logging-channel-default" class="channel-select w-full bg-[#1c1c1c] border border-[#262626] text-[#F1F1F1] rounded px-3 py-1.5 text-xs"></select>
+                <select id="logging-channel-default" class="form-control channel-select"></select>
               </div>
             </div>
           </div>
         </div>
 
         <!-- 3. Olay Bazlı Açma/Kapama (Modüler Filtreler) -->
-        <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
+        <div class="card space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
@@ -911,131 +903,182 @@
               <p class="text-xs text-zinc-400 mt-0.5">Sadece takip etmek istediğiniz olayları açarak gereksiz kanal kirliliğini önleyin.</p>
             </div>
             <div class="flex items-center gap-2">
-              <button id="log-events-select-all" type="button" class="text-xs text-[#FFE000] hover:underline font-semibold bg-[#141414] border border-[#262626] px-2.5 py-1 rounded">Tümünü Aç</button>
-              <button id="log-events-deselect-all" type="button" class="text-xs text-zinc-400 hover:underline font-semibold bg-[#141414] border border-[#262626] px-2.5 py-1 rounded">Tümünü Kapat</button>
+              <button id="log-events-select-all" type="button" class="btn btn-primary btn-sm">Tümünü Aç</button>
+              <button id="log-events-deselect-all" type="button" class="btn btn-sm">Tümünü Kapat</button>
+              <button id="log-appearance-event-colors-reset" type="button" class="btn btn-sm shrink-0" title="Tüm olay renklerini varsayılana sıfırla">
+                <i class="fa-solid fa-arrow-rotate-left"></i> Renkleri Sıfırla
+              </button>
             </div>
           </div>
 
           <!-- Olay Toggle Izgarası (Grid 4 sütun) -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <!-- Mesaj Silindi -->
-            <div class="p-3 rounded-lg bg-[#141414] border border-[#262626] flex items-center justify-between">
-              <div class="min-w-0 pr-2">
-                <div class="text-xs font-bold text-[#F1F1F1] flex items-center gap-1.5">
+            <!-- 1. Mesaj Silindi -->
+            <div class="setting-row !flex-col !items-stretch gap-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="setting-row-title">
                   <i class="fa-solid fa-trash-can text-red-400"></i> Mesaj Silme
                 </div>
-                <div class="text-[11px] text-zinc-500 mt-0.5 truncate">Silinen mesaj ve ekler</div>
+                <label class="switch shrink-0" for="log-event-messageDelete">
+                  <input id="log-event-messageDelete" type="checkbox" />
+                  <span class="switch-track"></span>
+                  <span class="switch-thumb"></span>
+                </label>
               </div>
-              <label class="switch shrink-0" for="log-event-messageDelete">
-                <input id="log-event-messageDelete" type="checkbox" />
-                <span class="switch-track"></span>
-                <span class="switch-thumb"></span>
-              </label>
+              <div class="flex items-center justify-between gap-2 pt-2 border-t border-[#262626]">
+                <div class="setting-row-desc !mt-0 truncate">Silinen mesaj ve ekler</div>
+                <div class="color-picker shrink-0">
+                  <input id="log-color-messageDelete" type="color" value="#EF4444" class="color-picker-swatch !w-6 !h-6 !rounded" title="Mesaj Silme embed rengi" />
+                  <input id="log-color-messageDelete-hex" type="text" value="#EF4444" maxlength="7" class="form-control color-picker-input color-picker-input-sm" />
+                </div>
+              </div>
             </div>
 
-            <!-- Mesaj Düzenlendi -->
-            <div class="p-3 rounded-lg bg-[#141414] border border-[#262626] flex items-center justify-between">
-              <div class="min-w-0 pr-2">
-                <div class="text-xs font-bold text-[#F1F1F1] flex items-center gap-1.5">
+            <!-- 2. Mesaj Düzenlendi -->
+            <div class="setting-row !flex-col !items-stretch gap-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="setting-row-title">
                   <i class="fa-solid fa-pen-to-square text-amber-400"></i> Mesaj Düzenleme
                 </div>
-                <div class="text-[11px] text-zinc-500 mt-0.5 truncate">Eski ve yeni hali</div>
+                <label class="switch shrink-0" for="log-event-messageUpdate">
+                  <input id="log-event-messageUpdate" type="checkbox" />
+                  <span class="switch-track"></span>
+                  <span class="switch-thumb"></span>
+                </label>
               </div>
-              <label class="switch shrink-0" for="log-event-messageUpdate">
-                <input id="log-event-messageUpdate" type="checkbox" />
-                <span class="switch-track"></span>
-                <span class="switch-thumb"></span>
-              </label>
+              <div class="flex items-center justify-between gap-2 pt-2 border-t border-[#262626]">
+                <div class="setting-row-desc !mt-0 truncate">Eski ve yeni hali</div>
+                <div class="color-picker shrink-0">
+                  <input id="log-color-messageUpdate" type="color" value="#F59E0B" class="color-picker-swatch !w-6 !h-6 !rounded" title="Mesaj Düzenleme embed rengi" />
+                  <input id="log-color-messageUpdate-hex" type="text" value="#F59E0B" maxlength="7" class="form-control color-picker-input color-picker-input-sm" />
+                </div>
+              </div>
             </div>
 
-            <!-- Üye Katıldı -->
-            <div class="p-3 rounded-lg bg-[#141414] border border-[#262626] flex items-center justify-between">
-              <div class="min-w-0 pr-2">
-                <div class="text-xs font-bold text-[#F1F1F1] flex items-center gap-1.5">
+            <!-- 3. Üye Katıldı -->
+            <div class="setting-row !flex-col !items-stretch gap-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="setting-row-title">
                   <i class="fa-solid fa-user-plus text-green-400"></i> Üye Katıldı
                 </div>
-                <div class="text-[11px] text-zinc-500 mt-0.5 truncate">Giriş ve hesap yaşı</div>
+                <label class="switch shrink-0" for="log-event-memberJoin">
+                  <input id="log-event-memberJoin" type="checkbox" />
+                  <span class="switch-track"></span>
+                  <span class="switch-thumb"></span>
+                </label>
               </div>
-              <label class="switch shrink-0" for="log-event-memberJoin">
-                <input id="log-event-memberJoin" type="checkbox" />
-                <span class="switch-track"></span>
-                <span class="switch-thumb"></span>
-              </label>
+              <div class="flex items-center justify-between gap-2 pt-2 border-t border-[#262626]">
+                <div class="setting-row-desc !mt-0 truncate">Giriş ve hesap yaşı</div>
+                <div class="color-picker shrink-0">
+                  <input id="log-color-memberJoin" type="color" value="#10B981" class="color-picker-swatch !w-6 !h-6 !rounded" title="Üye Katıldı embed rengi" />
+                  <input id="log-color-memberJoin-hex" type="text" value="#10B981" maxlength="7" class="form-control color-picker-input color-picker-input-sm" />
+                </div>
+              </div>
             </div>
 
-            <!-- Üye Ayrıldı -->
-            <div class="p-3 rounded-lg bg-[#141414] border border-[#262626] flex items-center justify-between">
-              <div class="min-w-0 pr-2">
-                <div class="text-xs font-bold text-[#F1F1F1] flex items-center gap-1.5">
+            <!-- 4. Üye Ayrıldı -->
+            <div class="setting-row !flex-col !items-stretch gap-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="setting-row-title">
                   <i class="fa-solid fa-user-minus text-rose-400"></i> Üye Ayrıldı
                 </div>
-                <div class="text-[11px] text-zinc-500 mt-0.5 truncate">Çıkış ve kalan üye</div>
+                <label class="switch shrink-0" for="log-event-memberLeave">
+                  <input id="log-event-memberLeave" type="checkbox" />
+                  <span class="switch-track"></span>
+                  <span class="switch-thumb"></span>
+                </label>
               </div>
-              <label class="switch shrink-0" for="log-event-memberLeave">
-                <input id="log-event-memberLeave" type="checkbox" />
-                <span class="switch-track"></span>
-                <span class="switch-thumb"></span>
-              </label>
+              <div class="flex items-center justify-between gap-2 pt-2 border-t border-[#262626]">
+                <div class="setting-row-desc !mt-0 truncate">Çıkış ve kalan üye</div>
+                <div class="color-picker shrink-0">
+                  <input id="log-color-memberLeave" type="color" value="#F43F5E" class="color-picker-swatch !w-6 !h-6 !rounded" title="Üye Ayrıldı embed rengi" />
+                  <input id="log-color-memberLeave-hex" type="text" value="#F43F5E" maxlength="7" class="form-control color-picker-input color-picker-input-sm" />
+                </div>
+              </div>
             </div>
 
-            <!-- Rol / Profil Güncelleme -->
-            <div class="p-3 rounded-lg bg-[#141414] border border-[#262626] flex items-center justify-between">
-              <div class="min-w-0 pr-2">
-                <div class="text-xs font-bold text-[#F1F1F1] flex items-center gap-1.5">
+            <!-- 5. Rol & Takma Ad -->
+            <div class="setting-row !flex-col !items-stretch gap-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="setting-row-title">
                   <i class="fa-solid fa-id-badge text-blue-400"></i> Rol & Takma Ad
                 </div>
-                <div class="text-[11px] text-zinc-500 mt-0.5 truncate">Rol ve nick değişimleri</div>
+                <label class="switch shrink-0" for="log-event-memberUpdate">
+                  <input id="log-event-memberUpdate" type="checkbox" />
+                  <span class="switch-track"></span>
+                  <span class="switch-thumb"></span>
+                </label>
               </div>
-              <label class="switch shrink-0" for="log-event-memberUpdate">
-                <input id="log-event-memberUpdate" type="checkbox" />
-                <span class="switch-track"></span>
-                <span class="switch-thumb"></span>
-              </label>
+              <div class="flex items-center justify-between gap-2 pt-2 border-t border-[#262626]">
+                <div class="setting-row-desc !mt-0 truncate">Rol ve nick değişimleri</div>
+                <div class="color-picker shrink-0">
+                  <input id="log-color-memberUpdate" type="color" value="#38BDF8" class="color-picker-swatch !w-6 !h-6 !rounded" title="Rol & Profil embed rengi" />
+                  <input id="log-color-memberUpdate-hex" type="text" value="#38BDF8" maxlength="7" class="form-control color-picker-input color-picker-input-sm" />
+                </div>
+              </div>
             </div>
 
-            <!-- Ses Odası Hareketleri -->
-            <div class="p-3 rounded-lg bg-[#141414] border border-[#262626] flex items-center justify-between">
-              <div class="min-w-0 pr-2">
-                <div class="text-xs font-bold text-[#F1F1F1] flex items-center gap-1.5">
+            <!-- 6. Ses Odası -->
+            <div class="setting-row !flex-col !items-stretch gap-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="setting-row-title">
                   <i class="fa-solid fa-headphones text-purple-400"></i> Ses Odası Hareketi
                 </div>
-                <div class="text-[11px] text-zinc-500 mt-0.5 truncate">Giriş, çıkış, oda değişimi</div>
+                <label class="switch shrink-0" for="log-event-voiceJoinLeave">
+                  <input id="log-event-voiceJoinLeave" type="checkbox" />
+                  <span class="switch-track"></span>
+                  <span class="switch-thumb"></span>
+                </label>
               </div>
-              <label class="switch shrink-0" for="log-event-voiceJoinLeave">
-                <input id="log-event-voiceJoinLeave" type="checkbox" />
-                <span class="switch-track"></span>
-                <span class="switch-thumb"></span>
-              </label>
+              <div class="flex items-center justify-between gap-2 pt-2 border-t border-[#262626]">
+                <div class="setting-row-desc !mt-0 truncate">Giriş, çıkış, oda değişimi</div>
+                <div class="color-picker shrink-0">
+                  <input id="log-color-voiceJoinLeave" type="color" value="#A855F7" class="color-picker-swatch !w-6 !h-6 !rounded" title="Ses Odası embed rengi" />
+                  <input id="log-color-voiceJoinLeave-hex" type="text" value="#A855F7" maxlength="7" class="form-control color-picker-input color-picker-input-sm" />
+                </div>
+              </div>
             </div>
 
-            <!-- Ses Susturma / Sağırlaştırma -->
-            <div class="p-3 rounded-lg bg-[#141414] border border-[#262626] flex items-center justify-between">
-              <div class="min-w-0 pr-2">
-                <div class="text-xs font-bold text-[#F1F1F1] flex items-center gap-1.5">
+            <!-- 7. Ses Susturma -->
+            <div class="setting-row !flex-col !items-stretch gap-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="setting-row-title">
                   <i class="fa-solid fa-microphone-slash text-orange-400"></i> Ses Susturma
                 </div>
-                <div class="text-[11px] text-zinc-500 mt-0.5 truncate">Yetkili susturması</div>
+                <label class="switch shrink-0" for="log-event-voiceMuteDeafen">
+                  <input id="log-event-voiceMuteDeafen" type="checkbox" />
+                  <span class="switch-track"></span>
+                  <span class="switch-thumb"></span>
+                </label>
               </div>
-              <label class="switch shrink-0" for="log-event-voiceMuteDeafen">
-                <input id="log-event-voiceMuteDeafen" type="checkbox" />
-                <span class="switch-track"></span>
-                <span class="switch-thumb"></span>
-              </label>
+              <div class="flex items-center justify-between gap-2 pt-2 border-t border-[#262626]">
+                <div class="setting-row-desc !mt-0 truncate">Yetkili susturması</div>
+                <div class="color-picker shrink-0">
+                  <input id="log-color-voiceMuteDeafen" type="color" value="#F97316" class="color-picker-swatch !w-6 !h-6 !rounded" title="Ses Susturma embed rengi" />
+                  <input id="log-color-voiceMuteDeafen-hex" type="text" value="#F97316" maxlength="7" class="form-control color-picker-input color-picker-input-sm" />
+                </div>
+              </div>
             </div>
 
-            <!-- Ban / Unban -->
-            <div class="p-3 rounded-lg bg-[#141414] border border-[#262626] flex items-center justify-between">
-              <div class="min-w-0 pr-2">
-                <div class="text-xs font-bold text-[#F1F1F1] flex items-center gap-1.5">
+            <!-- 8. Yasaklama (Ban/Unban) -->
+            <div class="setting-row !flex-col !items-stretch gap-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="setting-row-title">
                   <i class="fa-solid fa-gavel text-red-500"></i> Yasaklama (Ban/Unban)
                 </div>
-                <div class="text-[11px] text-zinc-500 mt-0.5 truncate">Sunucu ban cezaları</div>
+                <label class="switch shrink-0" for="log-event-guildBan">
+                  <input id="log-event-guildBan" type="checkbox" />
+                  <span class="switch-track"></span>
+                  <span class="switch-thumb"></span>
+                </label>
               </div>
-              <label class="switch shrink-0" for="log-event-guildBan">
-                <input id="log-event-guildBan" type="checkbox" />
-                <span class="switch-track"></span>
-                <span class="switch-thumb"></span>
-              </label>
+              <div class="flex items-center justify-between gap-2 pt-2 border-t border-[#262626]">
+                <div class="setting-row-desc !mt-0 truncate">Sunucu ban cezaları</div>
+                <div class="color-picker shrink-0">
+                  <input id="log-color-guildBan" type="color" value="#DC2626" class="color-picker-swatch !w-6 !h-6 !rounded" title="Yasaklama embed rengi" />
+                  <input id="log-color-guildBan-hex" type="text" value="#DC2626" maxlength="7" class="form-control color-picker-input color-picker-input-sm" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1043,18 +1086,18 @@
         <!-- 4. Akıllı Muafiyetler & Görünüm Ayarları -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Akıllı Muafiyetler (Ignore Rules) -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
+          <div class="card space-y-4">
             <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
               <i class="fa-solid fa-filter-circle-xmark text-[#FFE000]"></i> Akıllı Muafiyetler (Yoksayma)
             </h3>
 
             <!-- Botları Yoksay -->
-            <div class="p-3 rounded-lg bg-[#141414] border border-[#262626] flex items-center justify-between">
+            <div class="setting-row">
               <div>
-                <div class="text-xs font-bold text-[#F1F1F1] flex items-center gap-1.5">
+                <div class="setting-row-title">
                   <i class="fa-solid fa-robot text-zinc-400"></i> Botları Yoksay (ignoreBots)
                 </div>
-                <div class="text-[11px] text-zinc-500 mt-0.5">Botların mesaj hareketleri ve düzenlemeleri loglanmaz</div>
+                <div class="setting-row-desc">Botların mesaj hareketleri ve düzenlemeleri loglanmaz</div>
               </div>
               <label class="switch shrink-0" for="log-filter-ignore-bots">
                 <input id="log-filter-ignore-bots" type="checkbox" />
@@ -1071,10 +1114,10 @@
               </span>
               <div class="flex items-center gap-2.5 w-full">
                 <div class="flex-1 min-w-0">
-                  <select id="log-filter-channel-select" class="channel-select w-full bg-[#141414] border border-[#262626] text-[#F1F1F1] rounded-lg px-3 py-2 text-xs"></select>
+                  <select id="log-filter-channel-select" class="form-control channel-select"></select>
                 </div>
-                <button id="log-filter-add-channel-btn" type="button" class="shrink-0 whitespace-nowrap bg-zinc-800 hover:bg-[#FFE000] hover:text-[#141414] text-[#F1F1F1] font-semibold px-4 py-2.5 rounded-lg text-xs transition border border-[#262626] flex items-center justify-center gap-1.5 h-[42px] shadow-sm group">
-                  <i class="fa-solid fa-plus text-[#FFE000] group-hover:text-[#141414] transition-colors"></i> Ekle
+                <button id="log-filter-add-channel-btn" type="button" class="btn btn-primary btn-sm shrink-0">
+                  <i class="fa-solid fa-plus"></i> Ekle
                 </button>
               </div>
 
@@ -1086,7 +1129,7 @@
           </div>
 
           <!-- Embed & Görünüm Ayarları -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
+          <div class="card space-y-4">
             <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
               <i class="fa-solid fa-palette text-[#FFE000]"></i> Embed & Görünüm Ayarları
             </h3>
@@ -1094,7 +1137,7 @@
             <!-- Detay Düzeyi -->
             <div class="space-y-1.5">
               <span class="field-label">Mesaj Detay Düzeyi</span>
-              <select id="log-appearance-detail-level" class="w-full bg-[#141414] border border-[#262626] text-[#F1F1F1] rounded px-3 py-2 text-xs">
+              <select id="log-appearance-detail-level" class="form-control">
                 <option value="rich">Zengin / Detaylı (Görsel önizlemeleri, ekler ve tüm detaylar)</option>
                 <option value="compact">Kompakt / Sade (Gereksiz görseller kaldırılır, sade metin)</option>
               </select>
@@ -1103,19 +1146,19 @@
 
             <!-- Vurgu Rengi -->
             <div class="space-y-1.5">
-              <span class="field-label">Embed Vurgu Rengi</span>
-              <div class="flex items-center gap-2.5">
-                <input id="log-appearance-color" type="color" value="#FFE000" class="w-10 h-10 rounded border border-[#262626] bg-[#141414] cursor-pointer" />
-                <input id="log-appearance-color-hex" type="text" value="#FFE000" class="w-32 bg-[#141414] border border-[#262626] text-[#F1F1F1] rounded px-3 py-2 text-xs font-semibold" />
-                <button id="log-appearance-color-reset" type="button" class="text-xs bg-[#141414] border border-[#262626] hover:text-[#FFE000] text-zinc-400 px-3 py-2 rounded transition">Varsayılan Yap</button>
+              <span class="field-label">Genel / Varsayılan Embed Vurgu Rengi</span>
+              <div class="color-picker">
+                <input id="log-appearance-color" type="color" value="#FFE000" class="color-picker-swatch" />
+                <input id="log-appearance-color-hex" type="text" value="#FFE000" class="form-control color-picker-input" />
+                <button id="log-appearance-color-reset" type="button" class="btn btn-sm">Varsayılan Yap</button>
               </div>
-              <p class="text-[11px] text-zinc-500">Log embedlerinin kenarlık vurgu rengi.</p>
+              <p class="text-[11px] text-zinc-500">Özel rengi atanmamış log olayları için varsayılan kenarlık rengi.</p>
             </div>
           </div>
         </div>
 
         <!-- 5. Canlı Panel Günlüğü (Web Log Explorer) -->
-        <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
+        <div class="card space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
@@ -1125,63 +1168,63 @@
               <p class="text-xs text-zinc-400 mt-0.5">Botun kaydettiği tüm son hareketleri panelden gerçek zamanlı inceleyin ve arayın.</p>
             </div>
             <div class="flex items-center gap-2">
-              <button id="log-clear-btn" type="button" class="bg-zinc-800 hover:bg-red-500/15 hover:text-red-400 text-zinc-400 border border-[#262626] px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5" title="Kayıtlı logları temizle">
+              <button id="log-clear-btn" type="button" class="btn btn-danger btn-sm" title="Kayıtlı logları temizle">
                 <i class="fa-solid fa-trash-can"></i> Temizle
               </button>
-              <button id="log-test-send-btn" type="button" class="bg-zinc-800 hover:bg-zinc-700 text-[#F1F1F1] border border-[#262626] px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5" title="Discord'a ve tabloya test log gönder">
-                <i class="fa-solid fa-vial text-[#FFE000]"></i> Test Log Gönder
+              <button id="log-test-send-btn" type="button" class="btn btn-sm" title="Discord'a ve tabloya test log gönder">
+                <i class="fa-solid fa-vial"></i> Test Log Gönder
               </button>
-              <button id="log-refresh-btn" type="button" class="bg-[#FFE000] hover:bg-[#ebd000] text-[#141414] font-semibold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5">
+              <button id="log-refresh-btn" type="button" class="btn btn-primary btn-sm">
                 <i class="fa-solid fa-arrows-rotate"></i> Yenile
               </button>
             </div>
           </div>
 
           <!-- Arama & Filtre Çubuğu -->
-          <div class="relative z-30 grid grid-cols-1 md:grid-cols-3 gap-3 p-3.5 rounded-xl bg-[#141414] border border-[#262626]">
+          <div class="card-sub relative z-30 grid grid-cols-1 md:grid-cols-3 gap-3">
             <!-- Arama Kutusu -->
-            <div class="relative flex items-center min-w-0">
-              <i class="fa-solid fa-magnifying-glass absolute left-3.5 text-zinc-500 text-xs pointer-events-none"></i>
-              <input id="log-search-input" type="text" placeholder="Kullanıcı adı, ID, kanal veya içerik ara..." class="w-full h-[42px] bg-[#141414] border border-[#262626] hover:border-[#3b3b3b] text-[#F1F1F1] rounded-lg pl-9 pr-3.5 text-sm font-medium placeholder:text-zinc-500 focus:outline-none focus:border-[#FFE000] focus:ring-1 focus:ring-[#FFE000] transition" />
+            <div class="search-box min-w-0">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input id="log-search-input" type="text" placeholder="Kullanıcı adı, ID, kanal veya içerik ara..." class="form-control" />
             </div>
 
             <!-- Kategori Filtresi -->
             <div class="relative min-w-0">
               <select id="log-category-filter" class="w-full">
-                <option value="all">Tüm Kategoriler (Hepsi)</option>
-                <option value="messages">💬 Mesaj Hareketleri</option>
-                <option value="members">👥 Üye & Profil Hareketleri</option>
-                <option value="voice">🔊 Ses Odası Hareketleri</option>
-                <option value="moderation">⚖️ Moderasyon & Cezalar</option>
+                <option value="all" data-icon="fa-solid fa-layer-group">Tüm Kategoriler (Hepsi)</option>
+                <option value="messages" data-icon="fa-solid fa-comment-dots">Mesaj Hareketleri</option>
+                <option value="members" data-icon="fa-solid fa-users">Üye & Profil Hareketleri</option>
+                <option value="voice" data-icon="fa-solid fa-headphones">Ses Odası Hareketleri</option>
+                <option value="moderation" data-icon="fa-solid fa-gavel">Moderasyon & Cezalar</option>
               </select>
             </div>
 
             <!-- Olay Türü Filtresi -->
             <div class="relative min-w-0">
               <select id="log-type-filter" class="w-full">
-                <option value="all">Tüm Olay Türleri (Hepsi)</option>
-                <option value="messageDelete">🗑️ Mesaj Silindi</option>
-                <option value="messageUpdate">✏️ Mesaj Düzenlendi</option>
-                <option value="memberJoin">📥 Üye Katıldı</option>
-                <option value="memberLeave">📤 Üye Ayrıldı</option>
-                <option value="memberUpdate">🏷️ Rol & Takma Ad</option>
-                <option value="voiceJoinLeave">🎧 Ses Odası Hareketi</option>
-                <option value="voiceMuteDeafen">🎙️ Ses Susturma</option>
-                <option value="guildBan">🔨 Yasaklama (Ban/Unban)</option>
+                <option value="all" data-icon="fa-solid fa-list-check">Tüm Olay Türleri (Hepsi)</option>
+                <option value="messageDelete" data-icon="fa-solid fa-trash-can">Mesaj Silindi</option>
+                <option value="messageUpdate" data-icon="fa-solid fa-pen-to-square">Mesaj Düzenlendi</option>
+                <option value="memberJoin" data-icon="fa-solid fa-user-plus">Üye Katıldı</option>
+                <option value="memberLeave" data-icon="fa-solid fa-user-minus">Üye Ayrıldı</option>
+                <option value="memberUpdate" data-icon="fa-solid fa-id-badge">Rol & Takma Ad</option>
+                <option value="voiceJoinLeave" data-icon="fa-solid fa-headphones">Ses Odası Hareketi</option>
+                <option value="voiceMuteDeafen" data-icon="fa-solid fa-microphone-slash">Ses Susturma</option>
+                <option value="guildBan" data-icon="fa-solid fa-gavel">Yasaklama (Ban/Unban)</option>
               </select>
             </div>
           </div>
 
           <!-- Canlı Log Tablosu -->
-          <div class="overflow-x-auto rounded-lg border border-[#262626] bg-[#141414]">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-[#1c1c1c] text-zinc-400 border-b border-[#262626] uppercase text-[10px] tracking-wider">
+          <div class="data-table">
+            <table>
+              <thead>
                 <tr>
-                  <th class="py-2.5 px-3.5 w-24">Zaman</th>
-                  <th class="py-2.5 px-3.5 w-36">Olay Türü</th>
-                  <th class="py-2.5 px-3.5 w-44">Kullanıcı</th>
-                  <th class="py-2.5 px-3.5 w-32">Konum / Kanal</th>
-                  <th class="py-2.5 px-3.5">Detay / İçerik</th>
+                  <th class="w-24">Zaman</th>
+                  <th class="w-36">Olay Türü</th>
+                  <th class="w-44">Kullanıcı</th>
+                  <th class="w-32">Konum / Kanal</th>
+                  <th>Detay / İçerik</th>
                 </tr>
               </thead>
               <tbody id="log-table-body" class="divide-y divide-[#262626] text-[#F1F1F1]">
@@ -1197,45 +1240,86 @@
       </section>
 
       <!-- KARŞILAMA -->
-      <section id="tab-welcome" class="hidden space-y-6">
-        <div class="bg-[#1c1c1c] border border-[#262626] rounded-lg p-5 grid md:grid-cols-2 gap-4">
-          <div class="flex items-center justify-between md:col-span-2">
-            <div>
-              <h2 class="font-semibold text-[#F1F1F1]"><i class="fa-solid fa-hand-sparkles text-[#FFE000] mr-1"></i> Karşılama Mesajı</h2>
-              <p class="text-sm text-zinc-400">Sunucuya katılan üyelere görselli karşılama kartı gönderir.</p>
+      <section id="tab-welcome" class="hidden space-y-6 max-w-6xl">
+        <!-- 1. Ana Yönetim & Durum Kartı -->
+        <div class="card space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-xl bg-zinc-800 border border-[#262626] flex items-center justify-center text-[#FFE000] text-xl shadow-sm">
+                <i class="fa-solid fa-hand-sparkles"></i>
+              </div>
+              <div>
+                <h2 class="text-lg font-bold text-[#F1F1F1] flex items-center gap-2">
+                  Karşılama Mesajı & Kartı (Welcome)
+                  <span id="welcome-active-status-badge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-[#262626]">Pasif</span>
+                </h2>
+                <p class="text-xs text-zinc-400 mt-0.5">Sunucuya yeni katılan üyelere belirlenen kanalda özel görsel karşılama kartı ve hoş geldin mesajı gönderir.</p>
+              </div>
             </div>
-            <label class="switch" for="welcome-enabled">
-              <input id="welcome-enabled" type="checkbox" />
-              <span class="switch-track"></span>
-              <span class="switch-thumb"></span>
-            </label>
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-semibold text-zinc-400">Karşılama Modülü:</span>
+              <label class="switch" for="welcome-enabled">
+                <input id="welcome-enabled" type="checkbox" />
+                <span class="switch-track"></span>
+                <span class="switch-thumb"></span>
+              </label>
+            </div>
           </div>
-          <div class="block space-y-1">
-            <span class="field-label">Karşılama Kanalı</span>
-            <select id="welcome-channel" class="channel-select w-full bg-[#141414] border border-[#262626] text-[#F1F1F1] rounded px-3 py-2"></select>
+
+          <!-- Durum Özeti Rozetleri -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-[#262626]">
+            <div class="card-sub p-2.5">
+              <span class="text-[11px] text-zinc-500 block">Karşılama Kanalı</span>
+              <span id="badge-welcome-channel" class="text-xs font-bold text-[#FFE000]">Seçilmedi</span>
+            </div>
+            <div class="card-sub p-2.5">
+              <span class="text-[11px] text-zinc-500 block">Karşılama Kartı</span>
+              <span id="badge-welcome-card" class="text-xs font-bold text-zinc-300">Özel Tasarım</span>
+            </div>
+            <div class="card-sub p-2.5">
+              <span class="text-[11px] text-zinc-500 block">Katman Sayısı</span>
+              <span id="badge-welcome-layers" class="text-xs font-bold text-zinc-300">0 Katman</span>
+            </div>
+            <div class="card-sub p-2.5">
+              <span class="text-[11px] text-zinc-500 block">Mesaj Metni Durumu</span>
+              <span id="badge-welcome-msg" class="text-xs font-bold text-green-400">Varsayılan</span>
+            </div>
           </div>
-          <label class="block space-y-1">
-            <span class="field-label">Mesaj Metni</span>
-            <input id="welcome-message" type="text" class="w-full bg-[#141414] border border-[#262626] text-[#F1F1F1] rounded px-3 py-2" />
-          </label>
-          <p class="md:col-span-2 text-xs text-zinc-400">
+        </div>
+
+        <!-- 2. Kanal & Karşılama Mesajı Ayarları -->
+        <div class="card space-y-4">
+          <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+            <i class="fa-solid fa-bullseye text-[#FFE000]"></i> Karşılama Kanalı & Mesaj Metni
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            <div class="space-y-1.5">
+              <span class="field-label">Karşılama Kanalı</span>
+              <select id="welcome-channel" class="form-control channel-select"></select>
+            </div>
+            <div class="space-y-1.5">
+              <span class="field-label">Mesaj Metni</span>
+              <input id="welcome-message" type="text" placeholder="Aramıza hoş geldin {mention}!" class="form-control" />
+            </div>
+          </div>
+          <p class="text-xs text-zinc-400">
             Kullanılabilir etiketler:
-            <code class="bg-black/50 text-[#FFE000] px-1 rounded">{mention}</code> (sadece mesajda),
-            <code class="bg-black/50 text-[#FFE000] px-1 rounded">{username}</code>
-            <code class="bg-black/50 text-[#FFE000] px-1 rounded">{displayName}</code>
-            <code class="bg-black/50 text-[#FFE000] px-1 rounded">{server}</code>
-            <code class="bg-black/50 text-[#FFE000] px-1 rounded">{memberCount}</code>
+            <code class="bg-[#141414] border border-[#262626] text-[#FFE000] px-1.5 py-0.5 rounded text-[11px]">{mention}</code> (sadece mesajda),
+            <code class="bg-[#141414] border border-[#262626] text-[#FFE000] px-1.5 py-0.5 rounded text-[11px]">{username}</code>,
+            <code class="bg-[#141414] border border-[#262626] text-[#FFE000] px-1.5 py-0.5 rounded text-[11px]">{displayName}</code>,
+            <code class="bg-[#141414] border border-[#262626] text-[#FFE000] px-1.5 py-0.5 rounded text-[11px]">{server}</code>,
+            <code class="bg-[#141414] border border-[#262626] text-[#FFE000] px-1.5 py-0.5 rounded text-[11px]">{memberCount}</code>
           </p>
         </div>
 
         <div class="grid xl:grid-cols-[1fr_320px] gap-6">
           <!-- Tuval -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-lg p-5 space-y-3 min-w-0">
+          <div class="card space-y-3 min-w-0">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <h2 class="font-semibold text-[#F1F1F1]"><i class="fa-solid fa-image text-[#FFE000] mr-1"></i> Kart Editörü</h2>
               <div class="flex gap-2">
-                <button id="server-preview-btn" class="bg-zinc-800 hover:bg-zinc-700 text-[#F1F1F1] border border-[#262626] px-3 py-1.5 rounded text-sm transition"><i class="fa-solid fa-magnifying-glass mr-1"></i> Gerçek Önizleme</button>
-                <button id="test-btn" class="bg-[#FFE000] hover:bg-[#ebd000] text-[#141414] font-semibold px-3 py-1.5 rounded text-sm transition"><i class="fa-solid fa-paper-plane mr-1"></i> Test Gönder</button>
+                <button id="server-preview-btn" class="btn"><i class="fa-solid fa-magnifying-glass"></i> Gerçek Önizleme</button>
+                <button id="test-btn" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Test Gönder</button>
               </div>
             </div>
             <p class="text-xs text-zinc-400">Öğeleri fareyle sürükleyerek konumlandırın. Seçili öğeyi klavye ok tuşlarıyla (Shift ile 10px) hassas kaydırabilirsiniz.</p>
@@ -1246,14 +1330,14 @@
 
           <!-- Özellikler -->
           <div class="space-y-4">
-            <div class="bg-[#1c1c1c] border border-[#262626] rounded-lg p-4 space-y-3">
+            <div class="card space-y-3">
               <div class="flex items-center justify-between">
                 <h3 class="font-semibold text-sm text-[#F1F1F1]"><i class="fa-solid fa-layer-group mr-1 text-[#FFE000]"></i> Katmanlar</h3>
-                <button id="add-text-btn" class="text-xs bg-zinc-800 hover:bg-zinc-700 text-[#F1F1F1] border border-[#262626] px-2 py-1 rounded transition"><i class="fa-solid fa-plus mr-1"></i> Metin Ekle</button>
+                <button id="add-text-btn" class="btn btn-sm"><i class="fa-solid fa-plus"></i> Metin Ekle</button>
               </div>
               <div id="layer-list" class="space-y-1"></div>
             </div>
-            <div class="bg-[#1c1c1c] border border-[#262626] rounded-lg p-4 space-y-3">
+            <div class="card space-y-3">
               <h3 id="props-title" class="font-semibold text-sm text-[#F1F1F1]">Özellikler</h3>
               <div id="props-panel" class="space-y-3"></div>
             </div>
@@ -1264,7 +1348,7 @@
       <!-- ANA SAYFA GÖNDERİ AKIŞI (FEED) -->
       <section id="tab-feed" class="hidden space-y-6 max-w-6xl">
         <!-- 1. Ana Yönetim & Durum Kartı -->
-        <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
+        <div class="card space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-4">
             <div class="flex items-center gap-3.5">
               <div class="w-11 h-11 rounded-xl bg-zinc-800 border border-[#262626] flex items-center justify-center text-[#FFE000] text-xl shadow-sm">
@@ -1285,200 +1369,200 @@
                 <span class="switch-track"></span>
                 <span class="switch-thumb"></span>
               </label>
-              <button id="feed-save-direct-btn" type="button" class="bg-[#FFE000] hover:bg-[#ebd000] text-[#141414] font-semibold px-3.5 py-1.5 rounded-lg text-xs transition shadow-sm flex items-center gap-1.5 ml-1">
-                <i class="fa-solid fa-floppy-disk"></i> Ayarları Kaydet
-              </button>
             </div>
           </div>
 
           <!-- Durum Özeti Rozetleri -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-[#262626]">
-            <div class="p-2.5 rounded-lg bg-[#141414] border border-[#262626]">
+            <div class="card-sub p-2.5">
               <span class="text-[11px] text-zinc-500 block">Hedef Akış Kanalı</span>
               <span id="badge-feed-target" class="text-xs font-bold text-[#FFE000]">Seçilmedi</span>
             </div>
-            <div class="p-2.5 rounded-lg bg-[#141414] border border-[#262626]">
+            <div class="card-sub p-2.5">
               <span class="text-[11px] text-zinc-500 block">İzlenen Kanallar</span>
               <span id="badge-feed-sources" class="text-xs font-bold text-zinc-300">0 Kanal İzleniyor</span>
             </div>
-            <div class="p-2.5 rounded-lg bg-[#141414] border border-[#262626]">
+            <div class="card-sub p-2.5">
               <span class="text-[11px] text-zinc-500 block">Önizleme Sınırı</span>
               <span id="badge-feed-length" class="text-xs font-bold text-zinc-300">200 Karakter</span>
             </div>
-            <div class="p-2.5 rounded-lg bg-[#141414] border border-[#262626]">
+            <div class="card-sub p-2.5">
               <span class="text-[11px] text-zinc-500 block">Bot Filtresi</span>
               <span id="badge-feed-bot-filter" class="text-xs font-bold text-green-400">Botlar Yoksayılıyor</span>
             </div>
           </div>
         </div>
 
-        <!-- 2. Hedef & Kaynak Kanallar -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Hedef Kanal Seçimi -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
-            <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
-              <i class="fa-solid fa-bullseye text-[#FFE000]"></i> Hedef Akış Kanalı (Ana Sayfa)
-            </h3>
-            <p class="text-xs text-zinc-400">Özet gönderi kartlarının Discord'da gönderileceği ana kanalı seçin (Örn: <code class="bg-[#141414] px-1.5 py-0.5 rounded text-[#FFE000]">#ana-sayfa</code>).</p>
-            <div class="space-y-2 pt-1">
-              <span class="field-label">Akış Kanalı</span>
-              <select id="feed-target-channel" class="channel-select w-full bg-[#141414] border border-[#262626] text-[#F1F1F1] rounded-lg px-3.5 py-2.5"></select>
-            </div>
-          </div>
-
-          <!-- İzlenecek Kaynak Kanallar -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
-            <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
-              <i class="fa-solid fa-tower-broadcast text-[#FFE000]"></i> İzlenecek Kaynak Kanallar
-            </h3>
-            <p class="text-xs text-zinc-400">Yeni bir gönderi paylaşıldığında akışa aktarılmasını istediğiniz metin kanallarını veya <b>Forum kanallarını (💬)</b> ekleyin.</p>
-
-            <div class="flex items-center gap-2.5 w-full pt-1">
-              <div class="flex-1 min-w-0">
-                <select id="feed-source-channel-select" class="channel-select w-full bg-[#141414] border border-[#262626] text-[#F1F1F1] rounded-lg px-3 py-2 text-xs"></select>
-              </div>
-              <button id="feed-add-source-btn" type="button" class="shrink-0 whitespace-nowrap bg-zinc-800 hover:bg-[#FFE000] hover:text-[#141414] text-[#F1F1F1] font-semibold px-4 py-2.5 rounded-lg text-xs transition border border-[#262626] flex items-center justify-center gap-1.5 h-[42px] shadow-sm group">
-                <i class="fa-solid fa-plus text-[#FFE000] group-hover:text-[#141414] transition-colors"></i> Ekle
-              </button>
-            </div>
-
-            <!-- Eklenen Kaynak Kanal Etiketleri -->
-            <div id="feed-source-channels-list" class="flex flex-wrap gap-1.5 min-h-[42px] p-2.5 bg-[#141414] border border-[#262626] rounded-lg">
-              <span class="text-xs text-zinc-500 italic p-1">Henüz izlenecek kaynak kanal eklenmedi.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. İçerik & Filtre Ayarları -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Metin & Filtreler -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
-            <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
-              <i class="fa-solid fa-sliders text-[#FFE000]"></i> Metin & Önizleme Ayarları
-            </h3>
-
-            <!-- Önizleme Metin Uzunluğu Slider -->
-            <div class="space-y-2">
-              <div class="flex items-center justify-between text-xs font-semibold">
-                <span class="text-zinc-300">Önizleme Metin Uzunluğu</span>
-                <span id="feed-preview-length-val" class="text-[#FFE000] bg-[#141414] border border-[#262626] px-2 py-0.5 rounded text-xs">200 Karakter</span>
-              </div>
-              <input id="feed-preview-length" type="range" min="50" max="600" step="10" value="200" class="modern-slider w-full" />
-              <div class="flex justify-between text-[11px] text-zinc-500">
-                <span>50 Karakter (Kısa özet)</span>
-                <span>600 Karakter (Geniş önizleme)</span>
-              </div>
-            </div>
-
-            <!-- Minimum Karakter Sayısı -->
-            <div class="space-y-1.5 pt-1">
-              <span class="field-label">Minimum Mesaj Uzunluğu (Spam Engeli)</span>
-              <input id="feed-min-content-length" type="number" min="0" max="100" value="1" class="w-full bg-[#141414] border border-[#262626] text-[#F1F1F1] rounded px-3 py-2 text-xs" />
-              <p class="text-[11px] text-zinc-500">Bu sınırdan daha kısa olan metin mesajları akışa basılmaz (tüm mesajlar için 0 veya 1 yapın).</p>
-            </div>
-
-            <!-- Botları Yoksay -->
-            <div class="p-3 rounded-lg bg-[#141414] border border-[#262626] flex items-center justify-between">
-              <div>
-                <div class="text-xs font-bold text-[#F1F1F1] flex items-center gap-1.5">
-                  <i class="fa-solid fa-robot text-zinc-400"></i> Bot Mesajlarını Yoksay
-                </div>
-                <div class="text-[11px] text-zinc-500 mt-0.5">Botların gönderdiği mesajlar akışa aktarılmaz</div>
-              </div>
-              <label class="switch shrink-0" for="feed-ignore-bots">
-                <input id="feed-ignore-bots" type="checkbox" />
-                <span class="switch-track"></span>
-                <span class="switch-thumb"></span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Görünüm & Kart Rengi -->
-          <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
-            <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
-              <i class="fa-solid fa-palette text-[#FFE000]"></i> Görsel & Kart Stili
-            </h3>
-
-            <!-- Görselleri Dahil Et -->
-            <div class="p-3 rounded-lg bg-[#141414] border border-[#262626] flex items-center justify-between">
-              <div>
-                <div class="text-xs font-bold text-[#F1F1F1] flex items-center gap-1.5">
-                  <i class="fa-solid fa-image text-zinc-400"></i> Görsel Önizlemelerini Dahil Et
-                </div>
-                <div class="text-[11px] text-zinc-500 mt-0.5">Gönderideki ilk resim veya fotoğraf eki kartın içine eklenir</div>
-              </div>
-              <label class="switch shrink-0" for="feed-include-images">
-                <input id="feed-include-images" type="checkbox" />
-                <span class="switch-track"></span>
-                <span class="switch-thumb"></span>
-              </label>
-            </div>
-
-            <!-- Vurgu Rengi -->
-            <div class="space-y-1.5 pt-1">
-              <span class="field-label">Akış Kartı Vurgu Rengi</span>
-              <div class="flex items-center gap-2.5">
-                <input id="feed-embed-color" type="color" value="#FFE000" class="w-10 h-10 rounded border border-[#262626] bg-[#141414] cursor-pointer" />
-                <input id="feed-embed-color-hex" type="text" value="#FFE000" class="w-32 bg-[#141414] border border-[#262626] text-[#F1F1F1] rounded px-3 py-2 text-xs font-semibold" />
-                <button id="feed-embed-color-reset" type="button" class="text-xs bg-[#141414] border border-[#262626] hover:text-[#FFE000] text-zinc-400 px-3 py-2 rounded transition">Varsayılan Yap</button>
-              </div>
-              <p class="text-[11px] text-zinc-500">Discord'da gönderilen özet kartının sol kenarlık şerit rengi.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. Canlı Kart Simülasyonu & Test -->
-        <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-5 space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
+        <!-- 2. Akış Yönetimi & Ayarları (Sol: Kanallar ve Önizleme, Sağ: Ayarlar) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <!-- Sol Sütun: Kanallar & Canlı Önizleme (Üst Üste 3 Kart) -->
+          <div class="space-y-6">
+            <!-- 1. Hedef Kanal Seçimi -->
+            <div class="card space-y-4">
               <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
-                <i class="fa-solid fa-eye text-[#FFE000]"></i> Canlı Akış Kartı Önizlemesi
+                <i class="fa-solid fa-bullseye text-[#FFE000]"></i> Hedef Akış Kanalı (Ana Sayfa)
               </h3>
-              <p class="text-xs text-zinc-400 mt-0.5">Discord akış kanalında üyelerin göreceği kartın ve gönderi bağlantısının canlı simülasyonu.</p>
+              <p class="text-xs text-zinc-400">Özet gönderi kartlarının Discord'da gönderileceği ana kanalı seçin (Örn: <code class="bg-[#141414] px-1.5 py-0.5 rounded text-[#FFE000]">#ana-sayfa</code>).</p>
+              <div class="space-y-2 pt-1">
+                <span class="field-label">Akış Kanalı</span>
+                <select id="feed-target-channel" class="form-control channel-select"></select>
+              </div>
             </div>
-            <button id="feed-test-btn" type="button" class="bg-zinc-800 hover:bg-[#FFE000] hover:text-[#141414] text-[#F1F1F1] border border-[#262626] px-3.5 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-2 shadow-sm">
-              <i class="fa-solid fa-paper-plane text-[#FFE000]"></i> Test Gönderisi Paylaş
-            </button>
+
+            <!-- 2. İzlenecek Kaynak Kanallar -->
+            <div class="card space-y-4">
+              <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                <i class="fa-solid fa-tower-broadcast text-[#FFE000]"></i> İzlenecek Kaynak Kanallar
+              </h3>
+              <p class="text-xs text-zinc-400">Yeni bir gönderi paylaşıldığında akışa aktarılmasını istediğiniz metin kanallarını veya <b>Forum kanallarını (💬)</b> ekleyin.</p>
+
+              <div class="flex items-center gap-2.5 w-full pt-1">
+                <div class="flex-1 min-w-0">
+                  <select id="feed-source-channel-select" class="form-control channel-select"></select>
+                </div>
+                <button id="feed-add-source-btn" type="button" class="btn btn-primary btn-sm shrink-0">
+                  <i class="fa-solid fa-plus"></i> Ekle
+                </button>
+              </div>
+
+              <!-- Eklenen Kaynak Kanal Etiketleri -->
+              <div id="feed-source-channels-list" class="flex flex-wrap gap-1.5 min-h-[42px] p-2.5 bg-[#141414] border border-[#262626] rounded-lg">
+                <span class="text-xs text-zinc-500 italic p-1">Henüz izlenecek kaynak kanal eklenmedi.</span>
+              </div>
+            </div>
+
+            <!-- 3. Canlı Akış Kartı Önizlemesi -->
+            <div class="card space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                    <i class="fa-solid fa-eye text-[#FFE000]"></i> Canlı Akış Kartı Önizlemesi
+                  </h3>
+                  <p class="text-xs text-zinc-400 mt-0.5">Discord akış kanalında üyelerin göreceği kartın ve gönderi bağlantısının canlı simülasyonu.</p>
+                </div>
+                <button id="feed-test-btn" type="button" class="btn">
+                  <i class="fa-solid fa-paper-plane text-[#FFE000]"></i> Test Gönderisi Paylaş
+                </button>
+              </div>
+
+              <!-- Discord Tarzı Canlı Mockup Kartı -->
+              <div class="card-sub p-4 w-full">
+                <!-- Discord Embed Container -->
+                <div id="feed-preview-card" class="discord-embed transition-colors space-y-2.5">
+                  <!-- Başlık -->
+                  <div id="feed-prev-title" class="discord-embed-title">
+                    Örnek Gönderi Başlığı
+                  </div>
+
+                  <!-- Metin Özeti -->
+                  <div id="feed-prev-desc" class="discord-embed-desc leading-relaxed break-words">
+                    Sunucumuzun yeni güncellemesi yayınlandı! Detayları incelemek ve tartışmaya katılmak için aşağıdaki butona tıklayabilirsiniz...
+                  </div>
+
+                  <!-- Alanlar (Fields) -->
+                  <div class="grid grid-cols-2 gap-2 pt-1 text-[11px]">
+                    <div class="bg-[#141414] p-1.5 rounded border border-[#262626]">
+                      <span class="text-zinc-500 block text-[10px]">Yazar</span>
+                      <span id="feed-prev-mention" class="text-zinc-300 font-semibold truncate block">@Kullanıcı</span>
+                    </div>
+                    <div class="bg-[#141414] p-1.5 rounded border border-[#262626]">
+                      <span class="text-zinc-500 block text-[10px]">Paylaşım</span>
+                      <span class="text-zinc-400 font-medium">Az önce</span>
+                    </div>
+                  </div>
+
+                  <!-- Görsel Mockup -->
+                  <div id="feed-prev-img-wrap" class="pt-1">
+                    <div class="h-28 rounded-lg bg-zinc-800/80 border border-[#262626] flex items-center justify-center text-zinc-500 text-xs gap-2">
+                      <i class="fa-regular fa-image text-base"></i> <span>Görsel Önizlemesi</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Discord Butonu Mockup'ı -->
+                <div class="mt-2.5 flex items-center">
+                  <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#2b2d31] hover:bg-[#35373c] text-white text-xs font-medium cursor-pointer border border-[#3b3e45] shadow-sm transition">
+                    <span>Gönderiye Git</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Discord Tarzı Canlı Mockup Kartı -->
-          <div class="p-4 rounded-xl bg-[#141414] border border-[#262626] max-w-xl">
-            <!-- Discord Embed Container -->
-            <div id="feed-preview-card" class="rounded-r-lg border-l-4 border-[#FFE000] bg-[#1c1c1c] p-4 space-y-2.5 shadow-md transition-colors">
-              <!-- Başlık -->
-              <div id="feed-prev-title" class="text-sm font-bold text-[#F1F1F1] flex items-center gap-1.5">
-                Örnek Gönderi Başlığı
-              </div>
+          <!-- Sağ: Ayarlar (Üst Üste) -->
+          <div class="space-y-6">
+            <!-- Metin & Önizleme Ayarları -->
+            <div class="card space-y-4">
+              <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-[#FFE000]"></i> Metin & Önizleme Ayarları
+              </h3>
 
-              <!-- Metin Özeti -->
-              <div id="feed-prev-desc" class="text-xs text-zinc-300 leading-relaxed break-words">
-                Sunucumuzun yeni güncellemesi yayınlandı! Detayları incelemek ve tartışmaya katılmak için aşağıdaki butona tıklayabilirsiniz...
-              </div>
-
-              <!-- Alanlar (Fields) -->
-              <div class="grid grid-cols-2 gap-2 pt-1 text-[11px]">
-                <div class="bg-[#141414] p-1.5 rounded border border-[#262626]">
-                  <span class="text-zinc-500 block text-[10px]">Yazar</span>
-                  <span id="feed-prev-mention" class="text-zinc-300 font-semibold truncate block">@Kullanıcı</span>
+              <!-- Önizleme Metin Uzunluğu Slider -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs font-semibold">
+                  <span class="text-zinc-300">Önizleme Metin Uzunluğu</span>
+                  <span id="feed-preview-length-val" class="text-[#FFE000] bg-[#141414] border border-[#262626] px-2 py-0.5 rounded text-xs">200 Karakter</span>
                 </div>
-                <div class="bg-[#141414] p-1.5 rounded border border-[#262626]">
-                  <span class="text-zinc-500 block text-[10px]">Paylaşım</span>
-                  <span class="text-zinc-400 font-medium">Az önce</span>
+                <input id="feed-preview-length" type="range" min="50" max="600" step="10" value="200" class="modern-slider w-full" />
+                <div class="flex justify-between text-[11px] text-zinc-500">
+                  <span>50 Karakter (Kısa özet)</span>
+                  <span>600 Karakter (Geniş önizleme)</span>
                 </div>
               </div>
 
-              <!-- Görsel Mockup -->
-              <div id="feed-prev-img-wrap" class="pt-1">
-                <div class="h-28 rounded-lg bg-zinc-800/80 border border-[#262626] flex items-center justify-center text-zinc-500 text-xs gap-2">
-                  <i class="fa-regular fa-image text-base"></i> <span>Görsel Önizlemesi</span>
+              <!-- Minimum Karakter Sayısı -->
+              <div class="space-y-1.5 pt-1">
+                <span class="field-label">Minimum Mesaj Uzunluğu (Spam Engeli)</span>
+                <input id="feed-min-content-length" type="number" min="0" max="100" value="1" class="w-full bg-[#141414] border border-[#262626] text-[#F1F1F1] rounded px-3 py-2 text-xs" />
+                <p class="text-[11px] text-zinc-500">Bu sınırdan daha kısa olan metin mesajları akışa basılmaz (tüm mesajlar için 0 veya 1 yapın).</p>
+              </div>
+
+              <!-- Botları Yoksay -->
+              <div class="setting-row">
+                <div>
+                  <div class="setting-row-title">
+                    <i class="fa-solid fa-robot text-zinc-400"></i> Bot Mesajlarını Yoksay
+                  </div>
+                  <div class="setting-row-desc">Botların gönderdiği mesajlar akışa aktarılmaz</div>
                 </div>
+                <label class="switch shrink-0" for="feed-ignore-bots">
+                  <input id="feed-ignore-bots" type="checkbox" />
+                  <span class="switch-track"></span>
+                  <span class="switch-thumb"></span>
+                </label>
               </div>
             </div>
 
-            <!-- Discord Butonu Mockup'ı -->
-            <div class="mt-2.5 flex items-center">
-              <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#2b2d31] hover:bg-[#35373c] text-white text-xs font-medium cursor-pointer border border-[#3b3e45] shadow-sm transition">
-                <span>Gönderiye Git</span>
+            <!-- Görsel & Kart Stili -->
+            <div class="card space-y-4">
+              <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                <i class="fa-solid fa-palette text-[#FFE000]"></i> Görsel & Kart Stili
+              </h3>
+
+              <!-- Görselleri Dahil Et -->
+              <div class="setting-row">
+                <div>
+                  <div class="setting-row-title">
+                    <i class="fa-solid fa-image text-zinc-400"></i> Görsel Önizlemelerini Dahil Et
+                  </div>
+                  <div class="setting-row-desc">Gönderideki ilk resim veya fotoğraf eki kartın içine eklenir</div>
+                </div>
+                <label class="switch shrink-0" for="feed-include-images">
+                  <input id="feed-include-images" type="checkbox" />
+                  <span class="switch-track"></span>
+                  <span class="switch-thumb"></span>
+                </label>
+              </div>
+
+              <!-- Vurgu Rengi -->
+              <div class="space-y-1.5 pt-1">
+                <span class="field-label">Akış Kartı Vurgu Rengi</span>
+                <div class="color-picker">
+                  <input id="feed-embed-color" type="color" value="#FFE000" class="color-picker-swatch" />
+                  <input id="feed-embed-color-hex" type="text" value="#FFE000" class="form-control color-picker-input" />
+                  <button id="feed-embed-color-reset" type="button" class="btn btn-sm">Varsayılan Yap</button>
+                </div>
+                <p class="text-[11px] text-zinc-500">Discord'da gönderilen özet kartının sol kenarlık şerit rengi.</p>
               </div>
             </div>
           </div>
@@ -1487,7 +1571,7 @@
 
       <!-- MESAJ / DUYURU GÖNDER -->
       <section id="tab-messages" class="hidden space-y-6 max-w-4xl">
-        <div class="bg-[#1c1c1c] border border-[#262626] rounded-xl p-6 space-y-5">
+        <div class="card space-y-5">
           <div>
             <h2 class="text-xl font-bold text-[#F1F1F1] flex items-center gap-2">
               <i class="fa-solid fa-paper-plane text-[#FFE000]"></i> Kanala Mesaj & Duyuru Gönder
@@ -1505,7 +1589,7 @@
             </div>
 
             <!-- Mesaj Türü (Düz Mesaj veya Embed) -->
-            <div class="flex items-center gap-4 bg-[#141414] border border-[#262626] p-3 rounded-lg">
+            <div class="card-sub flex items-center gap-4">
               <span class="text-sm font-semibold text-[#F1F1F1]">Format Türü:</span>
               <label class="flex items-center gap-2 cursor-pointer text-sm">
                 <input type="radio" name="msg-format" value="text" checked class="accent-[#FFE000]" />
@@ -1520,39 +1604,37 @@
             <!-- Standart Metin Alanı -->
             <div id="msg-text-group">
               <label class="field-label block mb-1.5">Mesaj İçeriği</label>
-              <textarea id="msg-content" rows="4" placeholder="Discord kanalına göndermek istediğiniz mesajı buraya yazın..." class="w-full bg-[#141414] border border-[#262626] rounded p-3 text-sm text-[#F1F1F1] focus:ring-1 focus:ring-[#FFE000] resize-y"></textarea>
+              <textarea id="msg-content" rows="4" placeholder="Discord kanalına göndermek istediğiniz mesajı buraya yazın..." class="form-control resize-y"></textarea>
             </div>
 
             <!-- Embed Alanları (Gizlenebilir) -->
-            <div id="msg-embed-group" class="hidden space-y-4 bg-[#141414] border border-[#262626] p-4 rounded-lg">
+            <div id="msg-embed-group" class="card-sub hidden space-y-4">
               <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div class="md:col-span-2">
                   <label class="field-label block mb-1.5">Duyuru Başlığı</label>
-                  <input type="text" id="msg-embed-title" placeholder="Örn: 📢 Önemli Sunucu Duyurusu" class="w-full bg-[#1c1c1c] border border-[#262626] rounded px-3 py-2 text-sm text-[#F1F1F1] focus:ring-1 focus:ring-[#FFE000]" />
+                  <input type="text" id="msg-embed-title" placeholder="Örn: 📢 Önemli Sunucu Duyurusu" class="form-control" />
                 </div>
                 <div>
                   <label class="field-label block mb-1.5">Kenar Çizgisi Rengi</label>
-                  <div class="flex items-center bg-[#1c1c1c] border border-[#262626] rounded-lg px-2.5 py-1 gap-2.5 h-[38px] focus-within:border-[#FFE000] focus-within:ring-1 focus-within:ring-[#FFE000] transition">
-                    <div id="embed-color-swatch" class="w-6 h-6 rounded-md border border-[#333333] shrink-0 relative overflow-hidden cursor-pointer shadow-inner flex items-center justify-center transition hover:scale-105" style="background-color: #FFE000;">
-                      <input type="color" id="msg-embed-color" value="#FFE000" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer" />
-                    </div>
-                    <input type="text" id="msg-embed-color-text" value="#FFE000" maxlength="7" class="flex-1 min-w-0 bg-transparent text-[#F1F1F1] text-xs font-semibold uppercase tracking-wider outline-none" />
+                  <div class="color-picker">
+                    <input type="color" id="msg-embed-color" value="#FFE000" class="color-picker-swatch" />
+                    <input type="text" id="msg-embed-color-text" value="#FFE000" maxlength="7" class="form-control color-picker-input" />
                   </div>
                 </div>
               </div>
 
               <div>
                 <label class="field-label block mb-1.5">Duyuru Açıklaması / Detay Metni</label>
-                <textarea id="msg-embed-desc" rows="5" placeholder="Duyuru detaylarını buraya yazın. Markdown biçimlendirmesi desteklenir (**kalın**, *italik*, [link](https://...))." class="w-full bg-[#1c1c1c] border border-[#262626] rounded p-3 text-sm text-[#F1F1F1] focus:ring-1 focus:ring-[#FFE000] resize-y"></textarea>
+                <textarea id="msg-embed-desc" rows="5" placeholder="Duyuru detaylarını buraya yazın. Markdown biçimlendirmesi desteklenir (**kalın**, *italik*, [link](https://...))." class="form-control resize-y"></textarea>
               </div>
 
               <!-- Canlı Önizleme Kutusu -->
               <div>
                 <label class="field-label block mb-1.5">Kutu Önizlemesi</label>
-                <div id="embed-preview-box" class="bg-[#1c1c1c] border-l-4 border-[#FFE000] border-y border-r border-[#262626] rounded-r p-4 space-y-2">
-                  <div id="embed-preview-title" class="font-bold text-base text-[#F1F1F1]">Duyuru Başlığı</div>
-                  <div id="embed-preview-desc" class="text-sm text-zinc-300 whitespace-pre-wrap">Duyuru detayları burada görünecek...</div>
-                  <div class="text-xs text-zinc-500 pt-2 border-t border-[#262626] flex items-center justify-between">
+                <div id="embed-preview-box" class="discord-embed max-w-xl transition-colors space-y-2">
+                  <div id="embed-preview-title" class="discord-embed-title">Duyuru Başlığı</div>
+                  <div id="embed-preview-desc" class="discord-embed-desc whitespace-pre-wrap">Duyuru detayları burada görünecek...</div>
+                  <div class="text-[11px] text-zinc-500 pt-2 border-t border-[#262626] flex items-center justify-between">
                     <span>Yönetim Paneli</span>
                     <span>Şimdi</span>
                   </div>
@@ -1563,7 +1645,7 @@
             <!-- Gönderme Butonu -->
             <div class="pt-2 flex items-center justify-between">
               <span id="msg-status" class="text-sm text-zinc-400"></span>
-              <button id="send-msg-btn" class="bg-[#FFE000] hover:bg-[#ebd000] text-[#141414] font-bold px-5 py-2.5 rounded transition shadow flex items-center gap-2">
+              <button id="send-msg-btn" class="btn btn-primary">
                 <i class="fa-solid fa-paper-plane"></i> Gönder
               </button>
             </div>
@@ -1574,19 +1656,156 @@
   </main>
 
   <!-- Önizleme Penceresi -->
-  <div id="preview-modal" class="hidden fixed inset-0 bg-black/85 flex items-center justify-center p-8 z-50">
-    <div class="bg-[#1c1c1c] border border-[#262626] rounded-lg p-4 max-w-5xl w-full space-y-3">
-      <div class="flex justify-between items-center">
-        <h3 class="font-semibold text-[#F1F1F1]">Gerçek Önizleme (botun göndereceği görsel)</h3>
-        <button id="preview-close" class="text-zinc-400 hover:text-[#FFE000] text-xl transition" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
+  <div id="preview-modal" class="modal-backdrop hidden">
+    <div class="modal-box max-w-5xl p-5 space-y-3">
+      <div class="flex justify-between items-center pb-2 border-b border-[#262626]">
+        <h3 class="font-semibold text-[#F1F1F1] text-sm">Gerçek Önizleme (botun göndereceği görsel)</h3>
+        <button id="preview-close" class="btn" title="Kapat"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <img id="preview-img" class="w-full rounded border border-[#262626]" alt="Önizleme" />
+    </div>
+  </div>
+
+  <!-- Üye Detay & Yönetim Modalı -->
+  <div id="member-detail-modal" class="modal-backdrop hidden">
+    <div class="modal-box max-w-2xl">
+      <!-- Üst Renk Şeridi & Kapat Butonu -->
+      <div id="mdm-banner" class="h-20 bg-gradient-to-r from-zinc-800 via-[#FFE000]/10 to-zinc-900 relative">
+        <button id="mdm-close-btn" class="absolute top-3 right-3 btn rounded-full bg-black/60 text-white" title="Kapat">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Profil Üstü (Avatar + Başlık) -->
+      <div class="px-6 pb-4 pt-0 relative flex flex-wrap items-end justify-between gap-4 -mt-10 border-b border-[#262626]">
+        <div class="flex items-end gap-3.5">
+          <div class="relative">
+            <img id="mdm-avatar" class="w-20 h-20 rounded-2xl bg-zinc-800 border-4 border-[#1c1c1c] shadow-lg object-cover" alt="" />
+            <span id="mdm-voice-indicator" class="hidden absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-[#1c1c1c] flex items-center justify-center text-[10px] text-white shadow-md" title="Ses Kanalında">
+              <i class="fa-solid fa-headphones"></i>
+            </span>
+          </div>
+          <div class="mb-1">
+            <div class="flex items-center gap-2">
+              <h3 id="mdm-display-name" class="text-lg font-bold text-[#F1F1F1]">Kullanıcı Adı</h3>
+              <span id="mdm-bot-badge" class="badge badge-purple hidden">BOT</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-zinc-400">
+              <span id="mdm-tag">@username</span>
+              <span id="mdm-nickname-wrapper" class="hidden text-zinc-500">(Takma Ad: <span id="mdm-nickname"></span>)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 mb-1">
+          <button id="mdm-copy-id" class="btn btn-sm" title="Kullanıcı ID Kopyala">
+            <i class="fa-regular fa-copy"></i> ID Kopyala
+          </button>
+          <button id="mdm-copy-mention" class="btn btn-sm" title="Mention Kopyala">
+            <i class="fa-solid fa-at"></i> Mention
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal İçerik Kaydırma Alanı -->
+      <div class="p-6 overflow-y-auto space-y-5 text-xs flex-1">
+        <!-- Durum Rozetleri Şeridi -->
+        <div id="mdm-status-badges" class="flex flex-wrap items-center gap-2"></div>
+
+        <!-- Tarihler Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="card-sub space-y-1">
+            <div class="flex items-center gap-1.5 text-zinc-400 font-semibold">
+              <i class="fa-solid fa-right-to-bracket text-[#FFE000]"></i> Sunucuya Katılma
+            </div>
+            <div id="mdm-joined-full" class="text-[#F1F1F1] font-bold text-sm">--</div>
+            <div id="mdm-joined-rel" class="text-zinc-500 text-[11px]">--</div>
+          </div>
+
+          <div class="card-sub space-y-1">
+            <div class="flex items-center gap-1.5 text-zinc-400 font-semibold">
+              <i class="fa-solid fa-cake-candles text-sky-400"></i> Discord Hesap Açılışı
+            </div>
+            <div id="mdm-created-full" class="text-[#F1F1F1] font-bold text-sm">--</div>
+            <div id="mdm-created-rel" class="text-zinc-500 text-[11px]">--</div>
+          </div>
+        </div>
+
+        <!-- Roller Bölümü -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="field-label flex items-center gap-1.5">
+              <i class="fa-solid fa-shield text-[#FFE000]"></i> Sahip Olduğu Roller (<span id="mdm-roles-count">0</span>)
+            </span>
+          </div>
+          <div id="mdm-roles-container" class="card-sub flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+            <span class="text-zinc-500 text-xs">Rol bulunamadı</span>
+          </div>
+        </div>
+
+        <!-- Önemli Yetkiler Bölümü -->
+        <div class="space-y-2">
+          <span class="field-label flex items-center gap-1.5">
+            <i class="fa-solid fa-key text-[#FFE000]"></i> Önemli İzinler & Yetkiler
+          </span>
+          <div id="mdm-permissions-container" class="card-sub flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+            <span class="text-zinc-500 text-xs">Standart Üye İzinleri</span>
+          </div>
+        </div>
+
+        <!-- Hızlı Yönetimsel İşlemler -->
+        <div class="border-t border-[#262626] pt-4 space-y-3">
+          <span class="field-label flex items-center gap-1.5">
+            <i class="fa-solid fa-gavel text-amber-400"></i> Hızlı Moderasyon / Yönetim İşlemleri
+          </span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Zamanaşımı (Timeout) -->
+            <div class="card-sub space-y-2">
+              <span class="text-xs font-semibold text-zinc-300 flex items-center gap-1">
+                <i class="fa-solid fa-hourglass-half text-red-400"></i> Zamanaşımı (Timeout)
+              </span>
+              <div class="flex items-center gap-1.5">
+                <select id="mdm-timeout-duration" class="form-control text-xs flex-1">
+                  <option value="5">5 Dakika</option>
+                  <option value="60">1 Saat</option>
+                  <option value="1440">1 Gün</option>
+                  <option value="10080">1 Hafta</option>
+                  <option value="0">Cezayı Kaldır</option>
+                </select>
+                <button id="mdm-timeout-apply-btn" type="button" class="btn btn-danger btn-sm">
+                  Uygula
+                </button>
+              </div>
+            </div>
+
+            <!-- Takma Ad Değiştir -->
+            <div class="card-sub space-y-2">
+              <span class="text-xs font-semibold text-zinc-300 flex items-center gap-1">
+                <i class="fa-solid fa-signature text-[#FFE000]"></i> Takma Adı Güncelle
+              </span>
+              <div class="flex items-center gap-1.5">
+                <input id="mdm-nickname-input" type="text" placeholder="Yeni takma ad..." class="form-control text-xs flex-1" />
+                <button id="mdm-nickname-save-btn" type="button" class="btn btn-primary btn-sm">
+                  Kaydet
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-[#262626] bg-[#161616] flex justify-end">
+        <button id="mdm-footer-close-btn" class="btn">
+          Kapat
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- Bildirim -->
   <div id="toast" class="hidden fixed bottom-6 right-6 px-4 py-3 rounded shadow-lg text-white z-50"></div>
 
-  <script src="/app.js?v=3.9"></script>
+  <script src="/app.js?v=4.0"></script>
 </body>
 </html>

@@ -1,0 +1,1089 @@
+/* ============================================================
+   Bot Yönetim Paneli - Yeniden Kullanılabilir Bileşenler (Components CSS)
+   ============================================================ */
+
+/* 1. KARTLAR & PANELLER (Birleştirilmiş Kart Yapısı) */
+.card {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-dark);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.card-sub {
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-dark);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.card-interactive {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.card-interactive:hover {
+  background-color: rgba(38, 38, 38, 0.75);
+  border-color: rgba(255, 224, 0, 0.4);
+  transform: translateY(-1px);
+}
+
+/* 2. BUTONLAR (Birleştirilmiş Tekil Buton Sistemi) */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 1.25;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  background-color: #27272a;
+  color: rgba(241, 241, 241, 0.5);
+  border: 1px solid var(--border-dark);
+  transition: all 0.15s ease;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  white-space: nowrap;
+  box-sizing: border-box;
+  width: auto;
+  height: auto;
+}
+
+/* İkon ve metin rengi her zaman butonun metin rengiyle (ve hover durumlarıyla) birebir aynı kalır */
+.btn i,
+.btn svg,
+.btn [class*="fa-"],
+.btn span {
+  color: inherit !important;
+  font-size: 0.875rem;
+  transition: color 0.15s ease;
+}
+
+/* Varsayılan (default) butonların içerik opaklığı %50, hover durumunda %80 */
+.btn:not(.btn-primary):not(.btn-danger) {
+  color: rgba(241, 241, 241, 0.5);
+}
+
+.btn:not(.btn-primary):not(.btn-danger):hover {
+  background-color: #38383e;
+  color: rgba(255, 255, 255, 0.8);
+  border-color: var(--border-hover);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Yalnızca İkonlu Butonlar: Sabit width/height yerine ikonun text boyutu ve padding ile content bazlı boyutlanır */
+.btn:has(> i:only-child),
+.btn:has(> svg:only-child),
+.btn-icon {
+  padding: 0.5rem;
+  line-height: 1;
+  width: auto;
+  height: auto;
+  aspect-ratio: auto;
+  justify-content: center;
+}
+
+.btn.btn-sm:has(> i:only-child),
+.btn.btn-sm:has(> svg:only-child),
+.btn-icon.btn-sm {
+  padding: 0.25rem 0.375rem;
+  font-size: 0.6875rem;
+  line-height: 1;
+  width: auto;
+  height: auto;
+  aspect-ratio: auto;
+}
+
+.btn.btn-sm i,
+.btn.btn-sm svg,
+.btn.btn-sm [class*="fa-"] {
+  font-size: 0.75rem;
+}
+
+/* Birincil Vurgu Butonu */
+.btn-primary {
+  background-color: var(--primary);
+  color: #141414 !important;
+  border-color: var(--primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+  color: #141414 !important;
+  box-shadow: 0 2px 8px rgba(255, 224, 0, 0.25);
+}
+
+/* Tehlike / Silme Butonu */
+.btn-danger {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171 !important;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+  background-color: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fca5a5 !important;
+}
+
+/* Küçük Boyut Modifiyeri (Content + text boyutu + padding) */
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1.25;
+  border-radius: 0.375rem;
+  width: auto;
+  height: auto;
+}
+
+/* Eski .btn-secondary sınıfları doğrudan varsayılan .btn ile birleştirildi */
+.btn-secondary {
+  /* .btn ile entegre */
+}
+
+/* 3. ROZETLER & DURUM ETİKETLERİ (Birleştirilmiş Rozet Sistemi) */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.32rem 0.45rem;
+  border-radius: 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.badge-green {
+  background-color: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.badge-yellow {
+  background-color: rgba(255, 224, 0, 0.12);
+  color: #FFE000;
+  border-color: rgba(255, 224, 0, 0.25);
+}
+
+.badge-pink {
+  background-color: rgba(236, 72, 153, 0.12);
+  color: #f472b6;
+  border-color: rgba(236, 72, 153, 0.25);
+}
+
+.badge-purple {
+  background-color: rgba(168, 85, 247, 0.12);
+  color: #c084fc;
+  border-color: rgba(168, 85, 247, 0.25);
+}
+
+.badge-blue {
+  background-color: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.25);
+}
+
+.badge-red {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.badge-amber {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.badge-neutral {
+  background-color: var(--bg-dark);
+  color: var(--text-muted);
+  border-color: var(--border-dark);
+}
+
+/* 4. FORM KONTROLLERİ & GİRİŞ ALANLARI */
+.field-label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.375rem;
+}
+
+.form-control {
+  width: 100%;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  border: 1px solid var(--border-dark);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.form-control:hover {
+  border-color: var(--border-hover);
+  background-color: var(--bg-sub);
+}
+
+.form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+  background-color: var(--bg-sub);
+}
+
+/* Özel Select Menüsü */
+select {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  border: 1px solid var(--border-dark);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23FFE000'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 0.85rem;
+  padding-right: 2.25rem !important;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+select:hover {
+  border-color: var(--border-hover);
+  background-color: var(--bg-sub);
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+  background-color: var(--bg-sub);
+}
+
+select optgroup {
+  background-color: #1a1a1a;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 8px 6px;
+}
+
+select option {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+select option:checked {
+  background-color: var(--primary) !important;
+  color: #141414 !important;
+  font-weight: 700;
+}
+
+/* Sayı Girişi Okları */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 0.6;
+  cursor: pointer;
+  margin-right: 2px;
+  height: 22px;
+  filter: invert(0.85) sepia(1) saturate(5) hue-rotate(10deg);
+  transition: opacity 0.15s ease;
+}
+
+input[type="number"]:hover::-webkit-inner-spin-button,
+input[type="number"]:focus::-webkit-inner-spin-button {
+  opacity: 1;
+}
+
+/* Kayan Anahtar (Switch) - Açık halin tersi renkler + %50 sarı outline */
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Kapalı Durum (Açık halin tam tersi renkler: Koyu zemin + Sarı top + %10 sarı outline) */
+.switch-track {
+  width: 2.75rem;
+  height: 1.5rem;
+  background-color: #141414;
+  border: 1px solid rgba(255, 224, 0, 0.1);
+  outline: 1px solid rgba(255, 224, 0, 0.1);
+  outline-offset: 0;
+  border-radius: 9999px;
+  transition: background-color 0.2s ease, border-color 0.2s ease, outline-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.switch-thumb {
+  position: absolute;
+  left: 0.125rem;
+  top: 0.125rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: var(--primary);
+  border-radius: 9999px;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Açık Durum (Checked: Sarı zemin + Koyu top) */
+.switch input:checked + .switch-track {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  outline: 1px solid var(--primary);
+}
+
+.switch input:checked ~ .switch-thumb {
+  transform: translateX(1.25rem);
+  background-color: #141414;
+}
+
+/* Modern Slider - %10 sarı outline ile */
+input[type="range"].modern-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  background: var(--bg-dark);
+  border-radius: 9999px;
+  outline: 1px solid rgba(255, 224, 0, 0.1);
+  border: 1px solid rgba(255, 224, 0, 0.1);
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+input[type="range"].modern-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--bg-dark);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+input[type="range"].modern-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.18);
+  background: #fff066;
+}
+
+input[type="range"].modern-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--bg-dark);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+/* 5. ÖZEL DROPDOWN MENÜ (.dropdown & .dropdown-sm) */
+.dropdown,
+.custom-select-wrapper {
+  position: relative;
+  user-select: none;
+  width: 100%;
+}
+
+.dropdown-trigger,
+.custom-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  border: 1px solid var(--border-dark);
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+
+.dropdown-trigger:hover,
+.custom-select-trigger:hover {
+  border-color: var(--border-hover);
+  background-color: var(--bg-sub);
+}
+
+.dropdown.open,
+.custom-select-wrapper.open {
+  z-index: 50;
+}
+
+.dropdown.open .dropdown-trigger,
+.custom-select-wrapper.open .custom-select-trigger {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+  background-color: var(--bg-sub);
+}
+
+.dropdown-trigger .arrow-icon,
+.custom-select-trigger .arrow-icon {
+  color: var(--primary);
+  font-size: 0.75rem;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown.open .arrow-icon,
+.custom-select-wrapper.open .arrow-icon {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu,
+.custom-select-menu {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  max-height: 250px;
+  overflow-y: auto;
+  background-color: var(--bg-sub);
+  border: 1px solid var(--border-sub);
+  border-radius: 0.6rem;
+  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 224, 0, 0.1);
+  z-index: 100;
+  display: none;
+  padding: 4px;
+}
+
+.dropdown.open .dropdown-menu,
+.custom-select-wrapper.open .custom-select-menu {
+  display: block;
+  animation: selectDropdownIn 0.15s ease-out forwards;
+}
+
+@keyframes selectDropdownIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-option,
+.custom-select-option {
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  color: var(--text-main);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.12s ease;
+}
+
+.dropdown-option:hover,
+.custom-select-option:hover {
+  background-color: #242424;
+  color: var(--primary);
+}
+
+.dropdown-option:hover i:not(.fa-check),
+.custom-select-option:hover i:not(.fa-check) {
+  color: var(--primary) !important;
+}
+
+.dropdown-option.selected,
+.custom-select-option.selected {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Küçük / Kompakt Dropdown (.dropdown-sm) */
+.dropdown.dropdown-sm .dropdown-trigger,
+.dropdown-sm .dropdown-trigger,
+.custom-select-wrapper.custom-select-sm .custom-select-trigger {
+  min-height: 32px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+  border-radius: 0.375rem;
+}
+
+.dropdown.dropdown-sm .dropdown-menu,
+.dropdown-sm .dropdown-menu,
+.custom-select-wrapper.custom-select-sm .custom-select-menu {
+  font-size: 0.75rem;
+  min-width: 100%;
+  width: max-content;
+}
+
+.dropdown.dropdown-sm .dropdown-option,
+.dropdown-sm .dropdown-option,
+.custom-select-wrapper.custom-select-sm .custom-select-option {
+  padding: 6px 10px;
+  font-size: 0.75rem;
+}
+
+/* 5. METRİK / KPI HIZLI FİLTRE KARTLARI */
+.kpi-card {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-dark);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  text-align: left;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  outline: none;
+}
+
+.kpi-card:hover {
+  background-color: rgba(38, 38, 38, 0.6);
+  border-color: var(--border-hover);
+}
+
+.kpi-card.active {
+  border-width: 2px !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px rgba(255, 224, 0, 0.2);
+}
+
+.kpi-card-green.active { border-color: #22c55e !important; box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.2); }
+.kpi-card-purple.active { border-color: #a855f7 !important; box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.2); }
+.kpi-card-pink.active { border-color: #ec4899 !important; box-shadow: 0 0 0 1px rgba(236, 72, 153, 0.2); }
+.kpi-card-emerald.active { border-color: #10b981 !important; box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2); }
+.kpi-card-amber.active { border-color: #fbbf24 !important; box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2); }
+.kpi-card-red.active { border-color: #ef4444 !important; box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2); }
+.kpi-card-sky.active { border-color: #38bdf8 !important; box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2); }
+
+/* 6. MODAL SİSTEMİ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 50;
+}
+
+.modal-box {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-dark);
+  border-radius: 1rem;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+  position: relative;
+}
+
+/* ============================================================
+   7. HIZLI EYLEMLER (.quick-action)
+   ============================================================ */
+.quick-action {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-dark);
+  border-radius: 0.75rem;
+  text-align: left;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  outline: none;
+  width: auto;
+  min-width: 0;
+}
+
+.quick-action:hover {
+  background-color: rgba(39, 39, 42, 0.8);
+  border-color: rgba(255, 224, 0, 0.4);
+}
+
+.quick-action-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  background-color: #27272a;
+  border: 1px solid var(--border-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: var(--primary);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.quick-action:hover .quick-action-icon {
+  transform: scale(1.1);
+}
+
+.quick-action-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s ease;
+}
+
+.quick-action:hover .quick-action-title {
+  color: var(--primary);
+}
+
+.quick-action-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================================
+   8. GENEL BAKIŞ İSTATİSTİK KARTLARI (.stat-card)
+   ============================================================ */
+.stat-card {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-dark);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+}
+
+.stat-card-interactive {
+  cursor: pointer;
+}
+
+.stat-card-interactive:hover {
+  background-color: rgba(39, 39, 42, 0.6);
+  border-color: rgba(255, 224, 0, 0.5);
+}
+
+.stat-card-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-card-value {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-top: 0.375rem;
+}
+
+.stat-card-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.stat-card-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  background-color: rgba(39, 39, 42, 0.8);
+  border: 1px solid var(--border-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: var(--text-main);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.stat-card-interactive:hover .stat-card-icon {
+  transform: scale(1.1);
+}
+
+/* ============================================================
+   9. MODÜL DURUM SATIRI (.module-row / .module-card)
+   ============================================================ */
+.module-row,
+.module-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem;
+  border-radius: 0.5rem;
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-dark);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  cursor: pointer;
+}
+
+.module-row:hover,
+.module-card:hover {
+  border-color: rgba(255, 224, 0, 0.4);
+}
+
+.module-row-icon,
+.module-card-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  background-color: #27272a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.module-row-title,
+.module-card-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-main);
+  transition: color 0.15s ease;
+}
+
+.module-row:hover .module-row-title,
+.module-card:hover .module-card-title {
+  color: var(--primary);
+}
+
+.module-row-sub,
+.module-card-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   10. MİNİ METRİK KUTUCUĞU (.info-tile)
+   ============================================================ */
+.info-tile {
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-dark);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  transition: border-color 0.15s ease;
+}
+
+.info-tile-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.info-tile-value {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-top: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================================
+   11. AYAR / FİLTRE ANAHTAR SATIRI (.setting-row)
+   ============================================================ */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-dark);
+  gap: 0.75rem;
+}
+
+.setting-row-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.setting-row-desc {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  margin-top: 0.125rem;
+}
+
+/* ============================================================
+   12. KALDIRILABİLİR ETİKET / ÇİP (.chip-tag)
+   ============================================================ */
+.chip-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  background-color: #1e1e1e;
+  border: 1px solid #333333;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-main);
+  transition: all 0.15s ease;
+  line-height: 1.25;
+}
+
+.chip-tag button,
+.chip-tag .chip-remove-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  margin-left: 0.25rem;
+  font-size: 0.6875rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.chip-tag button:hover,
+.chip-tag .chip-remove-btn:hover {
+  color: #ef4444;
+}
+
+/* ============================================================
+   13. RENK SEÇİCİ KAPSÜLÜ (.color-picker & .color-picker-capsule)
+   ============================================================ */
+.color-picker-capsule,
+.color-picker {
+  display: inline-flex;
+  gap: 0.5rem;
+}
+
+.color-picker-swatch {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-dark);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  padding: 0;
+  background-color: #141414;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.color-picker-input {
+  width: 5.5rem !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  text-align: center;
+  padding: 0 !important;
+  line-height: normal !important;
+  box-sizing: border-box;
+}
+
+/* Küçük / Kompakt Renk Girişleri (Olay Kartları) */
+.color-picker-input-sm {
+  width: 4.25rem !important;
+  font-size: 0.6875rem !important; /* 11px */
+  padding: 0 !important;
+  line-height: normal !important;
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   14. ARAMA GİRİŞ KUTUSU (.search-box)
+   ============================================================ */
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.search-box > i.search-icon,
+.search-box > .fa-magnifying-glass {
+  position: absolute;
+  left: 0.875rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.search-box > input,
+.search-box > .form-control {
+  padding-left: 2.25rem !important;
+  width: 100%;
+}
+
+.search-box .search-clear-btn {
+  position: absolute;
+  right: 0.625rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  font-size: 0.75rem;
+  padding: 0.25rem;
+  transition: color 0.15s ease;
+  z-index: 1;
+}
+
+.search-box .search-clear-btn:hover {
+  color: var(--primary);
+}
+
+/* ============================================================
+   15. İLERLEME ÇUBUĞU (.progress-track & .progress-fill)
+   ============================================================ */
+.progress-track {
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background-color: #141414;
+  border: 1px solid var(--border-dark);
+  overflow: hidden;
+  display: flex;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--primary);
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.progress-fill-pink {
+  background-color: var(--color-pink) !important;
+}
+
+/* ============================================================
+   16. DISCORD EMBED ÖNİZLEME KART (.discord-embed)
+   ============================================================ */
+.discord-embed {
+  background-color: #1e1f22;
+  border-left: 4px solid var(--primary);
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 0.875rem 1rem;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.2s ease;
+}
+
+.discord-embed-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.discord-embed-desc {
+  color: #dbdee1;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin-top: 0.375rem;
+}
+
+/* ============================================================
+   17. BOŞ DURUM GERİBİLDİRİM KUTUSU (.empty-state)
+   ============================================================ */
+.empty-state {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  border-radius: 0.75rem;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-dark);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.empty-state-icon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 1rem;
+  background-color: #27272a;
+  border: 1px solid var(--border-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 1.75rem;
+}
+
+.empty-state-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.empty-state-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  max-width: 28rem;
+  line-height: 1.5;
+}

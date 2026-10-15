@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import express, { type NextFunction, type Request, type Response } from "express";
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, EmbedBuilder, type Client } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, EmbedBuilder, PermissionFlagsBits, type Client } from "discord.js";
 import { config } from "../config.js";
 import { getGuildSettings, saveGuildSettings, sanitizeGuildSettings, UPLOADS_DIR } from "../settings.js";
 import { renderWelcomeCard, type CardData } from "../welcome/cardRenderer.js";
@@ -444,16 +444,25 @@ export function startDashboard(client: Client): void {
         if (!isNaN(parsed)) embedColor = parsed;
       }
 
+      const firstSourceId = feed.sourceChannelIds?.[0];
+      const sourceChannel = firstSourceId ? guild.channels.cache.get(firstSourceId) : null;
+      const isForum = sourceChannel ? (sourceChannel.type === ChannelType.GuildForum || sourceChannel.type === ChannelType.GuildMedia) : false;
+      const channelLabel = sourceChannel ? (isForum ? `💬 ${sourceChannel.name} (Forum)` : `📌 #${sourceChannel.name}`) : "📌 #kaynak-kanalı";
+
       const testEmbed = new EmbedBuilder()
         .setColor(embedColor)
-        .setTitle("Örnek Gönderi Başlığı")
+        .setTitle(channelLabel)
         .setDescription(
-          "Bu bir test gönderi akışı önizlemesidir! Seçtiğiniz kaynak kanallarda yeni mesajlar paylaşıldığında, içerik özetleri ve doğrudan gönderi bağlantısı bu formatta otomatik paylaşılacaktır."
+          "Bu bir test gönderi akışı önizlemesidir! Seçtiğiniz kaynak kanallarda yeni mesajlar ve forum gönderileri paylaşıldığında, içerik özetleri ve doğrudan gönderi bağlantısı bu formatta otomatik paylaşılacaktır."
         )
         .addFields(
           { name: "Yazar", value: `<@${client.user?.id}>`, inline: true },
           { name: "Paylaşım", value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true }
         );
+
+      if (feed.includeImages !== false) {
+        testEmbed.setImage("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80");
+      }
 
       const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
@@ -480,6 +489,268 @@ export function startDashboard(client: Client): void {
     } catch (error) {
       console.error("Test akış kartı hatası:", error);
       res.status(500).json({ error: error instanceof Error ? error.message : "Test akış kartı gönderilemedi." });
+    }
+  });
+
+  // Sunucu Üyeleri & Filtreleme Verileri API'si
+  app.get("/api/members", async (req, res) => {
+    try {
+      const guildId = String(req.query.guildId || "");
+      if (!guildId) {
+        res.status(400).json({ error: "Lütfen bir sunucu belirtin (guildId eksik)." });
+        return;
+      }
+      const guild = client.guilds.cache.get(guildId);
+      if (!guild) {
+        res.status(404).json({ error: "Sunucu bulunamadı." });
+        return;
+      }
+
+      // Üyeleri Discord'dan eksiksiz çek
+      if (req.query.forceRefresh === "true" || guild.members.cache.size < guild.memberCount) {
+        await guild.members.fetch().catch((err) => {
+          console.warn("[Members API] guild.members.fetch uyarısı:", err);
+        });
+      }
+
+      // Sunucu rolleri (En yüksek rolden en düşüğe, @everyone hariç)
+      const roles = guild.roles.cache
+        .filter((r) => r.id !== guild.id)
+        .sort((a, b) => b.position - a.position)
+        .map((r) => ({
+          id: r.id,
+          name: r.name,
+          color: r.hexColor === "#000000" ? "#9ca3af" : r.hexColor,
+          position: r.position,
+          memberCount: r.members.size,
+          isHoisted: r.hoist,
+        }));
+
+      const now = Date.now();
+      const oneDayAgo = now - 24 * 60 * 60 * 1000;
+      const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+      const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+
+      let humans = 0;
+      let bots = 0;
+      let boosters = 0;
+      let timedOut = 0;
+      let inVoice = 0;
+      let admins = 0;
+      let recent24h = 0;
+      let recent7d = 0;
+      let newAccounts = 0;
+      let noRoles = 0;
+      let pendingCount = 0;
+
+      const me = guild.members.me;
+      const botCanModerate = Boolean(me?.permissions.has(PermissionFlagsBits.ModerateMembers));
+      const botCanKick = Boolean(me?.permissions.has(PermissionFlagsBits.KickMembers));
+      const botCanManageNick = Boolean(me?.permissions.has(PermissionFlagsBits.ManageNicknames));
+
+      const membersList = [];
+
+      for (const m of guild.members.cache.values()) {
+        const isBot = m.user.bot;
+        if (isBot) bots++; else humans++;
+
+        const isBoosting = Boolean(m.premiumSince);
+        if (isBoosting) boosters++;
+
+        const isTimedOut = m.isCommunicationDisabled();
+        if (isTimedOut) timedOut++;
+
+        const inVoiceState = Boolean(m.voice?.channelId);
+        if (inVoiceState) inVoice++;
+
+        const isAdmin = m.permissions.has(PermissionFlagsBits.Administrator);
+        if (isAdmin) admins++;
+
+        if (m.joinedTimestamp && m.joinedTimestamp >= oneDayAgo) recent24h++;
+        if (m.joinedTimestamp && m.joinedTimestamp >= sevenDaysAgo) recent7d++;
+        if (m.user.createdTimestamp >= thirtyDaysAgo) newAccounts++;
+        if (m.pending) pendingCount++;
+
+        const memberRoles = m.roles.cache
+          .filter((r) => r.id !== guild.id)
+          .sort((a, b) => b.position - a.position)
+          .map((r) => ({
+            id: r.id,
+            name: r.name,
+            color: r.hexColor === "#000000" ? "#9ca3af" : r.hexColor,
+            position: r.position,
+          }));
+
+        if (memberRoles.length === 0) noRoles++;
+
+        const highestRole = m.roles.highest && m.roles.highest.id !== guild.id
+          ? {
+              id: m.roles.highest.id,
+              name: m.roles.highest.name,
+              color: m.roles.highest.hexColor === "#000000" ? "#9ca3af" : m.roles.highest.hexColor,
+              position: m.roles.highest.position,
+            }
+          : null;
+
+        // Önemli yetkiler listesi
+        const keyPermissions: string[] = [];
+        if (isAdmin) keyPermissions.push("Yönetici (Admin)");
+        if (m.permissions.has(PermissionFlagsBits.ManageGuild)) keyPermissions.push("Sunucuyu Yönet");
+        if (m.permissions.has(PermissionFlagsBits.ManageRoles)) keyPermissions.push("Rolleri Yönet");
+        if (m.permissions.has(PermissionFlagsBits.ManageChannels)) keyPermissions.push("Kanalları Yönet");
+        if (m.permissions.has(PermissionFlagsBits.KickMembers)) keyPermissions.push("Üyeleri At");
+        if (m.permissions.has(PermissionFlagsBits.BanMembers)) keyPermissions.push("Üyeleri Yasakla");
+        if (m.permissions.has(PermissionFlagsBits.ModerateMembers)) keyPermissions.push("Zamanaşımı Uygula");
+        if (m.permissions.has(PermissionFlagsBits.ManageMessages)) keyPermissions.push("Mesajları Yönet");
+        if (m.permissions.has(PermissionFlagsBits.MentionEveryone)) keyPermissions.push("@everyone Etiketle");
+        if (m.permissions.has(PermissionFlagsBits.ViewAuditLog)) keyPermissions.push("Denetim Kaydını Gör");
+
+        membersList.push({
+          id: m.id,
+          username: m.user.username,
+          discriminator: m.user.discriminator,
+          tag: m.user.tag,
+          displayName: m.displayName,
+          nickname: m.nickname,
+          avatarUrl: m.displayAvatarURL({ extension: "png", size: 128 }),
+          bannerUrl: m.user.bannerURL({ extension: "png", size: 512 }) || null,
+          isBot,
+          joinedAt: m.joinedAt ? m.joinedAt.toISOString() : null,
+          joinedTimestamp: m.joinedTimestamp,
+          createdAt: m.user.createdAt.toISOString(),
+          createdTimestamp: m.user.createdTimestamp,
+          isBoosting,
+          premiumSince: m.premiumSince ? m.premiumSince.toISOString() : null,
+          isTimedOut,
+          communicationDisabledUntil: m.communicationDisabledUntil ? m.communicationDisabledUntil.toISOString() : null,
+          communicationDisabledUntilTimestamp: m.communicationDisabledUntilTimestamp,
+          inVoice: inVoiceState,
+          voiceChannelName: m.voice?.channel ? m.voice.channel.name : null,
+          voiceChannelId: m.voice?.channelId || null,
+          isAdmin,
+          isMod: isAdmin || m.permissions.has(PermissionFlagsBits.ManageGuild) || m.permissions.has(PermissionFlagsBits.KickMembers) || m.permissions.has(PermissionFlagsBits.BanMembers),
+          pending: Boolean(m.pending),
+          roles: memberRoles,
+          highestRole,
+          permissions: keyPermissions,
+          canModerate: Boolean(botCanModerate && m.moderatable),
+          canKick: Boolean(botCanKick && m.kickable),
+          canManageNick: Boolean(botCanManageNick && m.manageable),
+        });
+      }
+
+      res.json({
+        guild: {
+          id: guild.id,
+          name: guild.name,
+          icon: guild.iconURL({ extension: "png", size: 128 }),
+          memberCount: guild.memberCount,
+          ownerId: guild.ownerId,
+        },
+        roles,
+        stats: {
+          total: membersList.length,
+          humans,
+          bots,
+          boosters,
+          timedOut,
+          inVoice,
+          admins,
+          recent24h,
+          recent7d,
+          newAccounts,
+          noRoles,
+          pending: pendingCount,
+        },
+        members: membersList,
+      });
+    } catch (error) {
+      console.error("Members API error:", error);
+      res.status(500).json({ error: error instanceof Error ? error.message : "Üye listesi alınamadı." });
+    }
+  });
+
+  // Üye Yönetim & Moderasyon Eylemi
+  app.post("/api/members/action", async (req, res) => {
+    try {
+      const { guildId, memberId, action, durationMinutes, nickname, reason } = req.body || {};
+      if (!guildId || !memberId || !action) {
+        res.status(400).json({ error: "Eksik parametreler (guildId, memberId, action gereklidir)." });
+        return;
+      }
+      const guild = client.guilds.cache.get(guildId);
+      if (!guild) {
+        res.status(404).json({ error: "Sunucu bulunamadı." });
+        return;
+      }
+      const member = await guild.members.fetch(memberId).catch(() => null);
+      if (!member) {
+        res.status(404).json({ error: "Üye bulunamadı." });
+        return;
+      }
+
+      if (action === "timeout") {
+        const minutes = Number(durationMinutes) || 0;
+        if (minutes <= 0) {
+          await member.timeout(null, reason || "Yönetim paneli tarafından zamanaşımı kaldırıldı");
+          addActivity({
+            guildId: guild.id,
+            type: "bot",
+            title: "Zamanaşımı Kaldırıldı",
+            desc: `${member.user.tag} üyesinin zamanaşımı kaldırıldı`,
+            icon: "hourglass",
+            color: "#22c55e",
+          });
+          res.json({ ok: true, message: `${member.user.tag} için zamanaşımı kaldırıldı.` });
+          return;
+        }
+        const ms = minutes * 60 * 1000;
+        await member.timeout(ms, reason || `Yönetim panelinden ${minutes} dakika ceza uygulandı`);
+        addActivity({
+          guildId: guild.id,
+          type: "bot",
+          title: "Zamanaşımı Uygulandı",
+          desc: `${member.user.tag} üyesine ${minutes} dk zamanaşımı verildi`,
+          icon: "hourglass-half",
+          color: "#f87171",
+        });
+        res.json({ ok: true, message: `${member.user.tag} üyesine ${minutes} dakika zamanaşımı uygulandı.` });
+        return;
+      }
+
+      if (action === "kick") {
+        if (!member.kickable) {
+          res.status(403).json({ error: "Bu üyeyi atma yetkiniz yok (Rolü botunkinden yüksek veya sunucu sahibi)." });
+          return;
+        }
+        await member.kick(reason || "Yönetim panelinden atıldı");
+        addActivity({
+          guildId: guild.id,
+          type: "member_leave",
+          title: "Üye Sunucudan Atıldı",
+          desc: `${member.user.tag} yönetim panelinden atıldı`,
+          icon: "user-xmark",
+          color: "#ef4444",
+        });
+        res.json({ ok: true, message: `${member.user.tag} sunucudan atıldı.` });
+        return;
+      }
+
+      if (action === "setNickname") {
+        if (!member.manageable) {
+          res.status(403).json({ error: "Bu üyenin takma adını değiştirme yetkisi yok." });
+          return;
+        }
+        const newNick = nickname ? String(nickname).trim().slice(0, 32) : null;
+        await member.setNickname(newNick, reason || "Yönetim paneli");
+        res.json({ ok: true, message: `Takma ad ${newNick ? `"${newNick}" olarak ayarlandı.` : "sıfırlandı."}` });
+        return;
+      }
+
+      res.status(400).json({ error: "Geçersiz işlem." });
+    } catch (error) {
+      console.error("Üye işlemi hatası:", error);
+      res.status(500).json({ error: error instanceof Error ? error.message : "İşlem gerçekleştirilemedi." });
     }
   });
 

@@ -1,0 +1,110 @@
+/* ============================================================
+   Bot Yönetim Paneli - Temel & Renk Değişkenleri (Base CSS)
+   ============================================================ */
+
+:root {
+  --bg-dark: #141414;
+  --bg-panel: #1c1c1c;
+  --bg-sub: #181818;
+  --border-dark: #262626;
+  --border-sub: #2b2b2b;
+  --border-hover: #3b3b3b;
+  
+  --text-main: #F1F1F1;
+  --text-muted: #a1a1aa;
+  --text-dim: #71717a;
+  
+  --primary: #FFE000;
+  --primary-hover: #ebd000;
+  --primary-light: rgba(255, 224, 0, 0.12);
+  --primary-ring: rgba(255, 224, 0, 0.35);
+
+  --color-green: #22c55e;
+  --color-red: #ef4444;
+  --color-pink: #ec4899;
+  --color-purple: #a855f7;
+  --color-blue: #38bdf8;
+  --color-amber: #f59e0b;
+}
+
+/* Tipografi & Temel Sıfırlamalar */
+body, input, button, select, textarea, optgroup, p, span, div, h1, h2, h3, h4, h5, h6, strong, b, label {
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+}
+
+button, input, optgroup, select, textarea {
+  line-height: normal !important;
+}
+
+.fa, .fas, .far, .fal, .fad, .fab, .fa-solid, .fa-regular, .fa-brands, [class*="fa-"] {
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+}
+
+/* Özel Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-sub);
+  border-radius: 4px;
+  border: 2px solid var(--bg-dark);
+  transition: background 0.15s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-sub) var(--bg-dark);
+}
+
+/* Canvas & Renk Seçici */
+#card-canvas {
+  cursor: default;
+  image-rendering: auto;
+}
+
+input[type="color"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 4px;
+}
+
+input[type="color"]::-moz-color-swatch {
+  border: none;
+  border-radius: 4px;
+}

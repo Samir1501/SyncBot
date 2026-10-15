@@ -1,0 +1,173 @@
+/* ============================================================
+   Bot Yönetim Paneli - Sayfa & Düzen Stilleri (Layout CSS)
+   ============================================================ */
+
+/* 1. KENAR ÇUBUĞU (SIDEBAR) & PROFİL */
+#sidebar {
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 100vh;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#main-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+}
+
+#sidebar.collapsed {
+  width: 4.5rem; /* 72px */
+}
+
+#sidebar.collapsed .sidebar-text {
+  display: none;
+}
+
+#sidebar.collapsed .tab-btn {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+#sidebar.collapsed .tab-btn i {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+#sidebar.collapsed #sidebar-profile {
+  justify-content: center;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+/* 2. GEZİNME SEKMELERİ (.tab-btn - Birleştirilmiş Referans Sınıf) */
+.tab-btn,
+.layer-btn {
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+  outline: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+/* İkon rengi her durumda text rengi ile birebir aynı kalır */
+.tab-btn i,
+.tab-btn svg,
+.layer-btn i,
+.layer-btn svg {
+  color: inherit !important;
+  transition: color 0.15s ease;
+}
+
+/* Hover yapıldığında hem ikon hem text aynı renkte (beyaz) parlar */
+.tab-btn:not(.active):hover,
+.layer-btn:not(.active):hover {
+  background-color: #262626;
+  color: #ffffff;
+}
+
+/* Aktif durumda sarı zemin ve sarı metin/ikon */
+.tab-btn.active,
+.layer-btn.active {
+  background-color: var(--primary-light) !important;
+  color: var(--primary) !important;
+}
+
+.tab-btn.active:hover,
+.layer-btn.active:hover {
+  background-color: rgba(255, 224, 0, 0.2) !important;
+  color: var(--primary) !important;
+}
+
+.tab-btn .fa-solid, .tab-btn .fa-regular {
+  width: 1.25rem;
+  text-align: center;
+}
+
+/* 3. VERİ TABLOSU (Tekil .data-table Sınıfı) */
+.data-table,
+.data-table-wrapper {
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-dark);
+  background-color: var(--bg-panel);
+  width: 100%;
+}
+
+.data-table table,
+table.data-table {
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.data-table thead tr,
+table.data-table thead tr {
+  border-bottom: 1px solid var(--border-dark);
+  background-color: #161616;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.6875rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.75rem 1rem;
+}
+
+.data-table tbody tr,
+table.data-table tbody tr {
+  border-bottom: 1px solid #242424;
+  transition: background-color 0.12s ease;
+}
+
+.data-table tbody tr:hover,
+table.data-table tbody tr:hover {
+  background-color: #1f1f1f;
+}
+
+/* 4. SAYFALAMA (.btn.btn-sm ile birleştirilmiştir) */
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1.25;
+  font-weight: 700;
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-dark);
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+  cursor: pointer;
+  width: auto;
+  height: auto;
+}
+
+.pagination-btn:not(.active):hover:not(:disabled) {
+  color: #ffffff;
+  border-color: var(--border-hover);
+  background-color: #27272a;
+}
+
+.pagination-btn.active {
+  background-color: var(--primary) !important;
+  color: #141414 !important;
+  border-color: var(--primary) !important;
+}
+
+.pagination-btn.active:hover {
+  background-color: var(--primary-hover) !important;
+  color: #141414 !important;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}

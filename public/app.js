@@ -12,6 +12,23 @@ const state = {
   channels: [],
   selected: "avatar", // "avatar" | "background" | text layer id
   dirty: false,
+  members: [],
+  memberRoles: [],
+  memberStats: null,
+  membersLoading: false,
+  membersFilters: {
+    search: "",
+    type: "all",
+    roleId: "all",
+    status: "all",
+    joinDate: "all",
+    age: "all",
+    sortBy: "joined_desc",
+    page: 1,
+    perPage: 50,
+    viewMode: "table",
+  },
+  selectedMember: null,
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -41,6 +58,30 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+function hexToRgba(hex, alpha = 1) {
+  if (!hex || typeof hex !== "string") return `rgba(255, 255, 255, ${alpha})`;
+  let c = hex.replace("#", "").trim();
+  if (c.length === 3) c = c.split("").map((x) => x + x).join("");
+  if (c.length !== 6) return `rgba(255, 255, 255, ${alpha})`;
+  const num = parseInt(c, 16);
+  if (isNaN(num)) return `rgba(255, 255, 255, ${alpha})`;
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function updateLogBadgeColors(eventType, color) {
+  if (!eventType || !color) return;
+  const bg = hexToRgba(color, 0.12);
+  const border = hexToRgba(color, 0.3);
+  document.querySelectorAll(`.log-event-badge[data-event-type="${eventType}"]`).forEach((badge) => {
+    badge.style.color = color;
+    badge.style.backgroundColor = bg;
+    badge.style.borderColor = border;
+  });
+}
+
 function toast(message, type = "success") {
   const el = $("#toast");
   el.innerHTML = `${icon(type === "error" ? "circle-xmark" : "circle-check", "mr-2")}${escapeHtml(message)}`;
@@ -65,71 +106,117 @@ function markDirty() {
  * Tarayıcının varsayılan kaba select menüsü yerine,
  * site tasarımına birebir uyan, sarı vurgulu ve özel kaydırma çubuklu modern dropdown üretir.
  */
-/**
- * Tarayıcının varsayılan kaba select menüsü yerine,
- * site tasarımına birebir uyan, sarı vurgulu ve özel kaydırma çubuklu modern dropdown üretir.
- */
 function createCustomSelect(selectEl) {
   if (!selectEl) return null;
 
-  let wrapper = selectEl.closest(".custom-select-wrapper");
+  let wrapper = selectEl.closest(".dropdown, .custom-select-wrapper");
   if (!wrapper) {
     wrapper = document.createElement("div");
-    wrapper.className = "custom-select-wrapper";
+    wrapper.className = "dropdown custom-select-wrapper";
     if (selectEl.classList.contains("flex-1")) {
       wrapper.classList.add("flex-1", "min-w-0");
+    }
+    if (selectEl.classList.contains("dropdown-sm") || selectEl.classList.contains("custom-select-sm") || selectEl.classList.contains("text-xs") || selectEl.id === "members-per-page") {
+      wrapper.classList.add("dropdown-sm", "custom-select-sm");
+    }
+    if (selectEl.classList.contains("w-auto") || selectEl.id === "members-per-page") {
+      wrapper.style.width = "auto";
+      wrapper.style.minWidth = "85px";
     }
     selectEl.parentNode.insertBefore(wrapper, selectEl);
     wrapper.appendChild(selectEl);
     selectEl.style.display = "none";
   }
 
+  if (!selectEl._customSelectBound) {
+    selectEl._customSelectBound = true;
+    selectEl.addEventListener("change", () => syncCustomSelect(selectEl));
+  }
+
   // Önceki trigger ve menu varsa temizle
-  const oldTrigger = wrapper.querySelector(".custom-select-trigger");
+  const oldTrigger = wrapper.querySelector(".dropdown-trigger, .custom-select-trigger");
   if (oldTrigger) oldTrigger.remove();
-  const oldMenu = wrapper.querySelector(".custom-select-menu");
+  const oldMenu = wrapper.querySelector(".dropdown-menu, .custom-select-menu");
   if (oldMenu) oldMenu.remove();
 
   const trigger = document.createElement("div");
-  trigger.className = "custom-select-trigger";
+  trigger.className = "dropdown-trigger custom-select-trigger";
   trigger.setAttribute("role", "button");
   trigger.setAttribute("tabindex", "0");
 
-  const triggerText = document.createElement("span");
-  triggerText.className = "truncate mr-2 pointer-events-none";
+  const triggerContent = document.createElement("div");
+  triggerContent.className = "flex items-center min-w-0 mr-2 pointer-events-none flex-1";
 
-  // Mevcut seçili metni bul
-  let currentText = "Seçin...";
+  const triggerIcon = document.createElement("i");
+  triggerIcon.className = "mr-2 text-xs shrink-0 hidden";
+
+  const triggerDot = document.createElement("span");
+  triggerDot.className = "w-2 h-2 rounded-full mr-2 shrink-0 hidden";
+
+  const triggerText = document.createElement("span");
+  triggerText.className = "truncate pointer-events-none";
+
+  triggerContent.append(triggerIcon, triggerDot, triggerText);
+
+  // Mevcut seçili metni ve ikonu bul
+  let selectedOpt = selectEl.options[0] || null;
   for (let i = 0; i < selectEl.options.length; i++) {
     const o = selectEl.options[i];
     if (o.value === selectEl.value || (selectEl.selectedIndex === i && !selectEl.value && !o.value)) {
-      currentText = o.text;
+      selectedOpt = o;
       break;
     }
   }
-  if (currentText === "Seçin..." && selectEl.options.length > 0) {
-    currentText = selectEl.options[0].text;
-  }
-  triggerText.textContent = currentText;
-  if (selectEl.dataset.type === "font" && selectEl.value) {
-    triggerText.style.fontFamily = `"${selectEl.value}", Arial, sans-serif`;
+
+  if (selectedOpt) {
+    triggerText.textContent = selectedOpt.text;
+    if (selectedOpt.dataset.icon) {
+      triggerIcon.className = `${selectedOpt.dataset.icon} w-4 text-center mr-2 text-xs text-[#FFE000] shrink-0`;
+      triggerDot.className = "hidden";
+    } else if (selectedOpt.dataset.color) {
+      triggerDot.className = "w-2 h-2 rounded-full mr-2 shrink-0";
+      triggerDot.style.backgroundColor = selectedOpt.dataset.color;
+      triggerIcon.className = "hidden";
+    } else {
+      triggerIcon.className = "hidden";
+      triggerDot.className = "hidden";
+    }
+    if (selectEl.dataset.type === "font" && selectedOpt.value) {
+      triggerText.style.fontFamily = `"${selectedOpt.value}", Arial, sans-serif`;
+    }
+  } else {
+    triggerText.textContent = "Seçin...";
   }
 
   const arrow = document.createElement("i");
-  arrow.className = "fa-solid fa-chevron-down arrow-icon pointer-events-none";
+  arrow.className = "fa-solid fa-chevron-down arrow-icon pointer-events-none ml-auto shrink-0";
 
-  trigger.append(triggerText, arrow);
+  trigger.append(triggerContent, arrow);
 
   const menu = document.createElement("div");
-  menu.className = "custom-select-menu";
+  menu.className = "dropdown-menu custom-select-menu";
 
   for (let i = 0; i < selectEl.options.length; i++) {
     const opt = selectEl.options[i];
     const isSelected = opt.value === selectEl.value || (!selectEl.value && !opt.value && i === 0);
 
     const item = document.createElement("div");
-    item.className = `custom-select-option ${isSelected ? "selected" : ""}`;
+    item.className = `dropdown-option custom-select-option ${isSelected ? "selected" : ""}`;
     item.dataset.value = opt.value;
+
+    const optContent = document.createElement("div");
+    optContent.className = "flex items-center min-w-0 pointer-events-none flex-1";
+
+    if (opt.dataset.icon) {
+      const optIcon = document.createElement("i");
+      optIcon.className = `${opt.dataset.icon} w-4 text-center mr-2 text-xs shrink-0 ${isSelected ? "text-[#FFE000]" : "text-zinc-400"}`;
+      optContent.appendChild(optIcon);
+    } else if (opt.dataset.color) {
+      const optDot = document.createElement("span");
+      optDot.className = "w-2 h-2 rounded-full mr-2 shrink-0";
+      optDot.style.backgroundColor = opt.dataset.color;
+      optContent.appendChild(optDot);
+    }
 
     const labelSpan = document.createElement("span");
     labelSpan.className = "truncate pointer-events-none";
@@ -137,11 +224,12 @@ function createCustomSelect(selectEl) {
     if (selectEl.dataset.type === "font" && opt.value) {
       labelSpan.style.fontFamily = `"${opt.value}", Arial, sans-serif`;
     }
-    item.appendChild(labelSpan);
+    optContent.appendChild(labelSpan);
+    item.appendChild(optContent);
 
     if (isSelected) {
       const check = document.createElement("i");
-      check.className = "fa-solid fa-check text-xs ml-2 text-[#FFE000] pointer-events-none";
+      check.className = "fa-solid fa-check text-xs ml-2 text-[#FFE000] pointer-events-none shrink-0";
       item.appendChild(check);
     }
 
@@ -151,19 +239,36 @@ function createCustomSelect(selectEl) {
 
       selectEl.value = opt.value;
       triggerText.textContent = opt.text;
+
+      if (opt.dataset.icon) {
+        triggerIcon.className = `${opt.dataset.icon} w-4 text-center mr-2 text-xs text-[#FFE000] shrink-0`;
+        triggerDot.className = "hidden";
+      } else if (opt.dataset.color) {
+        triggerDot.className = "w-2 h-2 rounded-full mr-2 shrink-0";
+        triggerDot.style.backgroundColor = opt.dataset.color;
+        triggerIcon.className = "hidden";
+      } else {
+        triggerIcon.className = "hidden";
+        triggerDot.className = "hidden";
+      }
+
       if (selectEl.dataset.type === "font" && opt.value) {
         triggerText.style.fontFamily = `"${opt.value}", Arial, sans-serif`;
       }
 
-      menu.querySelectorAll(".custom-select-option").forEach((o) => {
+      menu.querySelectorAll(".dropdown-option, .custom-select-option").forEach((o) => {
         o.classList.remove("selected");
         const ch = o.querySelector(".fa-check");
         if (ch) ch.remove();
+        const ic = o.querySelector("i:not(.fa-check)");
+        if (ic && o.dataset.value !== opt.value) ic.classList.replace("text-[#FFE000]", "text-zinc-400");
       });
       item.classList.add("selected");
+      const activeIcon = item.querySelector("i:not(.fa-check)");
+      if (activeIcon) activeIcon.classList.replace("text-zinc-400", "text-[#FFE000]");
 
       const check = document.createElement("i");
-      check.className = "fa-solid fa-check text-xs ml-2 text-[#FFE000] pointer-events-none";
+      check.className = "fa-solid fa-check text-xs ml-2 text-[#FFE000] pointer-events-none shrink-0";
       item.appendChild(check);
 
       wrapper.classList.remove("open");
@@ -181,7 +286,7 @@ function createCustomSelect(selectEl) {
     e.stopPropagation();
 
     const isOpen = wrapper.classList.contains("open");
-    document.querySelectorAll(".custom-select-wrapper.open").forEach((w) => {
+    document.querySelectorAll(".dropdown.open, .custom-select-wrapper.open").forEach((w) => {
       w.classList.remove("open");
     });
     if (!isOpen) {
@@ -205,10 +310,90 @@ function createCustomSelect(selectEl) {
 
 // Dışarı tıklandığında açık dropdownları kapat
 document.addEventListener("click", () => {
-  document.querySelectorAll(".custom-select-wrapper.open").forEach((w) => {
+  document.querySelectorAll(".dropdown.open, .custom-select-wrapper.open").forEach((w) => {
     w.classList.remove("open");
   });
 });
+
+/**
+ * Programatik olarak değeri değiştirilen select öğesinin özel dropdown arayüzünü günceller.
+ */
+function syncCustomSelect(selectEl) {
+  if (!selectEl) return;
+  const wrapper = selectEl.closest(".dropdown, .custom-select-wrapper");
+  if (!wrapper) return;
+  const triggerText = wrapper.querySelector(".dropdown-trigger span.truncate, .custom-select-trigger span.truncate");
+  const triggerIcon = wrapper.querySelector(".dropdown-trigger i:not(.arrow-icon), .custom-select-trigger i:not(.arrow-icon)");
+  const triggerDot = wrapper.querySelector(".dropdown-trigger span.rounded-full, .custom-select-trigger span.rounded-full");
+  const menu = wrapper.querySelector(".dropdown-menu, .custom-select-menu");
+  if (!triggerText || !menu) return;
+
+  let selectedOpt = selectEl.options[0] || null;
+  for (let i = 0; i < selectEl.options.length; i++) {
+    const o = selectEl.options[i];
+    if (o.value === selectEl.value || (selectEl.selectedIndex === i && !selectEl.value && !o.value)) {
+      selectedOpt = o;
+      break;
+    }
+  }
+
+  if (selectedOpt) {
+    triggerText.textContent = selectedOpt.text;
+    if (triggerIcon) {
+      if (selectedOpt.dataset.icon) {
+        triggerIcon.className = `${selectedOpt.dataset.icon} w-4 text-center mr-2 text-xs text-[#FFE000] shrink-0`;
+      } else {
+        triggerIcon.className = "hidden";
+      }
+    }
+    if (triggerDot) {
+      if (selectedOpt.dataset.color) {
+        triggerDot.className = "w-2 h-2 rounded-full mr-2 shrink-0";
+        triggerDot.style.backgroundColor = selectedOpt.dataset.color;
+      } else {
+        triggerDot.className = "hidden";
+      }
+    }
+    if (selectEl.dataset.type === "font" && selectedOpt.value) {
+      triggerText.style.fontFamily = `"${selectedOpt.value}", Arial, sans-serif`;
+    }
+  } else {
+    triggerText.textContent = "Seçin...";
+    if (triggerIcon) triggerIcon.className = "hidden";
+    if (triggerDot) triggerDot.className = "hidden";
+  }
+
+  menu.querySelectorAll(".dropdown-option, .custom-select-option").forEach((optEl) => {
+    const isSelected = optEl.dataset.value === selectEl.value;
+    optEl.classList.toggle("selected", isSelected);
+    const ch = optEl.querySelector(".fa-check");
+    if (isSelected) {
+      if (!ch) {
+        const check = document.createElement("i");
+        check.className = "fa-solid fa-check text-xs ml-2 text-[#FFE000] pointer-events-none shrink-0";
+        optEl.appendChild(check);
+      }
+      const ic = optEl.querySelector("i:not(.fa-check)");
+      if (ic) ic.classList.replace("text-zinc-400", "text-[#FFE000]");
+    } else {
+      if (ch) ch.remove();
+      const ic = optEl.querySelector("i:not(.fa-check)");
+      if (ic) ic.classList.replace("text-[#FFE000]", "text-zinc-400");
+    }
+  });
+}
+
+/**
+ * Sayfadaki tüm select öğelerini veya belirtilen konteyner içindekileri özel dropdown'a dönüştürür.
+ */
+function initAllCustomSelects(root = document) {
+  root.querySelectorAll("select").forEach((sel) => {
+    if (!sel.closest(".custom-select-wrapper")) {
+      createCustomSelect(sel);
+    }
+  });
+}
+
 
 function applyPlaceholders(text) {
   const b = state.bot || {};
@@ -478,13 +663,14 @@ function renderLayerList() {
   ];
   for (const item of items) {
     const btn = document.createElement("button");
-    btn.className = `layer-btn w-full text-left text-sm px-3 py-1.5 rounded truncate flex items-center ${
+    btn.className = `tab-btn layer-btn w-full text-left text-sm px-3 py-1.5 rounded truncate flex items-center ${
       state.selected === item.id ? "active" : ""
     }`;
     btn.innerHTML = item.label;
     btn.onclick = () => selectLayer(item.id);
     list.appendChild(btn);
   }
+  updateWelcomeBadges();
 }
 
 function selectLayer(id) {
@@ -574,7 +760,7 @@ function field(obj, key, label, type = "text", opts = {}) {
     hexInput.type = "text";
     hexInput.maxLength = 7;
     hexInput.value = (obj[key] || "#000000").toUpperCase();
-    hexInput.className = "flex-1 min-w-0 bg-transparent text-[#F1F1F1] text-xs font-semibold uppercase tracking-wider outline-none";
+    hexInput.className = "flex-1 min-w-0 bg-transparent text-[#F1F1F1] text-xs font-semibold uppercase tracking-wider outline-none pt-0.5";
     hexInput.placeholder = "#000000";
 
     const syncColor = (val) => {
@@ -613,7 +799,7 @@ function field(obj, key, label, type = "text", opts = {}) {
       const eyedropperBtn = document.createElement("button");
       eyedropperBtn.type = "button";
       eyedropperBtn.title = "Ekrandan Renk Seç (Damlalık)";
-      eyedropperBtn.className = "w-6 h-6 rounded flex items-center justify-center text-zinc-500 hover:text-[#FFE000] transition text-xs shrink-0";
+      eyedropperBtn.className = "btn btn-sm shrink-0";
       eyedropperBtn.innerHTML = `<i class="fa-solid fa-eye-dropper"></i>`;
       eyedropperBtn.onclick = async (e) => {
         e.preventDefault();
@@ -675,9 +861,9 @@ function grid(...children) {
   return g;
 }
 
-function button(label, onClick, cls = "bg-zinc-800 hover:bg-zinc-700 text-[#F1F1F1] border border-[#262626]") {
+function button(label, onClick, cls = "btn w-full") {
   const b = document.createElement("button");
-  b.className = `${cls} px-3 py-1.5 rounded text-sm col-span-2 flex items-center justify-center gap-2 transition`;
+  b.className = `${cls} col-span-2`;
   b.innerHTML = label;
   b.onclick = onClick;
   return b;
@@ -968,7 +1154,7 @@ function renderProps() {
         field(bg, "imageUrl", "Arka Plan Görseli (URL)", "text"),
         upload,
         button(`${icon("upload")} Bilgisayardan Görsel Yükle`, () => upload.click()),
-        ...(bg.imageUrl ? [button(`${icon("trash-can")} Görseli Kaldır`, () => { bg.imageUrl = ""; markDirty(); renderProps(); draw(); }, "bg-zinc-800 hover:bg-zinc-700 text-[#F1F1F1] border border-[#262626]")] : []),
+        ...(bg.imageUrl ? [button(`${icon("trash-can")} Görseli Kaldır`, () => { bg.imageUrl = ""; markDirty(); renderProps(); draw(); }, "btn btn-danger w-full")] : []),
         field(bg, "overlayColor", "Karartma Rengi", "color", { half: true }),
         field(bg, "overlayOpacity", "Karartma Opaklığı", "range", { half: true, min: 0, max: 1, step: 0.05 })
       )
@@ -1018,7 +1204,7 @@ function renderProps() {
         c.texts = c.texts.filter((l) => l.id !== t.id);
         markDirty();
         selectLayer("background");
-      }, "bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-800/50")
+      }, "btn btn-danger w-full")
     )
   );
 }
@@ -1055,14 +1241,26 @@ function fillChannelSelects() {
     for (const ch of filtered) {
       if (ch.isForum && !allowForum) continue;
 
-      const prefix = ch.isForum ? "💬 " : "# ";
       const suffix = ch.isForum ? " (Forum)" : "";
-      select.appendChild(new Option(`${prefix}${ch.name}${suffix}`, ch.id));
+      const opt = new Option(`${ch.isForum ? "" : "# "}${ch.name}${suffix}`, ch.id);
+      opt.dataset.icon = ch.isForum ? "fa-solid fa-comments" : "fa-solid fa-hashtag";
+      select.appendChild(opt);
     }
     select.value = currentVal;
     createCustomSelect(select);
   }
 }
+
+const LOG_DEFAULT_EVENT_COLORS = {
+  messageDelete: "#EF4444",
+  messageUpdate: "#F59E0B",
+  memberJoin: "#10B981",
+  memberLeave: "#F43F5E",
+  memberUpdate: "#38BDF8",
+  voiceJoinLeave: "#A855F7",
+  voiceMuteDeafen: "#F97316",
+  guildBan: "#DC2626",
+};
 
 function bindForms() {
   const s = state.settings;
@@ -1102,7 +1300,11 @@ function bindForms() {
     s.logging.appearance = {
       detailLevel: "rich",
       embedColor: "#FFE000",
+      eventColors: { ...LOG_DEFAULT_EVENT_COLORS },
     };
+  }
+  if (!s.logging.appearance.eventColors) {
+    s.logging.appearance.eventColors = { ...LOG_DEFAULT_EVENT_COLORS };
   }
 
   const bind = (sel, obj, key, prop = "value") => {
@@ -1115,6 +1317,7 @@ function bindForms() {
       updateAuditLogBadges();
       updateFeedBadges();
       updateFeedPreview();
+      updateWelcomeBadges();
     };
     if (el.tagName === "SELECT") {
       createCustomSelect(el);
@@ -1174,6 +1377,34 @@ function bindForms() {
         markDirty();
       }
     };
+  }
+
+  // Olay Filtresi Embed Renkleri (Her filtre için bağımsız renk ayarı)
+  for (const [key, defColor] of Object.entries(LOG_DEFAULT_EVENT_COLORS)) {
+    const swatch = $(`#log-color-${key}`);
+    const hex = $(`#log-color-${key}-hex`);
+    const val = s.logging.appearance.eventColors[key] || defColor;
+    if (swatch) swatch.value = val;
+    if (hex) hex.value = val;
+
+    if (swatch && hex) {
+      swatch.oninput = () => {
+        hex.value = swatch.value;
+        s.logging.appearance.eventColors[key] = swatch.value;
+        markDirty();
+        updateLogBadgeColors(key, swatch.value);
+      };
+      hex.oninput = () => {
+        let textVal = hex.value.trim();
+        if (!textVal.startsWith("#") && textVal.length > 0) textVal = "#" + textVal;
+        if (/^#[0-9A-Fa-f]{6}$/.test(textVal)) {
+          swatch.value = textVal;
+          s.logging.appearance.eventColors[key] = textVal;
+          markDirty();
+          updateLogBadgeColors(key, textVal);
+        }
+      };
+    }
   }
 
   // 6. Karşılama Ayarları
@@ -1250,6 +1481,7 @@ function bindForms() {
   renderFeedSourceChannels();
   updateFeedBadges();
   updateFeedPreview();
+  updateWelcomeBadges();
 }
 
 // ---------------- Denetim Kaydı (Audit Log) Yönetimi ----------------
@@ -1315,21 +1547,13 @@ function setLogRoutingMode(mode, doMarkDirty = true) {
   const multiCont = $("#log-multi-channel-container");
 
   if (mode === "multi") {
-    if (multiBtn) {
-      multiBtn.className = "px-3 py-1.5 rounded text-xs font-semibold transition bg-[#FFE000] text-[#141414] shadow-sm flex items-center gap-1.5";
-    }
-    if (singleBtn) {
-      singleBtn.className = "px-3 py-1.5 rounded text-xs font-semibold transition text-zinc-400 hover:text-[#F1F1F1] flex items-center gap-1.5";
-    }
+    if (multiBtn) multiBtn.className = "btn btn-primary btn-sm";
+    if (singleBtn) singleBtn.className = "btn btn-sm";
     if (singleCont) singleCont.classList.add("hidden");
     if (multiCont) multiCont.classList.remove("hidden");
   } else {
-    if (singleBtn) {
-      singleBtn.className = "px-3 py-1.5 rounded text-xs font-semibold transition bg-[#FFE000] text-[#141414] shadow-sm flex items-center gap-1.5";
-    }
-    if (multiBtn) {
-      multiBtn.className = "px-3 py-1.5 rounded text-xs font-semibold transition text-zinc-400 hover:text-[#F1F1F1] flex items-center gap-1.5";
-    }
+    if (singleBtn) singleBtn.className = "btn btn-primary btn-sm";
+    if (multiBtn) multiBtn.className = "btn btn-sm";
     if (singleCont) singleCont.classList.remove("hidden");
     if (multiCont) multiCont.classList.add("hidden");
   }
@@ -1356,12 +1580,12 @@ function renderIgnoredChannelsList() {
     const chName = chObj ? chObj.name : `Kanal ${chId}`;
 
     const tag = document.createElement("span");
-    tag.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#1c1c1c] border border-[#262626] text-xs font-semibold text-[#F1F1F1]";
+    tag.className = "chip-tag";
     tag.innerHTML = `
       <i class="fa-solid fa-hashtag text-zinc-500 text-[10px]"></i>
       <span class="truncate max-w-[140px]">${escapeHtml(chName)}</span>
-      <button type="button" class="text-zinc-400 hover:text-red-400 ml-1 transition" title="Kaldır">
-        <i class="fa-solid fa-xmark text-[11px]"></i>
+      <button type="button" class="chip-remove-btn" title="Kaldır">
+        <i class="fa-solid fa-xmark"></i>
       </button>
     `;
 
@@ -1410,9 +1634,16 @@ async function loadLogs() {
     if (logs.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="5" class="py-8 text-center text-zinc-500 text-xs">
-            <i class="fa-solid fa-inbox text-2xl block mb-2 text-zinc-600"></i>
-            Kriterlere uygun veya henüz kaydedilmiş denetim kaydı bulunamadı.
+          <td colspan="5" class="p-6">
+            <div class="empty-state">
+              <div class="empty-state-icon">
+                <i class="fa-solid fa-inbox"></i>
+              </div>
+              <div class="empty-state-title">Kayıt Bulunamadı</div>
+              <div class="empty-state-desc">
+                Kriterlere uygun veya henüz kaydedilmiş denetim kaydı bulunamadı.
+              </div>
+            </div>
           </td>
         </tr>
       `;
@@ -1420,14 +1651,14 @@ async function loadLogs() {
     }
 
     const eventBadgeMap = {
-      messageDelete: { label: "Mesaj Silindi", icon: "trash-can", color: "text-red-400 bg-red-500/10 border-red-500/30" },
-      messageUpdate: { label: "Mesaj Düzenlendi", icon: "pen-to-square", color: "text-amber-400 bg-amber-500/10 border-amber-500/30" },
-      memberJoin: { label: "Üye Katıldı", icon: "user-plus", color: "text-green-400 bg-green-500/10 border-green-500/30" },
-      memberLeave: { label: "Üye Ayrıldı", icon: "user-minus", color: "text-rose-400 bg-rose-500/10 border-rose-500/30" },
-      memberUpdate: { label: "Rol / Profil", icon: "id-badge", color: "text-blue-400 bg-blue-500/10 border-blue-500/30" },
-      voiceJoinLeave: { label: "Ses Odası", icon: "headphones", color: "text-purple-400 bg-purple-500/10 border-purple-500/30" },
-      voiceMuteDeafen: { label: "Ses Susturma", icon: "microphone-slash", color: "text-orange-400 bg-orange-500/10 border-orange-500/30" },
-      guildBan: { label: "Yasaklama (Ban)", icon: "gavel", color: "text-red-500 bg-red-600/15 border-red-500/30" },
+      messageDelete: { label: "Mesaj Silindi", icon: "trash-can" },
+      messageUpdate: { label: "Mesaj Düzenlendi", icon: "pen-to-square" },
+      memberJoin: { label: "Üye Katıldı", icon: "user-plus" },
+      memberLeave: { label: "Üye Ayrıldı", icon: "user-minus" },
+      memberUpdate: { label: "Rol / Profil", icon: "id-badge" },
+      voiceJoinLeave: { label: "Ses Odası", icon: "headphones" },
+      voiceMuteDeafen: { label: "Ses Susturma", icon: "microphone-slash" },
+      guildBan: { label: "Yasaklama (Ban)", icon: "gavel" },
     };
 
     tbody.innerHTML = logs.map((log) => {
@@ -1439,8 +1670,17 @@ async function loadLogs() {
       const badgeInfo = eventBadgeMap[log.eventType] || {
         label: log.eventType || "Olay",
         icon: "circle-info",
-        color: "text-zinc-300 bg-zinc-800 border-zinc-700",
       };
+
+      const eventColor =
+        state.settings?.logging?.appearance?.eventColors?.[log.eventType] ||
+        log.color ||
+        LOG_DEFAULT_EVENT_COLORS[log.eventType] ||
+        state.settings?.logging?.appearance?.embedColor ||
+        "#FFE000";
+
+      const badgeBg = hexToRgba(eventColor, 0.12);
+      const badgeBorder = hexToRgba(eventColor, 0.3);
 
       const userTag = log.user?.tag || (log.user?.id ? `ID: ${log.user.id}` : "Bilinmiyor");
       const userAvatar = log.user?.avatarUrl || "https://cdn.discordapp.com/embed/avatars/0.png";
@@ -1452,8 +1692,8 @@ async function loadLogs() {
             <i class="fa-regular fa-clock mr-1 text-zinc-500"></i>${timeStr}
           </td>
           <td class="py-2.5 px-3.5 whitespace-nowrap">
-            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold border ${badgeInfo.color}">
-              <i class="fa-solid fa-${badgeInfo.icon} text-[10px]"></i>
+            <span data-event-type="${escapeHtml(log.eventType || "")}" class="badge log-event-badge" style="color: ${escapeHtml(eventColor)}; background-color: ${badgeBg}; border-color: ${badgeBorder};">
+              <i class="fa-solid fa-${badgeInfo.icon}"></i>
               ${badgeInfo.label}
             </span>
           </td>
@@ -1540,6 +1780,24 @@ function initAuditLogControls() {
       if (cHex) cHex.value = col;
       markDirty();
       toast("Embed vurgu rengi varsayılana (#FFE000) sıfırlandı.");
+    };
+  }
+
+  const eventColorsResetBtn = $("#log-appearance-event-colors-reset");
+  if (eventColorsResetBtn) {
+    eventColorsResetBtn.onclick = () => {
+      const s = state.settings;
+      if (!s?.logging?.appearance) return;
+      s.logging.appearance.eventColors = { ...LOG_DEFAULT_EVENT_COLORS };
+      for (const [key, col] of Object.entries(LOG_DEFAULT_EVENT_COLORS)) {
+        const swatch = $(`#log-color-${key}`);
+        const hex = $(`#log-color-${key}-hex`);
+        if (swatch) swatch.value = col;
+        if (hex) hex.value = col;
+        updateLogBadgeColors(key, col);
+      }
+      markDirty();
+      toast("Olay embed renkleri varsayılan palete sıfırlandı.");
     };
   }
 
@@ -1708,6 +1966,70 @@ function updateFeedPreview() {
   }
 }
 
+// ---------------- Karşılama Mesajı & Kartı (Welcome) Yönetimi ----------------
+
+function updateWelcomeBadges() {
+  const s = state.settings;
+  if (!s || !s.welcome) return;
+
+  // 1. Ana Durum Rozeti
+  const activeBadge = $("#welcome-active-status-badge");
+  if (activeBadge) {
+    if (s.welcome.enabled) {
+      activeBadge.textContent = "Aktif";
+      activeBadge.className = "text-xs font-semibold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30";
+    } else {
+      activeBadge.textContent = "Pasif";
+      activeBadge.className = "text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-[#262626]";
+    }
+  }
+
+  // 2. Hedef Karşılama Kanalı Rozeti
+  const channelBadge = $("#badge-welcome-channel");
+  if (channelBadge) {
+    const chObj = state.channels.find((c) => c.id === s.welcome.channelId);
+    if (chObj) {
+      channelBadge.textContent = `#${chObj.name}`;
+      channelBadge.className = "text-xs font-bold text-[#FFE000]";
+    } else if (s.welcome.channelId) {
+      channelBadge.textContent = `ID: ${s.welcome.channelId}`;
+      channelBadge.className = "text-xs font-bold text-[#FFE000]";
+    } else {
+      channelBadge.textContent = "Seçilmedi";
+      channelBadge.className = "text-xs font-bold text-amber-400";
+    }
+  }
+
+  // 3. Karşılama Kartı Boyutu
+  const cardBadge = $("#badge-welcome-card");
+  if (cardBadge) {
+    const c = s.welcome.card;
+    if (c && c.width && c.height) {
+      cardBadge.textContent = `${c.width}x${c.height} px`;
+    } else {
+      cardBadge.textContent = "Özel Tasarım";
+    }
+  }
+
+  // 4. Katman Sayısı Rozeti
+  const layersBadge = $("#badge-welcome-layers");
+  if (layersBadge) {
+    const textCount = s.welcome.card?.texts?.length || 0;
+    const totalLayers = 2 + textCount;
+    layersBadge.textContent = `${totalLayers} Katman (${textCount} Metin)`;
+    layersBadge.className = "text-xs font-bold text-zinc-300";
+  }
+
+  // 5. Karşılama Mesajı Durumu
+  const msgBadge = $("#badge-welcome-msg");
+  if (msgBadge) {
+    const hasMsg = Boolean(s.welcome.message && s.welcome.message.trim());
+    msgBadge.textContent = hasMsg ? "Özel Metin" : "Varsayılan";
+    msgBadge.className = `text-xs font-bold ${hasMsg ? "text-green-400" : "text-zinc-400"}`;
+  }
+}
+
+
 function renderFeedSourceChannels() {
   const container = $("#feed-source-channels-list");
   if (!container) return;
@@ -1728,13 +2050,13 @@ function renderFeedSourceChannels() {
     const iconClass = isForum ? "fa-comments" : "fa-hashtag";
 
     const tag = document.createElement("span");
-    tag.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#1c1c1c] border border-[#262626] text-xs font-semibold text-[#F1F1F1] group";
+    tag.className = "chip-tag";
     tag.innerHTML = `
       <i class="fa-solid ${iconClass} text-[#FFE000] text-[10px]"></i>
       <span class="truncate max-w-[150px]">${escapeHtml(chName)}</span>
       ${isForum ? '<span class="text-[9px] text-[#FFE000] bg-[#FFE000]/15 px-1.5 py-0.5 rounded font-bold border border-[#FFE000]/30">Forum</span>' : ''}
-      <button type="button" class="text-zinc-400 hover:text-red-400 ml-1 transition" title="Kaldır">
-        <i class="fa-solid fa-xmark text-[11px]"></i>
+      <button type="button" class="chip-remove-btn" title="Kaldır">
+        <i class="fa-solid fa-xmark"></i>
       </button>
     `;
 
@@ -1797,11 +2119,6 @@ function initFeedControls() {
     };
   }
 
-  // Doğrudan Kaydet butonu
-  const directSaveBtn = $("#feed-save-direct-btn");
-  if (directSaveBtn) {
-    directSaveBtn.onclick = () => save();
-  }
 
   const testFeedBtn = $("#feed-test-btn");
   if (testFeedBtn) {
@@ -1810,12 +2127,19 @@ function initFeedControls() {
         toast("Sunucu seçilmedi!", "error");
         return;
       }
+      if (!state.settings?.feed?.targetChannelId) {
+        toast("Lütfen önce bir hedef akış kanalı seçip kaydedin!", "error");
+        return;
+      }
+      if (state.dirty && !(await save())) return;
+
       const origHtml = testFeedBtn.innerHTML;
       testFeedBtn.disabled = true;
       testFeedBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Gönderiliyor...';
       try {
-        await api(`/api/feed/test?guildId=${encodeURIComponent(state.selectedGuildId)}`, { method: "POST" });
-        toast("Test gönderi kartı Discord ana sayfa kanalına iletildi!");
+        const res = await api(`/api/feed/test?guildId=${encodeURIComponent(state.selectedGuildId)}`, { method: "POST" });
+        const data = await res.json();
+        toast(`Test gönderi kartı #${data.channelName || "hedef"} kanalına başarıyla iletildi!`);
         loadDashboardStats();
       } catch (err) {
         toast(`Test gönderilemedi: ${err.message}`, "error");
@@ -1851,6 +2175,7 @@ for (const btn of document.querySelectorAll(".tab-btn")) {
   btn.onclick = () => {
     document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b === btn));
     $("#tab-dashboard")?.classList.toggle("hidden", btn.dataset.tab !== "dashboard");
+    $("#tab-members")?.classList.toggle("hidden", btn.dataset.tab !== "members");
     $("#tab-general")?.classList.toggle("hidden", btn.dataset.tab !== "general");
     $("#tab-welcome")?.classList.toggle("hidden", btn.dataset.tab !== "welcome");
     $("#tab-messages")?.classList.toggle("hidden", btn.dataset.tab !== "messages");
@@ -1860,7 +2185,10 @@ for (const btn of document.querySelectorAll(".tab-btn")) {
     // Açık dropdownları kapat
     document.querySelectorAll(".custom-select-wrapper.open").forEach((w) => w.classList.remove("open"));
 
-    // Dashboard ve Mesaj Gönder sekmelerinde ana genel Kaydet butonuna gerek yok
+    // Sekme değiştiğinde içeriği en üste sar
+    $("#main-content")?.scrollTo({ top: 0, behavior: "instant" });
+
+    // Dashboard, Üyeler ve Mesaj Gönder sekmelerinde ana genel Kaydet butonuna gerek yok
     const isSaveTab = btn.dataset.tab === "general" || btn.dataset.tab === "welcome" || btn.dataset.tab === "feed";
     const saveBtn = $("#save-btn");
     const saveStatus = $("#save-status");
@@ -1877,6 +2205,7 @@ for (const btn of document.querySelectorAll(".tab-btn")) {
       updateFeedPreview();
     }
     if (btn.dataset.tab === "dashboard") loadDashboardStats();
+    if (btn.dataset.tab === "members") loadMembers();
     if (btn.dataset.tab === "general") loadLogs();
   };
 }
@@ -2453,6 +2782,7 @@ async function switchGuild(guildId) {
   draw();
   loadDashboardStats();
   if (!$("#tab-general")?.classList.contains("hidden")) loadLogs();
+  if (!$("#tab-members")?.classList.contains("hidden")) loadMembers(true);
 }
 
 const guildSelector = $("#guild-selector");
@@ -2460,6 +2790,1174 @@ if (guildSelector) {
   guildSelector.onchange = () => {
     switchGuild(guildSelector.value);
   };
+}
+
+// ---------------- Sunucu Üyeleri & Geniş Filtreleme Modülü ----------------
+
+function formatMemberRelativeTime(timestamp) {
+  if (!timestamp) return "Bilinmiyor";
+  const diffSec = Math.floor((Date.now() - timestamp) / 1000);
+  if (diffSec < 60) return "az önce";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} dk önce`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour} sa önce`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 30) return `${diffDay} gün önce`;
+  const diffMonth = Math.floor(diffDay / 30);
+  if (diffMonth < 12) return `${diffMonth} ay önce`;
+  const diffYear = Math.floor(diffDay / 365);
+  return `${diffYear} yıl önce`;
+}
+
+function formatMemberExactDate(isoStringOrTimestamp) {
+  if (!isoStringOrTimestamp) return "Bilinmiyor";
+  const d = new Date(isoStringOrTimestamp);
+  if (isNaN(d.getTime())) return "Bilinmiyor";
+  return d.toLocaleDateString("tr-TR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+window.copyTextToClipboard = function(text, successMsg = "Panoya kopyalandı!") {
+  if (!text) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => toast(successMsg)).catch(() => {
+      fallbackCopyText(text, successMsg);
+    });
+  } else {
+    fallbackCopyText(text, successMsg);
+  }
+};
+
+function fallbackCopyText(text, successMsg) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand("copy");
+  document.body.removeChild(ta);
+  toast(successMsg);
+}
+
+window.openMemberModalById = function(memberId) {
+  const member = state.members.find((m) => m.id === memberId);
+  if (member) openMemberModal(member);
+};
+
+function openMemberModal(member) {
+  state.selectedMember = member;
+  const modal = $("#member-detail-modal");
+  if (!modal) return;
+
+  // Banner & Renk
+  const banner = $("#mdm-banner");
+  if (banner) {
+    const roleColor = member.highestRole?.color || "#FFE000";
+    banner.style.background = `linear-gradient(135deg, #1c1c1c 0%, ${roleColor}25 50%, #141414 100%)`;
+    banner.style.borderTop = `4px solid ${roleColor}`;
+  }
+
+  // Profil Başlık
+  const avatar = $("#mdm-avatar");
+  if (avatar) avatar.src = member.avatarUrl || "https://cdn.discordapp.com/embed/avatars/0.png";
+
+  const dName = $("#mdm-display-name");
+  if (dName) dName.textContent = member.displayName || member.username;
+
+  const tag = $("#mdm-tag");
+  if (tag) tag.textContent = `@${member.username}`;
+
+  const nickWrapper = $("#mdm-nickname-wrapper");
+  const nick = $("#mdm-nickname");
+  if (nickWrapper && nick) {
+    if (member.nickname && member.nickname !== member.displayName) {
+      nickWrapper.classList.remove("hidden");
+      nick.textContent = member.nickname;
+    } else {
+      nickWrapper.classList.add("hidden");
+    }
+  }
+
+  const botBadge = $("#mdm-bot-badge");
+  if (botBadge) botBadge.classList.toggle("hidden", !member.isBot);
+
+  const voiceInd = $("#mdm-voice-indicator");
+  if (voiceInd) voiceInd.classList.toggle("hidden", !member.inVoice);
+
+  // Rozetler
+  const badgesContainer = $("#mdm-status-badges");
+  if (badgesContainer) {
+    let badgesHtml = "";
+    if (member.isBot) {
+      badgesHtml += `<span class="badge badge-purple"><i class="fa-solid fa-robot mr-1"></i> Bot</span>`;
+    } else {
+      badgesHtml += `<span class="badge badge-green"><i class="fa-solid fa-user mr-1"></i> Kullanıcı</span>`;
+    }
+    if (member.isBoosting) {
+      badgesHtml += `<span class="badge badge-pink"><i class="fa-solid fa-bolt mr-1"></i> Takviyeci (Boost)</span>`;
+    }
+    if (member.isAdmin) {
+      badgesHtml += `<span class="badge badge-amber"><i class="fa-solid fa-crown mr-1"></i> Yönetici</span>`;
+    }
+    if (member.inVoice) {
+      badgesHtml += `<span class="badge badge-green"><i class="fa-solid fa-headphones mr-1"></i> Seste: #${escapeHtml(member.voiceChannelName || "Ses")}</span>`;
+    }
+    if (member.isTimedOut) {
+      badgesHtml += `<span class="badge badge-red"><i class="fa-solid fa-hourglass-half mr-1"></i> Zamanaşımı (Cezalı)</span>`;
+    }
+    if (member.pending) {
+      badgesHtml += `<span class="badge badge-yellow"><i class="fa-solid fa-clipboard-check mr-1"></i> Kuralları Onaylamadı</span>`;
+    }
+    badgesContainer.innerHTML = badgesHtml;
+  }
+
+  // Tarihler
+  $("#mdm-joined-full").textContent = formatMemberExactDate(member.joinedTimestamp);
+  $("#mdm-joined-rel").textContent = formatMemberRelativeTime(member.joinedTimestamp);
+  $("#mdm-created-full").textContent = formatMemberExactDate(member.createdTimestamp);
+  $("#mdm-created-rel").textContent = formatMemberRelativeTime(member.createdTimestamp);
+
+  // Roller
+  const rolesCount = $("#mdm-roles-count");
+  if (rolesCount) rolesCount.textContent = String(member.roles.length);
+
+  const rolesContainer = $("#mdm-roles-container");
+  if (rolesContainer) {
+    if (member.roles.length === 0) {
+      rolesContainer.innerHTML = `<span class="text-zinc-500 text-xs">Bu üyeye atanmış özel rol bulunmuyor.</span>`;
+    } else {
+      rolesContainer.innerHTML = member.roles
+        .map(
+          (r) => `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-[#1a1a1a] border border-[#2b2b2b]" style="color: ${r.color};">
+            <span class="w-2 h-2 rounded-full shrink-0" style="background-color: ${r.color};"></span>
+            ${escapeHtml(r.name)}
+          </span>`
+        )
+        .join("");
+    }
+  }
+
+  // Yetkiler
+  const permsContainer = $("#mdm-permissions-container");
+  if (permsContainer) {
+    if (!member.permissions || member.permissions.length === 0) {
+      permsContainer.innerHTML = `<span class="text-zinc-500 text-xs">Standart üye yetkileri</span>`;
+    } else {
+      permsContainer.innerHTML = member.permissions
+        .map(
+          (p) => `
+          <span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-[#262626] text-[11px] font-medium flex items-center gap-1">
+            <i class="fa-solid fa-check text-xs text-[#FFE000]"></i> ${escapeHtml(p)}
+          </span>`
+        )
+        .join("");
+    }
+  }
+
+  // Yönetim İnputları
+  const nickInput = $("#mdm-nickname-input");
+  if (nickInput) nickInput.value = member.nickname || "";
+
+  modal.classList.remove("hidden");
+}
+
+function closeMemberModal() {
+  const modal = $("#member-detail-modal");
+  if (modal) modal.classList.add("hidden");
+  state.selectedMember = null;
+}
+
+async function handleMemberAction(action, payload) {
+  if (!state.selectedMember || !state.selectedGuildId) {
+    toast("Sunucu veya üye seçili değil!", "error");
+    return;
+  }
+  try {
+    const res = await api("/api/members/action", {
+      method: "POST",
+      body: JSON.stringify({
+        guildId: state.selectedGuildId,
+        memberId: state.selectedMember.id,
+        action,
+        ...payload,
+      }),
+    });
+    const data = await res.json();
+    toast(data.message || "İşlem başarılı.");
+    await loadMembers(true);
+    const updated = state.members.find((m) => m.id === state.selectedMember?.id);
+    if (updated) openMemberModal(updated);
+  } catch (err) {
+    toast(err.message || "İşlem başarısız.", "error");
+  }
+}
+
+function renderMemberRoleBadges(m) {
+  if (!m.roles || m.roles.length === 0) {
+    return `<span class="text-zinc-500 text-[11px]">Rolsüz</span>`;
+  }
+  const highest = m.highestRole || m.roles[0];
+  const others = m.roles.filter((r) => r.id !== highest.id);
+
+  let html = `
+    <div class="flex items-center gap-1 flex-wrap">
+      <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#141414] border border-[#262626]" style="color: ${highest.color};">
+        <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background-color: ${highest.color};"></span>
+        <span class="truncate max-w-[120px]">${escapeHtml(highest.name)}</span>
+      </span>
+  `;
+
+  if (others.length > 0) {
+    const previewOther = others[0];
+    html += `
+      <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-[#141414] border border-[#262626] text-zinc-400">
+        <span class="w-1 h-1 rounded-full shrink-0" style="background-color: ${previewOther.color};"></span>
+        <span class="truncate max-w-[90px]">${escapeHtml(previewOther.name)}</span>
+      </span>
+    `;
+  }
+
+  if (others.length > 1) {
+    const allRemainingNames = others.slice(1).map((r) => r.name).join(", ");
+    html += `
+      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-zinc-800 text-zinc-400 border border-[#262626]" title="${escapeHtml(allRemainingNames)}">
+        +${others.length - 1}
+      </span>
+    `;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function renderMemberStatusChips(m, isGrid = false) {
+  const chips = [];
+  if (m.isBoosting) {
+    chips.push(`<span class="badge badge-pink" title="Sunucu Takviyecisi"><i class="fa-solid fa-bolt"></i> Boost</span>`);
+  }
+  if (m.inVoice) {
+    chips.push(`<span class="badge badge-green" title="Seste: ${escapeHtml(m.voiceChannelName || 'Bilinmiyor')}"><i class="fa-solid fa-headphones"></i> Seste</span>`);
+  }
+  if (m.isAdmin) {
+    chips.push(`<span class="badge badge-amber" title="Yönetici"><i class="fa-solid fa-shield-halved"></i> Yetkili</span>`);
+  }
+  if (m.isTimedOut) {
+    chips.push(`<span class="badge badge-red" title="Zamanaşımı / Susturuldu"><i class="fa-solid fa-hourglass-half"></i> Cezalı</span>`);
+  }
+  const now = Date.now();
+  if (m.joinedTimestamp && m.joinedTimestamp >= now - 7 * 24 * 60 * 60 * 1000) {
+    chips.push(`<span class="badge badge-blue" title="Son 7 günde katıldı"><i class="fa-solid fa-calendar-plus"></i> Yeni</span>`);
+  }
+  if (m.createdTimestamp >= now - 30 * 24 * 60 * 60 * 1000) {
+    chips.push(`<span class="badge badge-yellow" title="Yeni açılmış Discord hesabı"><i class="fa-solid fa-triangle-exclamation"></i> &lt;30g</span>`);
+  }
+
+  if (chips.length === 0) {
+    return isGrid ? "" : `<span class="text-zinc-600 text-[10px]">-</span>`;
+  }
+  return chips.join(" ");
+}
+
+function getFilteredMembers() {
+  let list = [...(state.members || [])];
+  const { search, type, roleId, status, joinDate, age, sortBy } = state.membersFilters;
+  const now = Date.now();
+
+  // 1. Arama
+  if (search) {
+    const q = search.toLowerCase();
+    list = list.filter((m) => {
+      const u = (m.username || "").toLowerCase();
+      const d = (m.displayName || "").toLowerCase();
+      const n = (m.nickname || "").toLowerCase();
+      const t = (m.tag || "").toLowerCase();
+      const id = m.id || "";
+      return u.includes(q) || d.includes(q) || n.includes(q) || t.includes(q) || id.includes(q);
+    });
+  }
+
+  // 2. Hesap Türü
+  if (type === "human") {
+    list = list.filter((m) => !m.isBot);
+  } else if (type === "bot") {
+    list = list.filter((m) => m.isBot);
+  }
+
+  // 3. Rol
+  if (roleId === "no_roles") {
+    list = list.filter((m) => !m.roles || m.roles.length === 0);
+  } else if (roleId && roleId !== "all") {
+    list = list.filter((m) => m.roles && m.roles.some((r) => r.id === roleId));
+  }
+
+  // 4. Özel Durum
+  if (status === "boosters") {
+    list = list.filter((m) => m.isBoosting);
+  } else if (status === "voice") {
+    list = list.filter((m) => m.inVoice);
+  } else if (status === "admin") {
+    list = list.filter((m) => m.isAdmin);
+  } else if (status === "timedout") {
+    list = list.filter((m) => m.isTimedOut);
+  } else if (status === "recent24h") {
+    list = list.filter((m) => m.joinedTimestamp && m.joinedTimestamp >= now - 24 * 60 * 60 * 1000);
+  } else if (status === "recent7d") {
+    list = list.filter((m) => m.joinedTimestamp && m.joinedTimestamp >= now - 7 * 24 * 60 * 60 * 1000);
+  } else if (status === "newAccounts") {
+    list = list.filter((m) => m.createdTimestamp >= now - 30 * 24 * 60 * 60 * 1000);
+  } else if (status === "pending") {
+    list = list.filter((m) => m.pending);
+  }
+
+  // 5. Katılma Zamanı
+  const todayStart = new Date().setHours(0, 0, 0, 0);
+  if (joinDate === "today") {
+    list = list.filter((m) => m.joinedTimestamp && m.joinedTimestamp >= todayStart);
+  } else if (joinDate === "3d") {
+    list = list.filter((m) => m.joinedTimestamp && m.joinedTimestamp >= now - 3 * 24 * 60 * 60 * 1000);
+  } else if (joinDate === "7d") {
+    list = list.filter((m) => m.joinedTimestamp && m.joinedTimestamp >= now - 7 * 24 * 60 * 60 * 1000);
+  } else if (joinDate === "30d") {
+    list = list.filter((m) => m.joinedTimestamp && m.joinedTimestamp >= now - 30 * 24 * 60 * 60 * 1000);
+  } else if (joinDate === "90d") {
+    list = list.filter((m) => m.joinedTimestamp && m.joinedTimestamp >= now - 90 * 24 * 60 * 60 * 1000);
+  }
+
+  // 6. Hesap Yaşı
+  const dayMs = 24 * 60 * 60 * 1000;
+  if (age === "very_new") {
+    list = list.filter((m) => m.createdTimestamp >= now - 7 * dayMs);
+  } else if (age === "new") {
+    list = list.filter((m) => m.createdTimestamp >= now - 30 * dayMs);
+  } else if (age === "medium") {
+    list = list.filter((m) => m.createdTimestamp < now - 30 * dayMs && m.createdTimestamp >= now - 180 * dayMs);
+  } else if (age === "old") {
+    list = list.filter((m) => m.createdTimestamp < now - 365 * dayMs);
+  } else if (age === "veteran") {
+    list = list.filter((m) => m.createdTimestamp < now - 3 * 365 * dayMs);
+  }
+
+  // 7. Sıralama
+  list.sort((a, b) => {
+    switch (sortBy) {
+      case "joined_asc":
+        return (a.joinedTimestamp || 0) - (b.joinedTimestamp || 0);
+      case "created_desc":
+        return b.createdTimestamp - a.createdTimestamp;
+      case "created_asc":
+        return a.createdTimestamp - b.createdTimestamp;
+      case "name_asc":
+        return (a.displayName || a.username || "").localeCompare(b.displayName || b.username || "", "tr");
+      case "name_desc":
+        return (b.displayName || b.username || "").localeCompare(a.displayName || a.username || "", "tr");
+      case "role_rank":
+        return (b.highestRole?.position || 0) - (a.highestRole?.position || 0);
+      case "joined_desc":
+      default:
+        return (b.joinedTimestamp || 0) - (a.joinedTimestamp || 0);
+    }
+  });
+
+  return list;
+}
+
+function updateActiveFilterChips() {
+  const container = $("#members-active-filter-tags-container");
+  const chipsEl = $("#members-active-filter-tags");
+  if (!container || !chipsEl) return;
+
+  const chips = [];
+  const { search, type, roleId, status, joinDate, age } = state.membersFilters;
+
+  if (search) {
+    chips.push({
+      key: "search",
+      label: `Arama: "${escapeHtml(search)}"`,
+    });
+  }
+  if (type !== "all") {
+    chips.push({
+      key: "type",
+      label: `Tür: ${type === "human" ? "Gerçek Kullanıcılar" : "Botlar"}`,
+    });
+  }
+  if (roleId !== "all") {
+    if (roleId === "no_roles") {
+      chips.push({ key: "roleId", label: "Rol: Rolsüzler" });
+    } else {
+      const r = state.memberRoles.find((role) => role.id === roleId);
+      chips.push({ key: "roleId", label: `Rol: ${escapeHtml(r ? r.name : roleId)}` });
+    }
+  }
+  if (status !== "all") {
+    const statusLabels = {
+      boosters: "Durum: Takviyeciler",
+      voice: "Durum: Seste Olanlar",
+      admin: "Durum: Yöneticiler",
+      timedout: "Durum: Cezalılar",
+      recent24h: "Durum: Son 24 Saat",
+      recent7d: "Durum: Son 7 Gün",
+      newAccounts: "Durum: Yeni Hesaplar (<30g)",
+      pending: "Durum: Kuralları Bekleyenler",
+    };
+    chips.push({ key: "status", label: statusLabels[status] || status });
+  }
+  if (joinDate !== "all") {
+    const jdLabels = {
+      today: "Katılma: Bugün",
+      "3d": "Katılma: Son 3 Gün",
+      "7d": "Katılma: Son 7 Gün",
+      "30d": "Katılma: Son 30 Gün",
+      "90d": "Katılma: Son 90 Gün",
+    };
+    chips.push({ key: "joinDate", label: jdLabels[joinDate] || joinDate });
+  }
+  if (age !== "all") {
+    const ageLabels = {
+      very_new: "Hesap: Çok Yeni (<7g)",
+      new: "Hesap: Yeni (<30g)",
+      medium: "Hesap: Orta (1-6 Ay)",
+      old: "Hesap: Kıdemli (>1 Yıl)",
+      veteran: "Hesap: Eski (>3 Yıl)",
+    };
+    chips.push({ key: "age", label: ageLabels[age] || age });
+  }
+
+  if (chips.length === 0) {
+    container.classList.add("hidden");
+    chipsEl.innerHTML = "";
+    return;
+  }
+
+  container.classList.remove("hidden");
+  chipsEl.innerHTML = chips
+    .map(
+      (c) => `
+      <span class="chip-tag">
+        <span>${c.label}</span>
+        <button type="button" class="chip-remove-btn" onclick="removeMemberFilter('${c.key}')" title="Filtreyi Kaldır">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </span>`
+    )
+    .join("");
+}
+
+window.removeMemberFilter = function(key) {
+  if (key === "search") {
+    state.membersFilters.search = "";
+    const input = $("#members-search-input");
+    if (input) input.value = "";
+    $("#members-search-clear")?.classList.add("hidden");
+  } else if (key === "type") {
+    state.membersFilters.type = "all";
+    const select = $("#members-type-filter");
+    if (select) { select.value = "all"; syncCustomSelect(select); }
+  } else if (key === "roleId") {
+    state.membersFilters.roleId = "all";
+    const select = $("#members-role-filter");
+    if (select) { select.value = "all"; syncCustomSelect(select); }
+  } else if (key === "status") {
+    state.membersFilters.status = "all";
+    const select = $("#members-status-filter");
+    if (select) { select.value = "all"; syncCustomSelect(select); }
+  } else if (key === "joinDate") {
+    state.membersFilters.joinDate = "all";
+    const select = $("#members-join-date-filter");
+    if (select) { select.value = "all"; syncCustomSelect(select); }
+  } else if (key === "age") {
+    state.membersFilters.age = "all";
+    const select = $("#members-age-filter");
+    if (select) { select.value = "all"; syncCustomSelect(select); }
+  }
+  state.membersFilters.page = 1;
+  renderFilteredMembers();
+};
+
+function renderFilteredMembers() {
+  const filtered = getFilteredMembers();
+  updateActiveFilterChips();
+
+  // Rozet sayısı & filtre özeti
+  const countBadge = $("#members-count-badge");
+  if (countBadge) {
+    countBadge.textContent = `${filtered.length} üye bulundu`;
+  }
+
+  const summary = $("#members-filter-summary");
+  if (summary) {
+    const total = state.members ? state.members.length : 0;
+    if (filtered.length !== total) {
+      summary.textContent = `(Toplam ${total} üye arasından filtrelendi)`;
+    } else {
+      summary.textContent = `(Toplam ${total} üye)`;
+    }
+  }
+
+  // KPI kart vurguları
+  document.querySelectorAll(".member-filter-card").forEach((card) => {
+    card.classList.remove("active");
+  });
+
+  const { type, status } = state.membersFilters;
+  if (type === "all" && status === "all") {
+    $("#filter-card-all")?.classList.add("active");
+  } else if (type === "human") {
+    $("#filter-card-humans")?.classList.add("active");
+  } else if (type === "bot") {
+    $("#filter-card-bots")?.classList.add("active");
+  } else if (status === "boosters") {
+    $("#filter-card-boosters")?.classList.add("active");
+  } else if (status === "voice") {
+    $("#filter-card-voice")?.classList.add("active");
+  } else if (status === "admin") {
+    $("#filter-card-admins")?.classList.add("active");
+  } else if (status === "timedout") {
+    $("#filter-card-timeout")?.classList.add("active");
+  } else if (status === "recent7d") {
+    $("#filter-card-recent")?.classList.add("active");
+  }
+
+  const emptyState = $("#members-empty-state");
+  const tableContainer = $("#members-table-container");
+  const gridContainer = $("#members-grid-container");
+  const paginationContainer = $("#members-pagination-container");
+
+  if (filtered.length === 0) {
+    if (emptyState) emptyState.classList.remove("hidden");
+    if (tableContainer) tableContainer.classList.add("hidden");
+    if (gridContainer) gridContainer.classList.add("hidden");
+    if (paginationContainer) paginationContainer.classList.add("hidden");
+    return;
+  }
+
+  if (emptyState) emptyState.classList.add("hidden");
+
+  // Sayfalama hesabı
+  const perPageVal = state.membersFilters.perPage;
+  const perPage = perPageVal === "all" ? filtered.length : parseInt(perPageVal, 10) || 50;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  if (state.membersFilters.page > totalPages) {
+    state.membersFilters.page = totalPages;
+  }
+  const page = state.membersFilters.page;
+  const startIdx = (page - 1) * perPage;
+  const pageItems = filtered.slice(startIdx, startIdx + perPage);
+
+  // Görünüm seçimi
+  const isTable = state.membersFilters.viewMode === "table";
+  if (tableContainer) tableContainer.classList.toggle("hidden", !isTable);
+  if (gridContainer) gridContainer.classList.toggle("hidden", isTable);
+
+  if (isTable) {
+    const tbody = $("#members-table-body");
+    if (tbody) {
+      tbody.innerHTML = pageItems
+        .map(
+          (m) => `
+        <tr class="hover:bg-[#1f1f1f] transition group">
+          <!-- Üye Bilgisi -->
+          <td class="py-3 px-4">
+            <div class="flex items-center gap-3">
+              <div class="relative shrink-0 cursor-pointer" onclick="openMemberModalById('${m.id}')">
+                <img src="${escapeHtml(m.avatarUrl || '')}" class="w-9 h-9 rounded-full bg-zinc-800 border border-[#262626] object-cover" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'" alt="" />
+                ${m.inVoice ? `<span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border border-[#141414]" title="Seste: ${escapeHtml(m.voiceChannelName || 'Bilinmiyor')}"></span>` : ""}
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-bold text-[#F1F1F1] hover:text-[#FFE000] cursor-pointer transition truncate max-w-[150px]" onclick="openMemberModalById('${m.id}')">
+                    ${escapeHtml(m.displayName || m.username)}
+                  </span>
+                  ${m.isBot ? `<span class="text-[9px] bg-purple-500/20 text-purple-400 border border-purple-500/30 px-1 py-0.2 rounded font-bold">BOT</span>` : ""}
+                  ${m.isBoosting ? `<span class="text-[10px] text-pink-400" title="Sunucu Takviyecisi"><i class="fa-solid fa-bolt"></i></span>` : ""}
+                  ${m.isAdmin ? `<span class="text-[10px] text-amber-400" title="Yönetici"><i class="fa-solid fa-crown"></i></span>` : ""}
+                </div>
+                <div class="text-[11px] text-zinc-400 flex items-center gap-1.5">
+                  <span class="truncate max-w-[120px]">@${escapeHtml(m.username)}</span>
+                  <span class="text-zinc-600">•</span>
+                  <button type="button" class="text-zinc-500 hover:text-[#FFE000] transition font-mono text-[10px]" onclick="copyTextToClipboard('${m.id}', 'Kullanıcı ID kopyalandı!')" title="ID Kopyala">
+                    ${m.id}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </td>
+
+          <!-- Roller -->
+          <td class="py-3 px-4">
+            ${renderMemberRoleBadges(m)}
+          </td>
+
+          <!-- Katılma Tarihi -->
+          <td class="py-3 px-4">
+            <div class="font-medium text-[#F1F1F1] text-[11px]">${formatMemberExactDate(m.joinedTimestamp)}</div>
+            <div class="text-[10px] text-zinc-500">${formatMemberRelativeTime(m.joinedTimestamp)}</div>
+          </td>
+
+          <!-- Hesap Yaşı -->
+          <td class="py-3 px-4">
+            <div class="font-medium text-[#F1F1F1] text-[11px]">${formatMemberExactDate(m.createdTimestamp)}</div>
+            <div class="text-[10px] text-zinc-500">${formatMemberRelativeTime(m.createdTimestamp)}</div>
+          </td>
+
+          <!-- Durum / Rozetler -->
+          <td class="py-3 px-4">
+            ${renderMemberStatusChips(m)}
+          </td>
+
+          <!-- İşlemler -->
+          <td class="py-3 px-4 text-right">
+            <div class="flex items-center justify-end gap-1.5">
+              <button type="button" class="btn btn-sm" onclick="openMemberModalById('${m.id}')" title="Üye Detayları">
+                <i class="fa-solid fa-address-card"></i> Detay
+              </button>
+              <button type="button" class="btn btn-sm" onclick="copyTextToClipboard('${m.id}', 'ID kopyalandı!')" title="ID Kopyala">
+                <i class="fa-regular fa-copy"></i>
+              </button>
+              <button type="button" class="btn btn-sm" onclick="copyTextToClipboard('<@${m.id}>', 'Mention kopyalandı!')" title="Mention Kopyala">
+                <i class="fa-solid fa-at"></i>
+              </button>
+            </div>
+          </td>
+        </tr>`
+        )
+        .join("");
+    }
+  } else {
+    // Grid (Kart Görünümü)
+    if (gridContainer) {
+      gridContainer.innerHTML = pageItems
+        .map(
+          (m) => `
+        <div class="bg-[#1c1c1c] border border-[#262626] hover:border-zinc-600 rounded-xl overflow-hidden transition group flex flex-col justify-between shadow-sm" style="border-top: 3px solid ${m.highestRole?.color || "#3b82f6"};">
+          <div class="p-4 space-y-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="relative cursor-pointer" onclick="openMemberModalById('${m.id}')">
+                <img src="${escapeHtml(m.avatarUrl || '')}" class="w-12 h-12 rounded-xl bg-zinc-800 border border-[#262626] object-cover" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'" alt="" />
+                ${m.inVoice ? `<span class="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[#1c1c1c]" title="Seste"></span>` : ""}
+              </div>
+              <div class="flex items-center gap-1">
+                <button type="button" class="btn btn-sm" onclick="copyTextToClipboard('${m.id}', 'ID kopyalandı!')" title="ID Kopyala">
+                  <i class="fa-regular fa-copy"></i>
+                </button>
+                <button type="button" class="btn btn-sm" onclick="copyTextToClipboard('<@${m.id}>', 'Mention kopyalandı!')" title="Mention Kopyala">
+                  <i class="fa-solid fa-at"></i>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <h4 class="font-bold text-sm text-[#F1F1F1] group-hover:text-[#FFE000] transition cursor-pointer truncate max-w-[160px]" onclick="openMemberModalById('${m.id}')">${escapeHtml(m.displayName || m.username)}</h4>
+                ${m.isBot ? `<span class="badge badge-purple">BOT</span>` : ""}
+              </div>
+              <div class="text-xs text-zinc-400 truncate">@${escapeHtml(m.username)}</div>
+            </div>
+
+            <div class="pt-0.5">
+              ${
+                m.highestRole
+                  ? `
+                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#141414] border border-[#262626]">
+                  <span class="w-2 h-2 rounded-full shrink-0" style="background-color: ${m.highestRole.color};"></span>
+                  <span class="truncate max-w-[140px] text-zinc-300">${escapeHtml(m.highestRole.name)}</span>
+                </div>`
+                  : `<span class="text-[11px] text-zinc-500">Rolsüz Üye</span>`
+              }
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-[#262626] text-[11px]">
+              <div>
+                <span class="text-zinc-500 block text-[10px]">Katılma:</span>
+                <span class="text-zinc-300 font-medium">${formatMemberRelativeTime(m.joinedTimestamp)}</span>
+              </div>
+              <div>
+                <span class="text-zinc-500 block text-[10px]">Hesap:</span>
+                <span class="text-zinc-300 font-medium">${formatMemberRelativeTime(m.createdTimestamp)}</span>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-1 pt-0.5 min-h-[22px]">
+              ${renderMemberStatusChips(m, true)}
+            </div>
+          </div>
+
+          <div class="p-3 bg-[#161616] border-t border-[#262626]">
+            <button type="button" class="btn w-full" onclick="openMemberModalById('${m.id}')">
+              <i class="fa-solid fa-address-card"></i> Detaylı İncele
+            </button>
+          </div>
+        </div>`
+        )
+        .join("");
+    }
+  }
+
+  // Sayfalama butonları
+  if (paginationContainer) {
+    paginationContainer.classList.remove("hidden");
+    const info = $("#members-pagination-info");
+    if (info) {
+      const endIdx = Math.min(startIdx + perPage, filtered.length);
+      info.textContent = `Sayfa ${page} / ${totalPages} (Toplam ${filtered.length} üyeden ${startIdx + 1} - ${endIdx} arası gösteriliyor)`;
+    }
+
+    const btnsContainer = $("#members-pagination-buttons");
+    if (btnsContainer) {
+      if (totalPages <= 1) {
+        btnsContainer.innerHTML = "";
+      } else {
+        let btnsHtml = "";
+        // İlk & Önceki
+        btnsHtml += `
+          <button type="button" class="btn btn-sm pagination-btn" ${page <= 1 ? "disabled" : ""} onclick="changeMemberPage(1)" title="İlk Sayfa">
+            <i class="fa-solid fa-angles-left"></i>
+          </button>
+          <button type="button" class="btn btn-sm pagination-btn" ${page <= 1 ? "disabled" : ""} onclick="changeMemberPage(${page - 1})" title="Önceki Sayfa">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+        `;
+
+        // Sayfa numaraları (Max 5 numara)
+        let startPage = Math.max(1, page - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        if (endPage - startPage < 4) {
+          startPage = Math.max(1, endPage - 4);
+        }
+
+        for (let p = startPage; p <= endPage; p++) {
+          const isActive = p === page;
+          btnsHtml += `
+            <button type="button" class="btn btn-sm pagination-btn ${isActive ? "btn-primary" : ""}" onclick="changeMemberPage(${p})">
+              ${p}
+            </button>
+          `;
+        }
+
+        // Sonraki & Son
+        btnsHtml += `
+          <button type="button" class="btn btn-sm pagination-btn" ${page >= totalPages ? "disabled" : ""} onclick="changeMemberPage(${page + 1})" title="Sonraki Sayfa">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+          <button type="button" class="btn btn-sm pagination-btn" ${page >= totalPages ? "disabled" : ""} onclick="changeMemberPage(${totalPages})" title="Son Sayfa">
+            <i class="fa-solid fa-angles-right"></i>
+          </button>
+        `;
+
+        btnsContainer.innerHTML = btnsHtml;
+      }
+    }
+  }
+}
+
+window.changeMemberPage = function(newPage) {
+  state.membersFilters.page = newPage;
+  renderFilteredMembers();
+  // Üst tabloya hafif kaydır
+  $("#tab-members")?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+async function loadMembers(forceRefresh = false) {
+  if (!state.selectedGuildId) return;
+
+  const skeleton = $("#members-loading-skeleton");
+  const tableContainer = $("#members-table-container");
+  const gridContainer = $("#members-grid-container");
+  const emptyState = $("#members-empty-state");
+  const paginationContainer = $("#members-pagination-container");
+  const refreshBtn = $("#members-refresh-btn");
+
+  if (skeleton) skeleton.classList.remove("hidden");
+  if (tableContainer) tableContainer.classList.add("hidden");
+  if (gridContainer) gridContainer.classList.add("hidden");
+  if (emptyState) emptyState.classList.add("hidden");
+  if (paginationContainer) paginationContainer.classList.add("hidden");
+  if (refreshBtn) {
+    refreshBtn.disabled = true;
+    refreshBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate fa-spin"></i> Yükleniyor...`;
+  }
+
+  try {
+    const res = await api(`/api/members?guildId=${encodeURIComponent(state.selectedGuildId)}${forceRefresh ? "&forceRefresh=true" : ""}`);
+    const data = await res.json();
+
+    state.members = data.members || [];
+    state.memberRoles = data.roles || [];
+    state.memberStats = data.stats || {};
+
+    // Rol dropdown'ını doldur
+    const roleSelect = $("#members-role-filter");
+    if (roleSelect) {
+      const currentRole = state.membersFilters.roleId;
+      roleSelect.innerHTML = `
+        <option value="all" data-icon="fa-solid fa-shield">Tüm Roller (Hepsi)</option>
+        <option value="no_roles" data-icon="fa-solid fa-user-slash">Rolsüz Üyeler</option>
+      `;
+      for (const r of state.memberRoles) {
+        const opt = new Option(`${r.name} (${r.memberCount})`, r.id);
+        if (r.color && r.color !== "#000000") {
+          opt.dataset.color = r.color;
+        } else {
+          opt.dataset.icon = "fa-solid fa-shield";
+        }
+        roleSelect.appendChild(opt);
+      }
+      roleSelect.value = currentRole || "all";
+      createCustomSelect(roleSelect);
+    }
+
+    // KPI Kartları sayılarını doldur
+    const stats = state.memberStats;
+    $("#mf-stat-total").textContent = String(stats.total || state.members.length);
+    $("#mf-stat-humans").textContent = String(stats.humans || 0);
+    $("#mf-stat-bots").textContent = String(stats.bots || 0);
+    $("#mf-stat-boosters").textContent = String(stats.boosters || 0);
+    $("#mf-stat-voice").textContent = String(stats.inVoice || 0);
+    $("#mf-stat-admins").textContent = String(stats.admins || 0);
+    $("#mf-stat-timeout").textContent = String(stats.timedOut || 0);
+    $("#mf-stat-recent").textContent = String(stats.recent7d || 0);
+
+    renderFilteredMembers();
+  } catch (err) {
+    toast(`Üyeler yüklenemedi: ${err.message}`, "error");
+  } finally {
+    if (skeleton) skeleton.classList.add("hidden");
+    if (refreshBtn) {
+      refreshBtn.disabled = false;
+      refreshBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> Yenile`;
+    }
+  }
+}
+
+function exportMembersToCsv() {
+  const members = getFilteredMembers();
+  if (members.length === 0) {
+    toast("Dışa aktarılacak üye bulunamadı!", "error");
+    return;
+  }
+  const headers = [
+    "Kullanıcı ID",
+    "Kullanıcı Adı",
+    "Görünen Ad",
+    "Takma Ad",
+    "Bot Mu",
+    "Katılma Tarihi",
+    "Hesap Açılış Tarihi",
+    "En Yüksek Rol",
+    "Tüm Roller",
+    "Takviyeci (Boost)",
+    "Seste Mi",
+    "Ses Kanalı",
+    "Zamanaşımı (Cezalı)",
+    "Yönetici Mi",
+  ];
+  const rows = members.map((m) => [
+    `"${m.id}"`,
+    `"${(m.username || "").replace(/"/g, '""')}"`,
+    `"${(m.displayName || "").replace(/"/g, '""')}"`,
+    `"${(m.nickname || "").replace(/"/g, '""')}"`,
+    m.isBot ? "Evet" : "Hayır",
+    m.joinedAt ? `"${m.joinedAt}"` : `""`,
+    `"${m.createdAt}"`,
+    `"${(m.highestRole?.name || "").replace(/"/g, '""')}"`,
+    `"${(m.roles ? m.roles.map((r) => r.name).join(", ") : "").replace(/"/g, '""')}"`,
+    m.isBoosting ? "Evet" : "Hayır",
+    m.inVoice ? "Evet" : "Hayır",
+    `"${(m.voiceChannelName || "").replace(/"/g, '""')}"`,
+    m.isTimedOut ? "Evet" : "Hayır",
+    m.isAdmin ? "Evet" : "Hayır",
+  ]);
+
+  const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const guildName = state.guilds.find((g) => g.id === state.selectedGuildId)?.name || "sunucu";
+  a.href = url;
+  a.download = `uyeler-${guildName.replace(/[^a-zA-Z0-9_\u0080-\uFFFF-]/g, "_")}-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`${members.length} üye CSV olarak başarıyla indirildi.`);
+}
+
+function exportMembersToJson() {
+  const members = getFilteredMembers();
+  if (members.length === 0) {
+    toast("Dışa aktarılacak üye bulunamadı!", "error");
+    return;
+  }
+  const jsonContent = JSON.stringify(members, null, 2);
+  const blob = new Blob([jsonContent], { type: "application/json;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const guildName = state.guilds.find((g) => g.id === state.selectedGuildId)?.name || "sunucu";
+  a.href = url;
+  a.download = `uyeler-${guildName.replace(/[^a-zA-Z0-9_\u0080-\uFFFF-]/g, "_")}-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`${members.length} üye JSON olarak başarıyla indirildi.`);
+}
+
+function initMembersControls() {
+  // Görünüm Seçici (Tablo vs Kart)
+  const viewTableBtn = $("#members-view-table-btn");
+  const viewGridBtn = $("#members-view-grid-btn");
+
+  if (viewTableBtn && viewGridBtn) {
+    viewTableBtn.onclick = () => {
+      state.membersFilters.viewMode = "table";
+      viewTableBtn.className = "btn btn-primary btn-sm";
+      viewGridBtn.className = "btn btn-sm";
+      renderFilteredMembers();
+    };
+
+    viewGridBtn.onclick = () => {
+      state.membersFilters.viewMode = "grid";
+      viewGridBtn.className = "btn btn-primary btn-sm";
+      viewTableBtn.className = "btn btn-sm";
+      renderFilteredMembers();
+    };
+  }
+
+  // Yenile Butonu
+  const refreshBtn = $("#members-refresh-btn");
+  if (refreshBtn) {
+    refreshBtn.onclick = () => loadMembers(true);
+  }
+
+  // Dışa Aktar Menüsü
+  const exportBtn = $("#members-export-btn");
+  const exportMenu = $("#members-export-menu");
+  if (exportBtn && exportMenu) {
+    exportBtn.onclick = (e) => {
+      e.stopPropagation();
+      exportMenu.classList.toggle("hidden");
+    };
+    document.addEventListener("click", () => exportMenu.classList.add("hidden"));
+
+    $("#export-csv-btn")?.addEventListener("click", () => {
+      exportMenu.classList.add("hidden");
+      exportMembersToCsv();
+    });
+    $("#export-json-btn")?.addEventListener("click", () => {
+      exportMenu.classList.add("hidden");
+      exportMembersToJson();
+    });
+  }
+
+  // Arama Girişi
+  const searchInput = $("#members-search-input");
+  const searchClear = $("#members-search-clear");
+  let searchTimer;
+  if (searchInput) {
+    searchInput.oninput = () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        state.membersFilters.search = searchInput.value.trim();
+        state.membersFilters.page = 1;
+        if (searchClear) searchClear.classList.toggle("hidden", !searchInput.value.trim());
+        renderFilteredMembers();
+      }, 150);
+    };
+  }
+  if (searchClear && searchInput) {
+    searchClear.onclick = () => {
+      searchInput.value = "";
+      state.membersFilters.search = "";
+      state.membersFilters.page = 1;
+      searchClear.classList.add("hidden");
+      renderFilteredMembers();
+    };
+  }
+
+  // Dropdown Filtreler (Özel Tasarımlı Dropdown Entegrasyonu)
+  const typeFilter = $("#members-type-filter");
+  if (typeFilter) {
+    createCustomSelect(typeFilter);
+    typeFilter.onchange = () => {
+      state.membersFilters.type = typeFilter.value;
+      state.membersFilters.page = 1;
+      renderFilteredMembers();
+    };
+  }
+
+  const roleFilter = $("#members-role-filter");
+  if (roleFilter) {
+    createCustomSelect(roleFilter);
+    roleFilter.onchange = () => {
+      state.membersFilters.roleId = roleFilter.value;
+      state.membersFilters.page = 1;
+      renderFilteredMembers();
+    };
+  }
+
+  const statusFilter = $("#members-status-filter");
+  if (statusFilter) {
+    createCustomSelect(statusFilter);
+    statusFilter.onchange = () => {
+      state.membersFilters.status = statusFilter.value;
+      state.membersFilters.page = 1;
+      renderFilteredMembers();
+    };
+  }
+
+  const joinDateFilter = $("#members-join-date-filter");
+  if (joinDateFilter) {
+    createCustomSelect(joinDateFilter);
+    joinDateFilter.onchange = () => {
+      state.membersFilters.joinDate = joinDateFilter.value;
+      state.membersFilters.page = 1;
+      renderFilteredMembers();
+    };
+  }
+
+  const ageFilter = $("#members-age-filter");
+  if (ageFilter) {
+    createCustomSelect(ageFilter);
+    ageFilter.onchange = () => {
+      state.membersFilters.age = ageFilter.value;
+      state.membersFilters.page = 1;
+      renderFilteredMembers();
+    };
+  }
+
+  const sortFilter = $("#members-sort-filter");
+  if (sortFilter) {
+    createCustomSelect(sortFilter);
+    sortFilter.onchange = () => {
+      state.membersFilters.sortBy = sortFilter.value;
+      renderFilteredMembers();
+    };
+  }
+
+  const perPageSelect = $("#members-per-page");
+  if (perPageSelect) {
+    createCustomSelect(perPageSelect);
+    perPageSelect.onchange = () => {
+      state.membersFilters.perPage = perPageSelect.value;
+      state.membersFilters.page = 1;
+      renderFilteredMembers();
+    };
+  }
+
+  const timeoutDuration = $("#mdm-timeout-duration");
+  if (timeoutDuration) {
+    createCustomSelect(timeoutDuration);
+  }
+
+  // Filtreleri Sıfırla Butonları
+  const resetBtn = $("#members-reset-filters-btn");
+  const emptyResetBtn = $("#members-empty-reset-btn");
+  const resetAllFilters = () => {
+    state.membersFilters.search = "";
+    state.membersFilters.type = "all";
+    state.membersFilters.roleId = "all";
+    state.membersFilters.status = "all";
+    state.membersFilters.joinDate = "all";
+    state.membersFilters.age = "all";
+    state.membersFilters.sortBy = "joined_desc";
+    state.membersFilters.page = 1;
+
+    if (searchInput) searchInput.value = "";
+    if (searchClear) searchClear.classList.add("hidden");
+    if (typeFilter) { typeFilter.value = "all"; syncCustomSelect(typeFilter); }
+    if (roleFilter) { roleFilter.value = "all"; syncCustomSelect(roleFilter); }
+    if (statusFilter) { statusFilter.value = "all"; syncCustomSelect(statusFilter); }
+    if (joinDateFilter) { joinDateFilter.value = "all"; syncCustomSelect(joinDateFilter); }
+    if (ageFilter) { ageFilter.value = "all"; syncCustomSelect(ageFilter); }
+    if (sortFilter) { sortFilter.value = "joined_desc"; syncCustomSelect(sortFilter); }
+
+    renderFilteredMembers();
+  };
+  if (resetBtn) resetBtn.onclick = resetAllFilters;
+  if (emptyResetBtn) emptyResetBtn.onclick = resetAllFilters;
+
+  // KPI Hızlı Filtre Kartları
+  document.querySelectorAll(".member-filter-card").forEach((card) => {
+    card.onclick = () => {
+      if (card.id === "filter-card-all") {
+        resetAllFilters();
+        return;
+      }
+
+      const typeVal = card.dataset.typeFilter;
+      const statusVal = card.dataset.statusFilter;
+
+      if (typeVal) {
+        state.membersFilters.type = state.membersFilters.type === typeVal ? "all" : typeVal;
+        state.membersFilters.status = "all";
+        if (typeFilter) { typeFilter.value = state.membersFilters.type; syncCustomSelect(typeFilter); }
+        if (statusFilter) { statusFilter.value = "all"; syncCustomSelect(statusFilter); }
+      } else if (statusVal) {
+        state.membersFilters.status = state.membersFilters.status === statusVal ? "all" : statusVal;
+        state.membersFilters.type = "all";
+        if (statusFilter) { statusFilter.value = state.membersFilters.status; syncCustomSelect(statusFilter); }
+        if (typeFilter) { typeFilter.value = "all"; syncCustomSelect(typeFilter); }
+      }
+
+      state.membersFilters.page = 1;
+      renderFilteredMembers();
+    };
+  });
+
+  // Modal İşlemleri
+  const modalCloseBtn = $("#mdm-close-btn");
+  const modalFooterClose = $("#mdm-footer-close-btn");
+  const memberModal = $("#member-detail-modal");
+
+  if (modalCloseBtn) modalCloseBtn.onclick = closeMemberModal;
+  if (modalFooterClose) modalFooterClose.onclick = closeMemberModal;
+  if (memberModal) {
+    memberModal.onclick = (e) => {
+      if (e.target === memberModal) closeMemberModal();
+    };
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && memberModal && !memberModal.classList.contains("hidden")) {
+      closeMemberModal();
+    }
+  });
+
+  // Modal Kopyalama Butonları
+  $("#mdm-copy-id")?.addEventListener("click", () => {
+    if (state.selectedMember) copyTextToClipboard(state.selectedMember.id, "Kullanıcı ID kopyalandı!");
+  });
+  $("#mdm-copy-mention")?.addEventListener("click", () => {
+    if (state.selectedMember) copyTextToClipboard(`<@${state.selectedMember.id}>`, "Mention kopyalandı!");
+  });
+
+  // Moderasyon: Zamanaşımı
+  $("#mdm-timeout-apply-btn")?.addEventListener("click", () => {
+    const duration = $("#mdm-timeout-duration")?.value || "5";
+    handleMemberAction("timeout", { durationMinutes: duration });
+  });
+
+  // Moderasyon: Takma Ad
+  $("#mdm-nickname-save-btn")?.addEventListener("click", () => {
+    const nick = $("#mdm-nickname-input")?.value;
+    handleMemberAction("setNickname", { nickname: nick });
+  });
+
+  // Dashboard'daki toplam üye kartına tıklandığında üyeler sekmesine geç
+  const statMembersCard = $("#stat-members-card");
+  if (statMembersCard) {
+    statMembersCard.onclick = () => {
+      const tabBtn = document.querySelector('.tab-btn[data-tab="members"]');
+      if (tabBtn) tabBtn.click();
+    };
+  }
 }
 
 // ---------------- Başlangıç ----------------
@@ -2528,10 +4026,12 @@ async function init() {
     bindForms();
     initAuditLogControls();
     initFeedControls();
+    initMembersControls();
     renderLayerList();
     renderProps();
     draw();
     loadDashboardStats();
+    initAllCustomSelects();
   } catch (err) {
     toast(`Panel yüklenemedi: ${err.message}`, "error");
   }

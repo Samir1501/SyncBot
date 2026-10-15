@@ -71,9 +71,21 @@ export interface LoggingFilters {
   ignoredChannels: string[];
 }
 
+export interface LoggingEventColors {
+  messageDelete?: string;
+  messageUpdate?: string;
+  memberJoin?: string;
+  memberLeave?: string;
+  memberUpdate?: string;
+  voiceJoinLeave?: string;
+  voiceMuteDeafen?: string;
+  guildBan?: string;
+}
+
 export interface LoggingAppearance {
   detailLevel: "rich" | "compact";
   embedColor: string;
+  eventColors?: LoggingEventColors;
 }
 
 export interface FeedSettings {
@@ -137,6 +149,16 @@ export const defaultSettings: GuildSettings = {
     appearance: {
       detailLevel: "rich",
       embedColor: "#FFE000",
+      eventColors: {
+        messageDelete: "#EF4444",
+        messageUpdate: "#F59E0B",
+        memberJoin: "#10B981",
+        memberLeave: "#F43F5E",
+        memberUpdate: "#38BDF8",
+        voiceJoinLeave: "#A855F7",
+        voiceMuteDeafen: "#F97316",
+        guildBan: "#DC2626",
+      },
     },
   },
   welcome: {
@@ -230,6 +252,16 @@ export function sanitizeGuildSettings(input: unknown): GuildSettings {
   }
   if (!["rich", "compact"].includes(merged.logging.appearance?.detailLevel)) {
     merged.logging.appearance.detailLevel = "rich";
+  }
+  if (!merged.logging.appearance.eventColors || typeof merged.logging.appearance.eventColors !== "object") {
+    merged.logging.appearance.eventColors = { ...defaultSettings.logging.appearance.eventColors };
+  } else {
+    for (const key of Object.keys(defaultSettings.logging.appearance.eventColors!)) {
+      const k = key as keyof LoggingEventColors;
+      if (!merged.logging.appearance.eventColors[k] || typeof merged.logging.appearance.eventColors[k] !== "string") {
+        merged.logging.appearance.eventColors[k] = defaultSettings.logging.appearance.eventColors![k];
+      }
+    }
   }
   // Sync channelId and channels.default
   if (merged.logging.channelId && !merged.logging.channels.default) {
