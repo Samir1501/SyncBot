@@ -1,9 +1,13 @@
 import { Colors, EmbedBuilder, GuildBan } from "discord.js";
-import { sendLog } from "../utils/logger.js";
-import { addActivity } from "../utils/activityTracker.js";
+import { activityRepository, type IActivityRepository } from "../repositories/activityRepository.js";
+import { auditLoggerService, type IAuditLogger } from "../services/logging/AuditLoggerService.js";
 
-export async function handleGuildBanRemove(ban: GuildBan): Promise<void> {
-  addActivity({
+export async function handleGuildBanRemove(
+  ban: GuildBan,
+  logger: IAuditLogger = auditLoggerService,
+  activityRepo: IActivityRepository = activityRepository
+): Promise<void> {
+  activityRepo.add({
     guildId: ban.guild.id,
     type: "bot",
     title: "Yasak Kaldırıldı (Unban)",
@@ -22,23 +26,19 @@ export async function handleGuildBanRemove(ban: GuildBan): Promise<void> {
     )
     .setTimestamp();
 
-  await sendLog(
-    ban.guild,
-    embed,
-    {
-      category: "moderation",
-      eventType: "guildBan",
-      user: {
-        id: ban.user.id,
-        tag: ban.user.tag,
-        avatarUrl: ban.user.displayAvatarURL(),
-        isBot: ban.user.bot,
-      },
-      record: {
-        title: "Yasak Kaldırıldı",
-        description: `${ban.user.tag} sunucu yasağı kaldırıldı`,
-        color: "#22c55e",
-      },
-    }
-  );
+  await logger.sendLog(ban.guild, embed, {
+    category: "moderation",
+    eventType: "guildBan",
+    user: {
+      id: ban.user.id,
+      tag: ban.user.tag,
+      avatarUrl: ban.user.displayAvatarURL(),
+      isBot: ban.user.bot,
+    },
+    record: {
+      title: "Yasak Kaldırıldı",
+      description: `${ban.user.tag} sunucu yasağı kaldırıldı`,
+      color: "#22c55e",
+    },
+  });
 }

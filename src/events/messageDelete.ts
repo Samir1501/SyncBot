@@ -6,10 +6,14 @@ import {
   PartialMessage,
   SnowflakeUtil,
 } from "discord.js";
-import { sendLog } from "../utils/logger.js";
-import { addActivity } from "../utils/activityTracker.js";
+import { activityRepository, type IActivityRepository } from "../repositories/activityRepository.js";
+import { auditLoggerService, type IAuditLogger } from "../services/logging/AuditLoggerService.js";
 
-export async function handleMessageDelete(message: Message | PartialMessage): Promise<void> {
+export async function handleMessageDelete(
+  message: Message | PartialMessage,
+  logger: IAuditLogger = auditLoggerService,
+  activityRepo: IActivityRepository = activityRepository
+): Promise<void> {
   // DM mesajlarını yoksay
   if (!message.guild) return;
 
@@ -17,10 +21,10 @@ export async function handleMessageDelete(message: Message | PartialMessage): Pr
   const hasAttachments = Boolean(message.attachments && message.attachments.size > 0);
 
   // 1. Hayalet / İçeriksiz Eski Mesaj Koruması:
-  // Eğer mesaj önbellekte yoksa (partial), yazarı bilinmiyorsa ve ne içeriği ne de eki varsa;
-  // bu Discord'un çok eski önbelleklenmemiş bir silme olayıdır. Boş ve anlamsız log basmayı engelle!
   if (!message.author && !content && !hasAttachments) {
-    console.log(`[Log Guard] #${message.channelId} kanalında içeriği ve yazarı bulunmayan önbellek öncesi mesaj silme olayı yok sayıldı.`);
+    console.log(
+      `[Log Guard] #${message.channelId} kanalında içeriği ve yazarı bulunmayan önbellek öncesi mesaj silme olayı yok sayıldı.`
+    );
     return;
   }
 
@@ -46,7 +50,6 @@ export async function handleMessageDelete(message: Message | PartialMessage): Pr
       limit: 1,
     });
     const entry = auditLogs.entries.first();
-    // Eğer silme kaydı hedef kullanıcının mesajına aitse ve son 12 saniyede bir yetkili sildiyse
     if (
       entry &&
       entry.extra &&
@@ -65,7 +68,7 @@ export async function handleMessageDelete(message: Message | PartialMessage): Pr
   }
 
   if (!message.author?.bot) {
-    addActivity({
+    activityRepo.add({
       guildId: message.guild.id,
       type: "message_delete",
       title: "Mesaj Silindi",
@@ -104,7 +107,6 @@ export async function handleMessageDelete(message: Message | PartialMessage): Pr
     inline: true,
   });
 
-  // Mesajın orijinal gönderilme tarihi (özellikle eski mesajların silindiği anlaşılsın diye)
   if (createdUnix) {
     embed.addFields({
       name: "Orijinal Gönderim Tarihi",
@@ -113,7 +115,6 @@ export async function handleMessageDelete(message: Message | PartialMessage): Pr
     });
   }
 
-  // Eğer mesajı bir moderatör sildiyse belirt
   if (executorId) {
     embed.addFields({
       name: "Silen Yetkili",
@@ -123,7 +124,6 @@ export async function handleMessageDelete(message: Message | PartialMessage): Pr
   }
 
   if (content) {
-    // 1024 karakter sınırını aşmamak için güvenli kırpma
     const safeContent = content.length > 1000 ? `${content.slice(0, 1000)}...` : content;
     embed.addFields({ name: "Silinen İçerik", value: safeContent });
   } else {
@@ -133,7 +133,6 @@ export async function handleMessageDelete(message: Message | PartialMessage): Pr
     });
   }
 
-  // Ekler (görsel/dosya) varsa listele
   if (message.attachments && message.attachments.size > 0) {
     const attachmentUrls = message.attachments.map((att) => att.url).join("\n");
     embed.addFields({
@@ -149,33 +148,29 @@ export async function handleMessageDelete(message: Message | PartialMessage): Pr
     }
   }
 
-  await sendLog(
-    message.guild,
-    embed,
-    {
-      category: "messages",
-      eventType: "messageDelete",
-      channelId: message.channelId,
-      channelName,
-      user: message.author
-        ? {
-            id: message.author.id,
-            tag: message.author.tag,
-            avatarUrl: message.author.displayAvatarURL() || undefined,
-            isBot: message.author.bot,
-          }
-        : undefined,
-      record: {
-        title: "Mesaj Silindi",
-        description: `#${channelName} kanalında ${message.author?.tag || "Kullanıcı"} mesajı silindi${executorTag ? ` (Yetkili: ${executorTag})` : ""}`,
-        details: {
-          author: message.author?.tag || "Bilinmiyor",
-          content: content ? (content.length > 80 ? `${content.slice(0, 80)}...` : content) : "Boş",
-          originalDate: createdUnix ? new Date(createdUnix * 1000).toISOString() : "Bilinmiyor",
-          executor: executorTag || "Kullanıcı Kendisi",
-        },
-        color: "#ef4444",
+  await logger.sendLog(message.guild, embed, {
+    category: "messages",
+    eventType: "messageDelete",
+    channelId: message.channelId,
+    channelName,
+    user: message.author
+      ? {
+          id: message.author.id,
+          tag: message.author.tag,
+          avatarUrl: message.author.displayAvatarURL() || undefined,
+          isBot: message.author.bot,
+        }
+      : undefined,
+    record: {
+      title: "Mesaj Silindi",
+      description: `#${channelName} kanalında ${message.author?.tag || "Kullanıcı"} mesajı silindi${executorTag ? ` (Yetkili: ${executorTag})` : ""}`,
+      details: {
+        author: message.author?.tag || "Bilinmiyor",
+        content: content ? (content.length > 80 ? `${content.slice(0, 80)}...` : content) : "Boş",
+        originalDate: createdUnix ? new Date(createdUnix * 1000).toISOString() : "Bilinmiyor",
+        executor: executorTag || "Kullanıcı Kendisi",
       },
-    }
-  );
+      color: "#ef4444",
+    },
+  });
 }

@@ -4,11 +4,16 @@
 
 /* 1. KENAR ÇUBUĞU (SIDEBAR) & PROFİL */
 #sidebar {
-  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 15rem; /* 240px */
   height: 100vh;
-  flex-shrink: 0;
+  background-color: var(--bg-panel);
+  border-right: 1px solid var(--border-dark);
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #main-content {
@@ -33,7 +38,7 @@
 
 #sidebar.collapsed .tab-btn i {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.15rem !important;
 }
 
 #sidebar.collapsed #sidebar-profile {
@@ -42,23 +47,138 @@
   padding-right: 0.5rem;
 }
 
+#sidebar-profile {
+  height: 4rem; /* 64px */
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.sidebar-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-avatar {
+  width: 2.5rem; /* 40px */
+  height: 2.5rem;
+  border-radius: 9999px;
+  background-color: #27272a;
+  border: 1px solid var(--border-dark);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.sidebar-status-badge {
+  position: absolute;
+  bottom: -0.125rem;
+  right: -0.125rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 9999px;
+  border: 2px solid #1c1c1c;
+  background-color: #71717a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  cursor: help;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-status-badge.online {
+  background-color: #23a55a;
+}
+
+.sidebar-status-badge.offline {
+  background-color: #f23f43;
+}
+
+.sidebar-info {
+  min-width: 0;
+}
+
+.sidebar-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-server {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-nav {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 0%;
+  overflow-y: auto;
+}
+
 /* 2. GEZİNME SEKMELERİ (.tab-btn - Birleştirilmiş Referans Sınıf) */
 .tab-btn,
 .layer-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 500;
+  line-height: 1.25;
   color: var(--text-muted);
-  transition: all 0.15s ease;
-  outline: none;
+  background-color: transparent;
+  border: 1px solid transparent;
   border-radius: 0.375rem;
+  outline: none;
   cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: all 0.15s ease;
 }
 
-/* İkon rengi her durumda text rengi ile birebir aynı kalır */
+/* İkonların Düşey Eksen Hizalaması (Vertical Alignment & Fixed Width Box) */
 .tab-btn i,
 .tab-btn svg,
+.tab-btn [class*="fa-"],
 .layer-btn i,
-.layer-btn svg {
+.layer-btn svg,
+.layer-btn [class*="fa-"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 1.25rem !important;  /* 20px - Tam sabit genişlik kutusu */
+  height: 1.25rem !important; /* 20px - Tam sabit yükseklik kutusu */
+  min-width: 1.25rem !important;
+  max-width: 1.25rem !important;
+  font-size: 0.9375rem !important; /* 15px */
+  line-height: 1 !important;
+  text-align: center !important;
+  flex-shrink: 0 !important;
   color: inherit !important;
   transition: color 0.15s ease;
+}
+
+.tab-btn .sidebar-text,
+.layer-btn .sidebar-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1 1 0%;
 }
 
 /* Hover yapıldığında hem ikon hem text aynı renkte (beyaz) parlar */
@@ -73,17 +193,13 @@
 .layer-btn.active {
   background-color: var(--primary-light) !important;
   color: var(--primary) !important;
+  font-weight: 600;
 }
 
 .tab-btn.active:hover,
 .layer-btn.active:hover {
   background-color: rgba(255, 224, 0, 0.2) !important;
   color: var(--primary) !important;
-}
-
-.tab-btn .fa-solid, .tab-btn .fa-regular {
-  width: 1.25rem;
-  text-align: center;
 }
 
 /* 3. VERİ TABLOSU (Tekil .data-table Sınıfı) */

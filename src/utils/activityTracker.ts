@@ -1,76 +1,15 @@
-import fs from "node:fs";
-import path from "node:path";
-import { DATA_DIR } from "../settings.js";
-import { createDebouncedJsonWriter } from "./jsonFile.js";
-
-export interface ActivityEvent {
-  id: string;
-  guildId?: string;
-  type: "member_join" | "member_leave" | "message_delete" | "voice" | "welcome" | "announcement" | "bot" | "feed";
-  title: string;
-  desc: string;
-  time: string;
-  icon: string;
-  color: string;
-}
-
-const ACTIVITIES_FILE = path.join(DATA_DIR, "activities.json");
-const MAX_ACTIVITIES = 100;
-
-let activities: ActivityEvent[] = [];
-
-// Başlangıçta kayıtlı aktiviteleri diskten yükle
-try {
-  if (fs.existsSync(ACTIVITIES_FILE)) {
-    const raw = fs.readFileSync(ACTIVITIES_FILE, "utf-8");
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      activities = parsed;
-    }
-  }
-} catch (err) {
-  console.error("[ActivityTracker] Aktiviteler diskten okunurken hata oluştu:", err);
-}
-
-if (activities.length === 0) {
-  activities.push({
-    id: "init-1",
-    type: "bot",
-    title: "Sistem Aktif",
-    desc: "Bot ve yönetim paneli başarıyla başlatıldı",
-    time: new Date().toISOString(),
-    icon: "bolt",
-    color: "#FFE000",
-  });
-}
-
-const activityWriter = createDebouncedJsonWriter(ACTIVITIES_FILE, () => activities, 1000, "ActivityTracker");
-
-function persistActivities(): void {
-  activityWriter.schedule();
-}
+export * from "../repositories/activityRepository.js";
+import { activityRepository, type ActivityEvent } from "../repositories/activityRepository.js";
 
 /** Bekleyen aktiviteleri hemen diske yazar (bot kapanırken çağrılır) */
 export function flushActivities(): void {
-  activityWriter.flushSync();
+  activityRepository.flush();
 }
 
 export function addActivity(event: Omit<ActivityEvent, "id" | "time">): void {
-  activities.unshift({
-    ...event,
-    id: Math.random().toString(36).slice(2, 9),
-    time: new Date().toISOString(),
-  });
-  if (activities.length > MAX_ACTIVITIES) {
-    activities.length = MAX_ACTIVITIES;
-  }
-  persistActivities();
+  activityRepository.add(event);
 }
 
 export function getActivities(guildId?: string): ActivityEvent[] {
-  if (guildId) {
-    const list = activities.filter((a) => !a.guildId || a.guildId === guildId);
-    return list.slice(0, 10);
-  }
-  return activities.slice(0, 10);
+  return activityRepository.getRecent(guildId, 10);
 }

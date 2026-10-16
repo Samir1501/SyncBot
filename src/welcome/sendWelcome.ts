@@ -1,7 +1,8 @@
 import { AttachmentBuilder, GuildMember, type GuildTextBasedChannel } from "discord.js";
-import { getGuildSettings } from "../settings.js";
+import { activityRepository, type IActivityRepository } from "../repositories/activityRepository.js";
+import { settingsRepository } from "../settings/repository.js";
+import type { ISettingsRepository } from "../settings/types.js";
 import { applyPlaceholders, renderWelcomeCard, type CardData } from "./cardRenderer.js";
-import { addActivity } from "../utils/activityTracker.js";
 
 export function cardDataFromMember(member: GuildMember): CardData {
   return {
@@ -14,46 +15,71 @@ export function cardDataFromMember(member: GuildMember): CardData {
 }
 
 /**
- * Üyeye karşılama kartını gönderir.
- * @param channelOverride Test gönderimlerinde farklı bir kanal kullanmak için
+ * Single Responsibility (SRP) & Dependency Inversion (DIP) uyumlu karşılama servisi.
  */
-export async function sendWelcome(member: GuildMember, channelOverride?: GuildTextBasedChannel): Promise<void> {
-  const { welcome } = getGuildSettings(member.guild.id);
+export class WelcomeService {
+  constructor(
+    private readonly settingsRepo: ISettingsRepository = settingsRepository,
+    private readonly activityRepo: IActivityRepository = activityRepository
+  ) {}
 
-  const channel =
-    channelOverride ??
-    (await member.guild.channels.fetch(welcome.channelId).catch(() => null));
+  public async sendWelcome(
+    member: GuildMember,
+    channelOverride?: GuildTextBasedChannel
+  ): Promise<void> {
+    const { welcome } = this.settingsRepo.getGuildSettings(member.guild.id);
 
-  if (!channel || !channel.isTextBased()) {
-    throw new Error("Karşılama kanalı bulunamadı veya metin kanalı değil.");
+    const channel =
+      channelOverride ??
+      (await member.guild.channels.fetch(welcome.channelId).catch(() => null));
+
+    if (!channel || !channel.isTextBased()) {
+      throw new Error("Karşılama kanalı bulunamadı veya metin kanalı değil.");
+    }
+
+    const data = cardDataFromMember(member);
+    const image = await renderWelcomeCard(welcome.card, data);
+    const content = applyPlaceholders(welcome.message, data).replaceAll(
+      "{mention}",
+      `<@${member.id}>`
+    );
+
+    await channel.send({
+      content: content || undefined,
+      files: [new AttachmentBuilder(image, { name: "hosgeldin.png" })],
+      allowedMentions: { users: [member.id] },
+    });
   }
 
-  const data = cardDataFromMember(member);
-  const image = await renderWelcomeCard(welcome.card, data);
-  const content = applyPlaceholders(welcome.message, data).replaceAll("{mention}", `<@${member.id}>`);
+  public async handleMemberJoin(member: GuildMember): Promise<void> {
+    const { welcome } = this.settingsRepo.getGuildSettings(member.guild.id);
+    if (!welcome.enabled || !welcome.channelId || member.user.bot) return;
 
-  await channel.send({
-    content: content || undefined,
-    files: [new AttachmentBuilder(image, { name: "hosgeldin.png" })],
-    allowedMentions: { users: [member.id] },
-  });
+    try {
+      await this.sendWelcome(member);
+      this.activityRepo.add({
+        guildId: member.guild.id,
+        type: "welcome",
+        title: "Karşılama Kartı Gönderildi",
+        desc: `${member.user.tag} için kart oluşturuldu`,
+        icon: "id-card",
+        color: "#FFE000",
+      });
+    } catch (error) {
+      console.error("[Karşılama] Kart gönderilemedi:", error);
+    }
+  }
+}
+
+export const welcomeService = new WelcomeService();
+
+export async function sendWelcome(
+  member: GuildMember,
+  channelOverride?: GuildTextBasedChannel
+): Promise<void> {
+  return welcomeService.sendWelcome(member, channelOverride);
 }
 
 export async function handleWelcome(member: GuildMember): Promise<void> {
-  const { welcome } = getGuildSettings(member.guild.id);
-  if (!welcome.enabled || !welcome.channelId || member.user.bot) return;
-
-  try {
-    await sendWelcome(member);
-    addActivity({
-      guildId: member.guild.id,
-      type: "welcome",
-      title: "Karşılama Kartı Gönderildi",
-      desc: `${member.user.tag} için kart oluşturuldu`,
-      icon: "id-card",
-      color: "#FFE000",
-    });
-  } catch (error) {
-    console.error("[Karşılama] Kart gönderilemedi:", error);
-  }
+  return welcomeService.handleMemberJoin(member);
 }

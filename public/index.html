@@ -25,41 +25,45 @@
 <body class="bg-[#141414] text-[#F1F1F1] h-screen overflow-hidden flex">
 
   <!-- Kenar Çubuğu -->
-  <aside id="sidebar" class="w-60 h-screen bg-[#1c1c1c] border-r border-[#262626] flex flex-col shrink-0 relative overflow-hidden">
-    <div id="sidebar-profile" class="p-4 border-b border-[#262626] flex items-center gap-3 h-16 shrink-0">
-      <div class="relative shrink-0 flex items-center justify-center">
-        <img id="bot-avatar" class="w-10 h-10 rounded-full bg-zinc-800 border border-[#262626] object-cover shrink-0" alt="" />
-        <span id="bot-status-badge" class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#1c1c1c] bg-zinc-500 cursor-help" title="Bağlanıyor..."></span>
+  <aside id="sidebar">
+    <div id="sidebar-profile">
+      <div class="sidebar-avatar-wrap">
+        <img id="bot-avatar" class="sidebar-avatar" alt="" />
+        <span id="bot-status-badge" class="sidebar-status-badge" title="Bağlanıyor..."></span>
       </div>
-      <div class="min-w-0 sidebar-text">
-        <div id="bot-name" class="font-semibold text-[#F1F1F1] truncate">Bot</div>
-        <div id="bot-server" class="text-xs text-zinc-400 truncate">Discord Bot</div>
+      <div class="sidebar-info sidebar-text">
+        <div id="bot-name" class="sidebar-name">Bot</div>
+        <div id="bot-server" class="sidebar-server">Discord Bot</div>
       </div>
     </div>
-    <nav class="p-2 space-y-1 flex-1 overflow-y-auto">
-      <button class="tab-btn active w-full text-left px-3 py-2.5 rounded flex items-center gap-3 transition" data-tab="dashboard" data-title="Genel Bakış" title="Genel Bakış">
+    <nav class="sidebar-nav">
+      <button class="tab-btn active" data-tab="dashboard" data-title="Genel Bakış" title="Genel Bakış">
         <i class="fa-solid fa-chart-pie"></i>
-        <span class="sidebar-text truncate">Genel Bakış</span>
+        <span class="sidebar-text">Genel Bakış</span>
       </button>
-      <button class="tab-btn w-full text-left px-3 py-2.5 rounded flex items-center gap-3 transition" data-tab="members" data-title="Sunucu Üyeleri" title="Sunucu Üyeleri">
+      <button class="tab-btn" data-tab="members" data-title="Sunucu Üyeleri" title="Sunucu Üyeleri">
         <i class="fa-solid fa-users"></i>
-        <span class="sidebar-text truncate">Sunucu Üyeleri</span>
+        <span class="sidebar-text">Sunucu Üyeleri</span>
       </button>
-      <button class="tab-btn w-full text-left px-3 py-2.5 rounded flex items-center gap-3 transition" data-tab="general" data-title="Genel Ayarlar" title="Genel Ayarlar">
+      <button class="tab-btn" data-tab="general" data-title="Genel Ayarlar" title="Genel Ayarlar">
         <i class="fa-solid fa-sliders"></i>
-        <span class="sidebar-text truncate">Genel Ayarlar</span>
+        <span class="sidebar-text">Genel Ayarlar</span>
       </button>
-      <button class="tab-btn w-full text-left px-3 py-2.5 rounded flex items-center gap-3 transition" data-tab="welcome" data-title="Karşılama Kartı" title="Karşılama Kartı">
+      <button class="tab-btn" data-tab="welcome" data-title="Karşılama Kartı" title="Karşılama Kartı">
         <i class="fa-solid fa-palette"></i>
-        <span class="sidebar-text truncate">Karşılama Kartı</span>
+        <span class="sidebar-text">Karşılama Kartı</span>
       </button>
-      <button class="tab-btn w-full text-left px-3 py-2.5 rounded flex items-center gap-3 transition" data-tab="feed" data-title="Ana Sayfa Akışı" title="Ana Sayfa Akışı">
+      <button class="tab-btn" data-tab="feed" data-title="Ana Sayfa Akışı" title="Ana Sayfa Akışı">
         <i class="fa-solid fa-newspaper"></i>
-        <span class="sidebar-text truncate">Ana Sayfa Akışı</span>
+        <span class="sidebar-text">Ana Sayfa Akışı</span>
       </button>
-      <button class="tab-btn w-full text-left px-3 py-2.5 rounded flex items-center gap-3 transition" data-tab="messages" data-title="Mesaj / Duyuru Gönder" title="Mesaj Gönder">
+      <button class="tab-btn" data-tab="messages" data-title="Mesaj / Duyuru Gönder" title="Mesaj Gönder">
         <i class="fa-solid fa-paper-plane"></i>
-        <span class="sidebar-text truncate">Mesaj Gönder</span>
+        <span class="sidebar-text">Mesaj Gönder</span>
+      </button>
+      <button class="tab-btn" data-tab="steam" data-title="Steam Güncellemeleri" title="Steam Güncellemeleri">
+        <i class="fa-brands fa-steam-symbol"></i>
+        <span class="sidebar-text">Steam Güncellemeleri</span>
       </button>
     </nav>
   </aside>
@@ -350,6 +354,20 @@
                   </div>
                 </div>
                 <span id="dash-feed-status-badge" class="badge badge-neutral">Pasif</span>
+              </div>
+
+              <!-- Steam Güncellemeleri Modülü Durumu -->
+              <div id="dash-steam-module-card" class="module-row group cursor-pointer" onclick="document.querySelector('.tab-btn[data-tab=\'steam\']')?.click()">
+                <div class="flex items-center gap-3">
+                  <div class="module-row-icon">
+                    <i class="fa-brands fa-steam"></i>
+                  </div>
+                  <div>
+                    <div class="module-row-title">Steam Güncelleme Takibi</div>
+                    <div id="dash-steam-channel-name" class="module-row-sub">Oyun: Girilmedi</div>
+                  </div>
+                </div>
+                <span id="dash-steam-status-badge" class="badge badge-neutral">Pasif</span>
               </div>
             </div>
           </div>
@@ -769,7 +787,7 @@
               <div>
                 <h2 class="text-lg font-bold text-[#F1F1F1] flex items-center gap-2">
                   Denetim Kaydı & Loglama Yönetimi
-                  <span id="log-active-status-badge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30">Aktif</span>
+                  <span id="log-active-status-badge" class="module-badge active">Aktif</span>
                 </h2>
                 <p class="text-xs text-zinc-400 mt-0.5">Sunucudaki mesaj, üye, ses ve ceza hareketlerini anlık izler ve Discord kanallarına raporlar.</p>
               </div>
@@ -785,22 +803,22 @@
           </div>
 
           <!-- Hızlı Durum Rozetleri -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-[#262626]">
-            <div class="p-2.5 rounded-lg bg-[#141414] border border-[#262626]">
-              <span class="text-[11px] text-zinc-500 block">Kanal Yönlendirme</span>
-              <span id="badge-log-mode" class="text-xs font-bold text-[#FFE000]">Tek Kanal</span>
+          <div class="summary-grid">
+            <div class="summary-tile">
+              <span class="summary-tile-label">Kanal Yönlendirme</span>
+              <span id="badge-log-mode" class="summary-tile-value val-primary">Tek Kanal</span>
             </div>
-            <div class="p-2.5 rounded-lg bg-[#141414] border border-[#262626]">
-              <span class="text-[11px] text-zinc-500 block">Olay Filtreleri</span>
-              <span id="badge-log-events" class="text-xs font-bold text-zinc-300">8/8 Olay Açık</span>
+            <div class="summary-tile">
+              <span class="summary-tile-label">Olay Filtreleri</span>
+              <span id="badge-log-events" class="summary-tile-value val-neutral">8/8 Olay Açık</span>
             </div>
-            <div class="p-2.5 rounded-lg bg-[#141414] border border-[#262626]">
-              <span class="text-[11px] text-zinc-500 block">Bot Koruması</span>
-              <span id="badge-log-bot-filter" class="text-xs font-bold text-green-400">Botlar Yoksayılıyor</span>
+            <div class="summary-tile">
+              <span class="summary-tile-label">Bot Koruması</span>
+              <span id="badge-log-bot-filter" class="summary-tile-value val-success">Botlar Yoksayılıyor</span>
             </div>
-            <div class="p-2.5 rounded-lg bg-[#141414] border border-[#262626]">
-              <span class="text-[11px] text-zinc-500 block">Embed Formatı</span>
-              <span id="badge-log-appearance" class="text-xs font-bold text-zinc-300">Zengin (Detaylı)</span>
+            <div class="summary-tile">
+              <span class="summary-tile-label">Embed Formatı</span>
+              <span id="badge-log-appearance" class="summary-tile-value val-neutral">Zengin (Detaylı)</span>
             </div>
           </div>
         </div>
@@ -1251,7 +1269,7 @@
               <div>
                 <h2 class="text-lg font-bold text-[#F1F1F1] flex items-center gap-2">
                   Karşılama Mesajı & Kartı (Welcome)
-                  <span id="welcome-active-status-badge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-[#262626]">Pasif</span>
+                  <span id="welcome-active-status-badge" class="module-badge passive">Pasif</span>
                 </h2>
                 <p class="text-xs text-zinc-400 mt-0.5">Sunucuya yeni katılan üyelere belirlenen kanalda özel görsel karşılama kartı ve hoş geldin mesajı gönderir.</p>
               </div>
@@ -1267,22 +1285,22 @@
           </div>
 
           <!-- Durum Özeti Rozetleri -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-[#262626]">
-            <div class="card-sub p-2.5">
-              <span class="text-[11px] text-zinc-500 block">Karşılama Kanalı</span>
-              <span id="badge-welcome-channel" class="text-xs font-bold text-[#FFE000]">Seçilmedi</span>
+          <div class="summary-grid">
+            <div class="summary-tile">
+              <span class="summary-tile-label">Karşılama Kanalı</span>
+              <span id="badge-welcome-channel" class="summary-tile-value val-primary">Seçilmedi</span>
             </div>
-            <div class="card-sub p-2.5">
-              <span class="text-[11px] text-zinc-500 block">Karşılama Kartı</span>
-              <span id="badge-welcome-card" class="text-xs font-bold text-zinc-300">Özel Tasarım</span>
+            <div class="summary-tile">
+              <span class="summary-tile-label">Karşılama Kartı</span>
+              <span id="badge-welcome-card" class="summary-tile-value val-neutral">Özel Tasarım</span>
             </div>
-            <div class="card-sub p-2.5">
-              <span class="text-[11px] text-zinc-500 block">Katman Sayısı</span>
-              <span id="badge-welcome-layers" class="text-xs font-bold text-zinc-300">0 Katman</span>
+            <div class="summary-tile">
+              <span class="summary-tile-label">Katman Sayısı</span>
+              <span id="badge-welcome-layers" class="summary-tile-value val-neutral">0 Katman</span>
             </div>
-            <div class="card-sub p-2.5">
-              <span class="text-[11px] text-zinc-500 block">Mesaj Metni Durumu</span>
-              <span id="badge-welcome-msg" class="text-xs font-bold text-green-400">Varsayılan</span>
+            <div class="summary-tile">
+              <span class="summary-tile-label">Mesaj Metni Durumu</span>
+              <span id="badge-welcome-msg" class="summary-tile-value val-success">Varsayılan</span>
             </div>
           </div>
         </div>
@@ -1357,7 +1375,7 @@
               <div>
                 <h2 class="text-lg font-bold text-[#F1F1F1] flex items-center gap-2">
                   Ana Sayfa Gönderi Akışı (Server Feed)
-                  <span id="feed-active-status-badge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-[#262626]">Pasif</span>
+                  <span id="feed-active-status-badge" class="module-badge passive">Pasif</span>
                 </h2>
                 <p class="text-xs text-zinc-400 mt-0.5">Seçtiğiniz kaynak kanallardaki yeni gönderileri özetler ve hedef akış kanalında doğrudan gönderi linkiyle otomatik paylaşır.</p>
               </div>
@@ -1373,22 +1391,22 @@
           </div>
 
           <!-- Durum Özeti Rozetleri -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-[#262626]">
-            <div class="card-sub p-2.5">
-              <span class="text-[11px] text-zinc-500 block">Hedef Akış Kanalı</span>
-              <span id="badge-feed-target" class="text-xs font-bold text-[#FFE000]">Seçilmedi</span>
+          <div class="summary-grid">
+            <div class="summary-tile">
+              <span class="summary-tile-label">Hedef Akış Kanalı</span>
+              <span id="badge-feed-target" class="summary-tile-value val-primary">Seçilmedi</span>
             </div>
-            <div class="card-sub p-2.5">
-              <span class="text-[11px] text-zinc-500 block">İzlenen Kanallar</span>
-              <span id="badge-feed-sources" class="text-xs font-bold text-zinc-300">0 Kanal İzleniyor</span>
+            <div class="summary-tile">
+              <span class="summary-tile-label">İzlenen Kanallar</span>
+              <span id="badge-feed-sources" class="summary-tile-value val-neutral">0 Kanal İzleniyor</span>
             </div>
-            <div class="card-sub p-2.5">
-              <span class="text-[11px] text-zinc-500 block">Önizleme Sınırı</span>
-              <span id="badge-feed-length" class="text-xs font-bold text-zinc-300">200 Karakter</span>
+            <div class="summary-tile">
+              <span class="summary-tile-label">Önizleme Sınırı</span>
+              <span id="badge-feed-length" class="summary-tile-value val-neutral">200 Karakter</span>
             </div>
-            <div class="card-sub p-2.5">
-              <span class="text-[11px] text-zinc-500 block">Bot Filtresi</span>
-              <span id="badge-feed-bot-filter" class="text-xs font-bold text-green-400">Botlar Yoksayılıyor</span>
+            <div class="summary-tile">
+              <span class="summary-tile-label">Bot Filtresi</span>
+              <span id="badge-feed-bot-filter" class="summary-tile-value val-success">Botlar Yoksayılıyor</span>
             </div>
           </div>
         </div>
@@ -1648,6 +1666,229 @@
               <button id="send-msg-btn" class="btn btn-primary">
                 <i class="fa-solid fa-paper-plane"></i> Gönder
               </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEAM GÜNCELLEMELERİ -->
+      <section id="tab-steam" class="hidden space-y-6 max-w-6xl">
+        <!-- 1. Ana Yönetim & Durum Kartı -->
+        <div class="card space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5 min-w-0 flex-1">
+              <div class="w-11 h-11 rounded-xl bg-zinc-800 border border-[#262626] flex items-center justify-center text-[#FFE000] text-xl shadow-sm shrink-0">
+                <i class="fa-brands fa-steam-symbol"></i>
+              </div>
+              <div class="min-w-0">
+                <h2 class="text-lg font-bold text-[#F1F1F1] flex items-center gap-2 flex-wrap">
+                  Steam Güncelleme & Yama Notları (Steam Updates)
+                  <span id="steam-active-status-badge" class="module-badge passive">Pasif</span>
+                </h2>
+                <p class="text-xs text-zinc-400 mt-0.5">Steam'de yayınlanan yeni duyuru ve yama notlarını (Patch Notes) otomatik algılar ve Discord kanalınızda zengin embed olarak paylaşır.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+              <span class="text-xs font-semibold text-zinc-400">Steam Modülü:</span>
+              <label class="switch" for="steam-enabled">
+                <input id="steam-enabled" type="checkbox" />
+                <span class="switch-track"></span>
+                <span class="switch-thumb"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Durum Özeti Rozetleri -->
+          <div class="summary-grid">
+            <div class="summary-tile">
+              <span class="summary-tile-label">Hedef Paylaşım Kanalı</span>
+              <span id="badge-steam-channel" class="summary-tile-value val-primary">Seçilmedi</span>
+            </div>
+            <div class="summary-tile">
+              <span class="summary-tile-label">Takip Edilen Oyun</span>
+              <span id="badge-steam-game-name" class="summary-tile-value val-neutral">Belirtilmedi</span>
+            </div>
+            <div class="summary-tile">
+              <span class="summary-tile-label">Steam App ID</span>
+              <span id="badge-steam-app-id" class="summary-tile-value val-neutral">Belirtilmedi</span>
+            </div>
+            <div class="summary-tile">
+              <span class="summary-tile-label">Kontrol Sıklığı</span>
+              <span id="badge-steam-interval" class="summary-tile-value val-success">10 Dakikada Bir</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Steam Yönetimi & Ayarları (Sol: Hedef Kanal, Oyun Bilgisi & Canlı Önizleme; Sağ: Bildirim & Kart Ayarları) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <!-- Sol Sütun: Kanallar, Oyun & Canlı Önizleme (tab-feed ile birebir uyumlu) -->
+          <div class="space-y-6">
+            <!-- 1. Hedef Kanal Seçimi -->
+            <div class="card space-y-4">
+              <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                <i class="fa-solid fa-bullseye text-[#FFE000]"></i> Hedef Paylaşım Kanalı
+              </h3>
+              <p class="text-xs text-zinc-400">Yeni bir güncelleme veya yama notu yayınlandığında Discord'da gönderileceği ana kanalı seçin (Örn: <code class="bg-[#141414] px-1.5 py-0.5 rounded text-[#FFE000]">#duyurular</code>).</p>
+              <div class="space-y-2 pt-1">
+                <span class="field-label">Paylaşım Kanalı</span>
+                <select id="steam-channel-select" class="form-control channel-select"></select>
+              </div>
+            </div>
+
+            <!-- 2. Steam Oyun Bilgileri & App ID -->
+            <div class="card space-y-4">
+              <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                <i class="fa-brands fa-steam-symbol text-[#FFE000]"></i> Steam Oyun Bilgileri
+              </h3>
+              <p class="text-xs text-zinc-400">Takip etmek istediğiniz oyunun Steamworks veya Steam Mağazası <b>App ID</b> numarasını girin ve doğrulayın.</p>
+
+              <div class="space-y-2 pt-1">
+                <span class="field-label">Steam App ID</span>
+                <div class="flex items-center gap-2.5 w-full">
+                  <div class="flex-1 min-w-0">
+                    <input id="steam-app-id-input" type="text" placeholder="Örn: 3587830 veya kendi oyununuzun ID'si" class="form-control" />
+                  </div>
+                  <button id="steam-check-app-btn" type="button" class="btn btn-primary btn-sm shrink-0">
+                    <i class="fa-solid fa-magnifying-glass"></i> Doğrula
+                  </button>
+                </div>
+                <div id="steam-app-check-status" class="text-[11px] text-zinc-400"></div>
+              </div>
+
+              <!-- Doğrulanan Oyun Kartı Önizlemesi -->
+              <div id="steam-verified-game-card" class="card-sub p-3 flex items-center gap-3 hidden">
+                <img id="steam-verified-game-icon" src="" alt="Oyun Afişi" class="w-16 h-8 rounded object-cover border border-[#262626] shrink-0" />
+                <div class="min-w-0 flex-1">
+                  <div id="steam-verified-game-title" class="font-bold text-sm text-[#F1F1F1] truncate">Oyun Adı</div>
+                  <a id="steam-verified-game-link" href="#" target="_blank" class="text-xs text-[#FFE000] hover:underline flex items-center gap-1">
+                    <span>Steam Mağazasında Görüntüle</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Canlı Güncelleme Kartı Önizlemesi -->
+            <div class="card space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                    <i class="fa-solid fa-eye text-[#FFE000]"></i> Canlı Güncelleme Kartı Önizlemesi
+                  </h3>
+                  <p class="text-xs text-zinc-400 mt-0.5">Yama notları yayınlandığında Discord kanalında görünecek tasarımın canlı simülasyonu.</p>
+                </div>
+                <button id="steam-test-post-btn" type="button" class="btn">
+                  <i class="fa-solid fa-paper-plane text-[#FFE000]"></i> Test Güncellemesi Gönder
+                </button>
+              </div>
+
+              <!-- Canlı Mockup Kartı -->
+              <div class="card-sub p-4 w-full">
+                <!-- Rol etiketi önizlemesi -->
+                <div id="steam-preview-role-tag" class="text-xs font-semibold text-sky-400 mb-2.5 hidden">@everyone</div>
+
+                <!-- Discord Embed Gövdesi -->
+                <div id="steam-preview-embed" class="discord-embed transition-colors space-y-2.5">
+                  <!-- Author -->
+                  <div class="flex items-center gap-2 text-xs">
+                    <i class="fa-brands fa-steam text-zinc-400"></i>
+                    <span id="steam-preview-game-name" class="font-bold text-[#F1F1F1]">Steam Oyunu</span>
+                  </div>
+
+                  <!-- Başlık & Link -->
+                  <div>
+                    <h4 id="steam-preview-title" class="discord-embed-title text-sky-400 hover:underline cursor-pointer">
+                      v1.2.0 - Büyük Güncelleme & Yama Notları
+                    </h4>
+                  </div>
+
+                  <!-- Banner İmajı -->
+                  <div id="steam-preview-image-container" class="rounded overflow-hidden border border-[#262626] my-2">
+                    <img id="steam-preview-image" src="" alt="Güncelleme Görseli" class="w-full max-h-56 object-cover" onerror="this.parentElement.classList.add('hidden')" onload="this.parentElement.classList.remove('hidden')" />
+                  </div>
+
+                  <!-- Açıklama / Yama Notu Metni -->
+                  <div id="steam-preview-desc" class="discord-embed-desc leading-relaxed whitespace-pre-wrap">**Yeni Özellikler:**
+• Çok oyunculu sunucu optimizasyonları tamamlandı.
+• Yeni harita ve oyun modu eklendi.
+• Performans iyileştirmeleri ve hata düzeltmeleri yapıldı.
+
+*(Yama notlarının tamamı Steam duyurusunda...)*</div>
+
+                  <!-- Footer & Tarih -->
+                  <div class="pt-2 border-t border-[#262626] flex items-center justify-between text-[11px] text-zinc-500">
+                    <span class="flex items-center gap-1.5">
+                      <i class="fa-brands fa-steam"></i>
+                      <span>Steam Güncelleme Notları • Geliştirici</span>
+                    </span>
+                    <span>Şimdi</span>
+                  </div>
+                </div>
+
+                <!-- Buton Çubuğu Mockup -->
+                <div class="mt-2.5 flex flex-wrap gap-2">
+                  <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#2b2d31] hover:bg-[#35373c] text-white text-xs font-medium cursor-pointer border border-[#3b3e45] shadow-sm transition">
+                    <span>Steam'de İncele</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                  </div>
+                  <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#2b2d31] hover:bg-[#35373c] text-white text-xs font-medium cursor-pointer border border-[#3b3e45] shadow-sm transition">
+                    <span>Mağaza Sayfası</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sağ: Ayarlar (tab-feed ile birebir uyumlu) -->
+          <div class="space-y-6">
+            <!-- 1. Bildirim & Kontrol Ayarları -->
+            <div class="card space-y-4">
+              <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-[#FFE000]"></i> Bildirim & Kontrol Ayarları
+              </h3>
+
+              <!-- Rol Etiketi -->
+              <div class="space-y-1.5 pt-1">
+                <span class="field-label">Güncelleme Bildirim Rolü (Opsiyonel)</span>
+                <select id="steam-role-select" class="form-control">
+                  <option value="">Hiçbiri (Rol Etiketleme)</option>
+                  <option value="everyone">@everyone</option>
+                  <option value="here">@here</option>
+                </select>
+                <p class="text-[11px] text-zinc-500">Yeni bir güncelleme geldiğinde etiketlenecek rol (üyelerinize anlık bildirim gider).</p>
+              </div>
+
+              <!-- Kontrol Sıklığı -->
+              <div class="space-y-1.5 pt-1">
+                <span class="field-label">Güncelleme Kontrol Sıklığı</span>
+                <select id="steam-interval-select" class="form-control">
+                  <option value="5">5 Dakikada Bir (Hızlı)</option>
+                  <option value="10" selected>10 Dakikada Bir (Önerilen)</option>
+                  <option value="15">15 Dakikada Bir</option>
+                  <option value="30">30 Dakikada Bir</option>
+                  <option value="60">1 Saatte Bir</option>
+                </select>
+                <p class="text-[11px] text-zinc-500">Botun Steam API'sini ne sıklıkla kontrol edeceği.</p>
+              </div>
+            </div>
+
+            <!-- 2. Görsel & Kart Stili -->
+            <div class="card space-y-4">
+              <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                <i class="fa-solid fa-palette text-[#FFE000]"></i> Görsel & Kart Stili
+              </h3>
+
+              <!-- Vurgu Rengi -->
+              <div class="space-y-1.5 pt-1">
+                <span class="field-label">Steam Kartı Vurgu Rengi</span>
+                <div class="color-picker">
+                  <input id="steam-embed-color" type="color" value="#1b2838" class="color-picker-swatch" />
+                  <input id="steam-embed-color-hex" type="text" value="#1b2838" class="form-control color-picker-input" />
+                  <button id="steam-embed-color-reset" type="button" class="btn btn-sm">Varsayılan Yap</button>
+                </div>
+                <p class="text-[11px] text-zinc-500">Steam koyu mavi tonu: <code class="text-[#FFE000]">#1b2838</code> veya sunucunuza özel renk.</p>
+              </div>
             </div>
           </div>
         </div>

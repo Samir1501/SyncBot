@@ -4,25 +4,24 @@ import {
   Message,
   PartialMessage,
 } from "discord.js";
-import { sendLog } from "../utils/logger.js";
+import { auditLoggerService, type IAuditLogger } from "../services/logging/AuditLoggerService.js";
 
 export async function handleMessageUpdate(
   oldMessage: Message | PartialMessage,
-  newMessage: Message | PartialMessage
+  newMessage: Message | PartialMessage,
+  logger: IAuditLogger = auditLoggerService
 ): Promise<void> {
   if (!newMessage.guild) return;
 
   // 1. Bot mesajlarını yoksay (botun kendi mesaj güncellemeleri veya webhooks)
   if (newMessage.author?.bot) return;
 
-  // 2. Eğer eski mesaj önbellekte yoksa (partial) veya eski içerik bilinmiyorsa;
-  // gerçek bir düzenleme olup olmadığı anlaşılamaz (ör. YouTube/link önizlemesi yüklenmesi).
-  // Sahte "Mesaj Düzenlendi" logu basılmasını engelle!
+  // 2. Eğer eski mesaj önbellekte yoksa (partial) veya eski içerik bilinmiyorsa
   if (oldMessage.partial || !oldMessage.content) {
     return;
   }
 
-  // 3. İçerik birebir aynıysa (ör. sadece embed/link kartı yüklendiğinde) loglama yapma
+  // 3. İçerik birebir aynıysa loglama yapma
   if (oldMessage.content.trim() === (newMessage.content?.trim() || "")) {
     return;
   }
@@ -73,32 +72,28 @@ export async function handleMessageUpdate(
     }
   );
 
-  await sendLog(
-    newMessage.guild,
-    embed,
-    {
-      category: "messages",
-      eventType: "messageUpdate",
-      channelId: newMessage.channelId,
-      channelName,
-      user: newMessage.author
-        ? {
-            id: newMessage.author.id,
-            tag: newMessage.author.tag,
-            avatarUrl: newMessage.author.displayAvatarURL() || undefined,
-            isBot: newMessage.author.bot,
-          }
-        : undefined,
-      record: {
-        title: "Mesaj Düzenlendi",
-        description: `#${channelName} kanalında ${newMessage.author?.tag || "Kullanıcı"} mesajını düzenledi`,
-        details: {
-          author: newMessage.author?.tag || "Bilinmiyor",
-          eski: oldContent.length > 50 ? `${oldContent.slice(0, 50)}...` : oldContent,
-          yeni: newContent.length > 50 ? `${newContent.slice(0, 50)}...` : newContent,
-        },
-        color: "#eab308",
+  await logger.sendLog(newMessage.guild, embed, {
+    category: "messages",
+    eventType: "messageUpdate",
+    channelId: newMessage.channelId,
+    channelName,
+    user: newMessage.author
+      ? {
+          id: newMessage.author.id,
+          tag: newMessage.author.tag,
+          avatarUrl: newMessage.author.displayAvatarURL() || undefined,
+          isBot: newMessage.author.bot,
+        }
+      : undefined,
+    record: {
+      title: "Mesaj Düzenlendi",
+      description: `#${channelName} kanalında ${newMessage.author?.tag || "Kullanıcı"} mesajını düzenledi`,
+      details: {
+        author: newMessage.author?.tag || "Bilinmiyor",
+        eski: oldContent.length > 50 ? `${oldContent.slice(0, 50)}...` : oldContent,
+        yeni: newContent.length > 50 ? `${newContent.slice(0, 50)}...` : newContent,
       },
-    }
-  );
+      color: "#eab308",
+    },
+  });
 }

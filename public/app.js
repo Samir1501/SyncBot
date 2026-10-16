@@ -29,6 +29,7 @@ const state = {
     viewMode: "table",
   },
   selectedMember: null,
+  steamGame: null,
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -661,15 +662,13 @@ function renderLayerList() {
   const list = $("#layer-list");
   list.innerHTML = "";
   const items = [
-    { id: "background", label: `${icon("image", "mr-2 text-zinc-400")} Arka Plan` },
-    { id: "avatar", label: `${icon("user", "mr-2 text-zinc-400")} Profil Fotoğrafı` },
-    ...card().texts.map((t) => ({ id: t.id, label: `${icon("font", "mr-2 text-zinc-400")} ${escapeHtml(t.text || "(boş metin)")}` })),
+    { id: "background", label: `${icon("image")} Arka Plan` },
+    { id: "avatar", label: `${icon("user")} Profil Fotoğrafı` },
+    ...card().texts.map((t) => ({ id: t.id, label: `${icon("font")} ${escapeHtml(t.text || "(boş metin)")}` })),
   ];
   for (const item of items) {
     const btn = document.createElement("button");
-    btn.className = `tab-btn layer-btn w-full text-left text-sm px-3 py-1.5 rounded truncate flex items-center ${
-      state.selected === item.id ? "active" : ""
-    }`;
+    btn.className = `tab-btn layer-btn ${state.selected === item.id ? "active" : ""}`;
     btn.innerHTML = item.label;
     btn.onclick = () => selectLayer(item.id);
     list.appendChild(btn);
@@ -1489,8 +1488,56 @@ function bindForms() {
   updateAuditLogBadges();
   renderFeedSourceChannels();
   updateFeedBadges();
-  updateFeedPreview();
   updateWelcomeBadges();
+
+  // 8. Steam Güncelleme Takibi Ayarları
+  if (!s.steam) {
+    s.steam = {
+      enabled: false,
+      appId: "",
+      channelId: "",
+      mentionRoleId: "",
+      checkIntervalMinutes: 10,
+      embedColor: "#1b2838",
+      lastGid: "",
+    };
+  }
+  if (typeof s.steam.checkIntervalMinutes !== "number") s.steam.checkIntervalMinutes = 10;
+  if (!s.steam.embedColor) s.steam.embedColor = "#1b2838";
+
+  bind("#steam-enabled", s.steam, "enabled", "checked");
+  bind("#steam-app-id-input", s.steam, "appId");
+  bind("#steam-channel-select", s.steam, "channelId");
+  bind("#steam-role-select", s.steam, "mentionRoleId");
+  bind("#steam-interval-select", s.steam, "checkIntervalMinutes");
+
+  const steamColorInput = $("#steam-embed-color");
+  const steamColorHex = $("#steam-embed-color-hex");
+  if (steamColorInput && steamColorHex) {
+    steamColorInput.value = s.steam.embedColor;
+    steamColorHex.value = s.steam.embedColor;
+    steamColorInput.oninput = () => {
+      steamColorHex.value = steamColorInput.value;
+      s.steam.embedColor = steamColorInput.value;
+      markDirty();
+      updateSteamPreview();
+    };
+    steamColorHex.oninput = () => {
+      if (/^#[0-9A-Fa-f]{6}$/.test(steamColorHex.value)) {
+        steamColorInput.value = steamColorHex.value;
+        s.steam.embedColor = steamColorHex.value;
+        markDirty();
+        updateSteamPreview();
+      }
+    };
+  }
+
+  fillSteamRoleSelect();
+  updateSteamBadges();
+  updateSteamPreview();
+  if (s.steam.appId) {
+    checkSteamApp(s.steam.appId, true);
+  }
 }
 
 // ---------------- Denetim Kaydı (Audit Log) Yönetimi ----------------
@@ -1502,19 +1549,15 @@ function updateAuditLogBadges() {
   // Ana Durum
   const activeBadge = $("#log-active-status-badge");
   if (activeBadge) {
-    if (s.logging.enabled) {
-      activeBadge.textContent = "Aktif";
-      activeBadge.className = "text-xs font-semibold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30";
-    } else {
-      activeBadge.textContent = "Pasif";
-      activeBadge.className = "text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-[#262626]";
-    }
+    activeBadge.textContent = s.logging.enabled ? "Aktif" : "Pasif";
+    activeBadge.className = `module-badge ${s.logging.enabled ? "active" : "passive"}`;
   }
 
   // Mod
   const modeBadge = $("#badge-log-mode");
   if (modeBadge) {
     modeBadge.textContent = s.logging.channels?.mode === "multi" ? "Ayrı Kanallar (4 Kategori)" : "Tek Kanal";
+    modeBadge.className = "summary-tile-value val-primary";
   }
 
   // Olaylar
@@ -1524,7 +1567,7 @@ function updateAuditLogBadges() {
     const keys = ["messageDelete", "messageUpdate", "memberJoin", "memberLeave", "memberUpdate", "voiceJoinLeave", "voiceMuteDeafen", "guildBan"];
     const activeCount = keys.filter((k) => ev[k] !== false).length;
     eventsBadge.textContent = `${activeCount}/8 Olay Açık`;
-    eventsBadge.className = `text-xs font-bold ${activeCount > 0 ? "text-zinc-300" : "text-amber-400"}`;
+    eventsBadge.className = `summary-tile-value ${activeCount > 0 ? "val-neutral" : "val-warning"}`;
   }
 
   // Bot Koruması
@@ -1532,7 +1575,7 @@ function updateAuditLogBadges() {
   if (botBadge) {
     const ignore = s.logging.filters?.ignoreBots !== false;
     botBadge.textContent = ignore ? "Botlar Yoksayılıyor" : "Botlar Dahil Ediliyor";
-    botBadge.className = `text-xs font-bold ${ignore ? "text-green-400" : "text-amber-400"}`;
+    botBadge.className = `summary-tile-value ${ignore ? "val-success" : "val-warning"}`;
   }
 
   // Görünüm
@@ -1540,6 +1583,7 @@ function updateAuditLogBadges() {
   if (appBadge) {
     const isCompact = s.logging.appearance?.detailLevel === "compact";
     appBadge.textContent = isCompact ? "Kompakt (Sade)" : "Zengin (Detaylı)";
+    appBadge.className = "summary-tile-value val-neutral";
   }
 }
 
@@ -1892,10 +1936,10 @@ function updateFeedBadges() {
   if (activeBadge) {
     if (s.feed.enabled) {
       activeBadge.textContent = "Aktif";
-      activeBadge.className = "text-xs font-semibold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30";
+      activeBadge.className = "module-badge active";
     } else {
       activeBadge.textContent = "Pasif";
-      activeBadge.className = "text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-[#262626]";
+      activeBadge.className = "module-badge passive";
     }
   }
 
@@ -1905,13 +1949,13 @@ function updateFeedBadges() {
     const chObj = state.channels.find((c) => c.id === s.feed.targetChannelId);
     if (chObj) {
       targetBadge.textContent = `#${chObj.name}`;
-      targetBadge.className = "text-xs font-bold text-[#FFE000]";
+      targetBadge.className = "summary-tile-value val-primary";
     } else if (s.feed.targetChannelId) {
       targetBadge.textContent = `ID: ${s.feed.targetChannelId}`;
-      targetBadge.className = "text-xs font-bold text-[#FFE000]";
+      targetBadge.className = "summary-tile-value val-primary";
     } else {
       targetBadge.textContent = "Seçilmedi";
-      targetBadge.className = "text-xs font-bold text-amber-400";
+      targetBadge.className = "summary-tile-value val-warning";
     }
   }
 
@@ -1920,13 +1964,14 @@ function updateFeedBadges() {
   if (sourcesBadge) {
     const count = s.feed.sourceChannelIds?.length || 0;
     sourcesBadge.textContent = `${count} Kanal İzleniyor`;
-    sourcesBadge.className = `text-xs font-bold ${count > 0 ? "text-zinc-300" : "text-amber-400"}`;
+    sourcesBadge.className = `summary-tile-value ${count > 0 ? "val-neutral" : "val-warning"}`;
   }
 
   // 4. Önizleme Uzunluğu Rozeti
   const lenBadge = $("#badge-feed-length");
   if (lenBadge) {
     lenBadge.textContent = `${s.feed.previewLength || 200} Karakter`;
+    lenBadge.className = "summary-tile-value val-neutral";
   }
 
   // 5. Bot Filtresi Rozeti
@@ -1934,7 +1979,7 @@ function updateFeedBadges() {
   if (botBadge) {
     const ignore = s.feed.ignoreBots !== false;
     botBadge.textContent = ignore ? "Botlar Yoksayılıyor" : "Botlar Dahil Ediliyor";
-    botBadge.className = `text-xs font-bold ${ignore ? "text-green-400" : "text-amber-400"}`;
+    botBadge.className = `summary-tile-value ${ignore ? "val-success" : "val-warning"}`;
   }
 }
 
@@ -1986,10 +2031,10 @@ function updateWelcomeBadges() {
   if (activeBadge) {
     if (s.welcome.enabled) {
       activeBadge.textContent = "Aktif";
-      activeBadge.className = "text-xs font-semibold px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30";
+      activeBadge.className = "module-badge active";
     } else {
       activeBadge.textContent = "Pasif";
-      activeBadge.className = "text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-[#262626]";
+      activeBadge.className = "module-badge passive";
     }
   }
 
@@ -1999,13 +2044,13 @@ function updateWelcomeBadges() {
     const chObj = state.channels.find((c) => c.id === s.welcome.channelId);
     if (chObj) {
       channelBadge.textContent = `#${chObj.name}`;
-      channelBadge.className = "text-xs font-bold text-[#FFE000]";
+      channelBadge.className = "summary-tile-value val-primary";
     } else if (s.welcome.channelId) {
       channelBadge.textContent = `ID: ${s.welcome.channelId}`;
-      channelBadge.className = "text-xs font-bold text-[#FFE000]";
+      channelBadge.className = "summary-tile-value val-primary";
     } else {
       channelBadge.textContent = "Seçilmedi";
-      channelBadge.className = "text-xs font-bold text-amber-400";
+      channelBadge.className = "summary-tile-value val-warning";
     }
   }
 
@@ -2018,6 +2063,7 @@ function updateWelcomeBadges() {
     } else {
       cardBadge.textContent = "Özel Tasarım";
     }
+    cardBadge.className = "summary-tile-value val-neutral";
   }
 
   // 4. Katman Sayısı Rozeti
@@ -2026,7 +2072,7 @@ function updateWelcomeBadges() {
     const textCount = s.welcome.card?.texts?.length || 0;
     const totalLayers = 2 + textCount;
     layersBadge.textContent = `${totalLayers} Katman (${textCount} Metin)`;
-    layersBadge.className = "text-xs font-bold text-zinc-300";
+    layersBadge.className = "summary-tile-value val-neutral";
   }
 
   // 5. Karşılama Mesajı Durumu
@@ -2034,7 +2080,7 @@ function updateWelcomeBadges() {
   if (msgBadge) {
     const hasMsg = Boolean(s.welcome.message && s.welcome.message.trim());
     msgBadge.textContent = hasMsg ? "Özel Metin" : "Varsayılan";
-    msgBadge.className = `text-xs font-bold ${hasMsg ? "text-green-400" : "text-zinc-400"}`;
+    msgBadge.className = `summary-tile-value ${hasMsg ? "val-success" : "val-muted"}`;
   }
 }
 
@@ -2178,6 +2224,318 @@ function initFeedControls() {
 
 }
 
+// ---------------- Steam Güncelleme & Yama Notu Takip Yönetimi ----------------
+
+function updateSteamBadges() {
+  const s = state.settings;
+  if (!s || !s.steam) return;
+
+  // 1. Ana Durum Rozeti
+  const activeBadge = $("#steam-active-status-badge");
+  if (activeBadge) {
+    if (s.steam.enabled) {
+      activeBadge.textContent = "Aktif";
+      activeBadge.className = "module-badge active";
+    } else {
+      activeBadge.textContent = "Pasif";
+      activeBadge.className = "module-badge passive";
+    }
+  }
+
+  // 2. Hedef Paylaşım Kanalı Rozeti
+  const chBadge = $("#badge-steam-channel");
+  if (chBadge) {
+    const ch = state.channels.find((c) => c.id === s.steam.channelId);
+    if (ch) {
+      chBadge.textContent = `#${ch.name}`;
+      chBadge.className = "summary-tile-value val-primary";
+    } else if (s.steam.channelId) {
+      chBadge.textContent = `ID: ${s.steam.channelId}`;
+      chBadge.className = "summary-tile-value val-primary";
+    } else {
+      chBadge.textContent = "Seçilmedi";
+      chBadge.className = "summary-tile-value val-warning";
+    }
+  }
+
+  // 3. Oyun Adı Rozeti
+  const gameNameBadge = $("#badge-steam-game-name");
+  if (gameNameBadge) {
+    const name = state.steamGame?.appDetails?.name;
+    gameNameBadge.textContent = name || (s.steam.appId ? `App ${s.steam.appId}` : "Belirtilmedi");
+    gameNameBadge.className = `summary-tile-value ${name ? "val-neutral" : "val-muted"}`;
+  }
+
+  // 4. App ID Rozeti
+  const appIdBadge = $("#badge-steam-app-id");
+  if (appIdBadge) {
+    appIdBadge.textContent = s.steam.appId ? s.steam.appId : "Belirtilmedi";
+    appIdBadge.className = `summary-tile-value ${s.steam.appId ? "val-neutral" : "val-muted"}`;
+  }
+
+  // 5. Kontrol Sıklığı Rozeti
+  const intervalBadge = $("#badge-steam-interval");
+  if (intervalBadge) {
+    intervalBadge.textContent = `${s.steam.checkIntervalMinutes || 10} Dakikada Bir`;
+    intervalBadge.className = "summary-tile-value val-success";
+  }
+}
+
+function updateSteamPreview() {
+  const s = state.settings;
+  if (!s || !s.steam) return;
+
+  const embedBox = $("#steam-preview-embed");
+  if (embedBox) {
+    embedBox.style.borderLeftColor = s.steam.embedColor || "#1b2838";
+  }
+
+  const roleTag = $("#steam-preview-role-tag");
+  if (roleTag) {
+    const role = s.steam.mentionRoleId;
+    if (role === "everyone") {
+      roleTag.textContent = "@everyone";
+      roleTag.classList.remove("hidden");
+    } else if (role === "here") {
+      roleTag.textContent = "@here";
+      roleTag.classList.remove("hidden");
+    } else if (role) {
+      const foundRole = state.memberRoles?.find((r) => r.id === role);
+      roleTag.textContent = foundRole ? `@${foundRole.name}` : `@Rol`;
+      roleTag.classList.remove("hidden");
+    } else {
+      roleTag.classList.add("hidden");
+    }
+  }
+
+  const game = state.steamGame;
+  const gameNameEl = $("#steam-preview-game-name");
+  if (gameNameEl) {
+    gameNameEl.textContent = game?.appDetails?.name || "Steam Oyunu";
+  }
+
+  const titleEl = $("#steam-preview-title");
+  if (titleEl) {
+    titleEl.textContent = game?.latestAnnouncement?.title || "v1.2.0 - Büyük Güncelleme & Yama Notları";
+  }
+
+  const descEl = $("#steam-preview-desc");
+  if (descEl) {
+    descEl.textContent = game?.latestAnnouncement?.summary || "**Yeni Özellikler:**\n• Çok oyunculu sunucu optimizasyonları tamamlandı.\n• Yeni harita ve oyun modu eklendi.\n• Performans iyileştirmeleri ve hata düzeltmeleri yapıldı.\n\n*(Yama notlarının tamamı Steam duyurusunda...)*";
+  }
+
+  const imgEl = $("#steam-preview-image");
+  const imgContainer = $("#steam-preview-image-container");
+  if (imgEl) {
+    const targetSrc = game?.latestAnnouncement?.imageUrl || game?.appDetails?.headerImage || "";
+    if (targetSrc) {
+      imgEl.src = targetSrc;
+      if (imgContainer) imgContainer.classList.remove("hidden");
+    } else {
+      if (imgContainer) imgContainer.classList.add("hidden");
+    }
+  }
+}
+
+async function loadGuildRoles(guildId) {
+  if (!guildId) return [];
+  try {
+    const res = await api(`/api/roles?guildId=${encodeURIComponent(guildId)}`);
+    const roles = await res.json();
+    state.memberRoles = Array.isArray(roles) ? roles : [];
+    return state.memberRoles;
+  } catch (err) {
+    console.warn("[Roles] Rol listesi alınamadı:", err);
+    return [];
+  }
+}
+
+async function fillSteamRoleSelect() {
+  const select = $("#steam-role-select");
+  if (!select) return;
+
+  if (!Array.isArray(state.memberRoles) || state.memberRoles.length === 0) {
+    if (state.selectedGuildId) {
+      await loadGuildRoles(state.selectedGuildId);
+    }
+  }
+
+  const currentVal = state.settings?.steam?.mentionRoleId || select.value || "";
+  select.innerHTML = `
+    <option value="">Hiçbiri (Rol Etiketleme)</option>
+    <option value="everyone" data-icon="fa-solid fa-at">@everyone</option>
+    <option value="here" data-icon="fa-solid fa-at">@here</option>
+  `;
+
+  if (Array.isArray(state.memberRoles) && state.memberRoles.length > 0) {
+    for (const r of state.memberRoles) {
+      const opt = new Option(`@${r.name}`, r.id);
+      if (r.color && r.color !== "#000000" && r.color !== "#9ca3af") {
+        opt.dataset.color = r.color;
+      } else {
+        opt.dataset.icon = "fa-solid fa-shield";
+      }
+      select.appendChild(opt);
+    }
+  }
+
+  select.value = currentVal;
+  createCustomSelect(select);
+}
+
+async function checkSteamApp(appId, silent = false) {
+  const cleanId = String(appId || "").trim();
+  const statusEl = $("#steam-app-check-status");
+  const cardEl = $("#steam-verified-game-card");
+  const iconEl = $("#steam-verified-game-icon");
+  const titleEl = $("#steam-verified-game-title");
+  const linkEl = $("#steam-verified-game-link");
+  const checkBtn = $("#steam-check-app-btn");
+
+  if (!cleanId || !/^\d+$/.test(cleanId)) {
+    if (!silent) toast("Lütfen geçerli bir sayısal Steam App ID girin.", "error");
+    if (statusEl) statusEl.textContent = "Geçersiz App ID formatı.";
+    return false;
+  }
+
+  if (checkBtn) {
+    checkBtn.disabled = true;
+    checkBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Aranıyor...';
+  }
+  if (statusEl) statusEl.textContent = "Steam Store ve Haber API sorgulanıyor...";
+
+  try {
+    const res = await api(`/api/steam/info?appId=${encodeURIComponent(cleanId)}`);
+    const data = await res.json();
+    state.steamGame = data;
+
+    if (cardEl) cardEl.classList.remove("hidden");
+    if (iconEl) iconEl.src = data.appDetails.headerImage;
+    if (titleEl) titleEl.textContent = data.appDetails.name;
+    if (linkEl) linkEl.href = data.appDetails.storeUrl;
+    if (statusEl) {
+      statusEl.innerHTML = `<span class="text-green-400"><i class="fa-solid fa-check mr-1"></i> Doğrulandı: <b>${escapeHtml(data.appDetails.name)}</b></span>`;
+    }
+
+    updateSteamBadges();
+    updateSteamPreview();
+
+    if (!silent) {
+      toast(`"${data.appDetails.name}" başarıyla doğrulandı!`);
+    }
+    return true;
+  } catch (err) {
+    if (statusEl) {
+      statusEl.innerHTML = `<span class="text-red-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Steam bilgisi alınamadı (${escapeHtml(err.message)})</span>`;
+    }
+    if (!silent) {
+      toast(`Steam sorgulama başarısız: ${err.message}`, "error");
+    }
+    return false;
+  } finally {
+    if (checkBtn) {
+      checkBtn.disabled = false;
+      checkBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Doğrula';
+    }
+  }
+}
+
+function initSteamControls() {
+  const checkBtn = $("#steam-check-app-btn");
+  if (checkBtn) {
+    checkBtn.onclick = () => {
+      const appId = $("#steam-app-id-input")?.value;
+      checkSteamApp(appId, false);
+    };
+  }
+
+  const appIdInput = $("#steam-app-id-input");
+  if (appIdInput) {
+    appIdInput.onblur = () => {
+      const appId = appIdInput.value.trim();
+      if (appId && (!state.steamGame || state.steamGame.appDetails?.appId !== appId)) {
+        checkSteamApp(appId, true);
+      }
+    };
+  }
+
+  const testBtn = $("#steam-test-post-btn");
+  if (testBtn) {
+    testBtn.onclick = async () => {
+      if (!state.selectedGuildId) {
+        toast("Sunucu seçilmedi!", "error");
+        return;
+      }
+      const s = state.settings?.steam;
+      if (!s?.appId) {
+        toast("Lütfen önce bir Steam App ID girin!", "error");
+        return;
+      }
+      if (!s?.channelId) {
+        toast("Lütfen önce bir hedef paylaşım kanalı seçin!", "error");
+        return;
+      }
+
+      if (state.dirty && !(await save())) return;
+
+      const origHtml = testBtn.innerHTML;
+      testBtn.disabled = true;
+      testBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Gönderiliyor...';
+
+      try {
+        const res = await api(`/api/steam/test?guildId=${encodeURIComponent(state.selectedGuildId)}`, { method: "POST" });
+        const data = await res.json();
+        toast(data.message || "Test güncelleme duyurusu kanala iletildi!");
+        loadDashboardStats();
+      } catch (err) {
+        toast(`Test gönderilemedi: ${err.message}`, "error");
+      } finally {
+        testBtn.disabled = false;
+        testBtn.innerHTML = origHtml;
+      }
+    };
+  }
+
+  const resetColorBtn = $("#steam-embed-color-reset");
+  if (resetColorBtn) {
+    resetColorBtn.onclick = () => {
+      const defaultColor = "#1b2838";
+      if (state.settings?.steam) {
+        state.settings.steam.embedColor = defaultColor;
+      }
+      const cInput = $("#steam-embed-color");
+      const cHex = $("#steam-embed-color-hex");
+      if (cInput) cInput.value = defaultColor;
+      if (cHex) cHex.value = defaultColor;
+      markDirty();
+      updateSteamPreview();
+      toast("Vurgu rengi varsayılana (#1b2838) sıfırlandı.");
+    };
+  }
+
+  const roleSelect = $("#steam-role-select");
+  if (roleSelect) {
+    roleSelect.onchange = () => {
+      if (state.settings?.steam) {
+        state.settings.steam.mentionRoleId = roleSelect.value;
+        markDirty();
+        updateSteamPreview();
+      }
+    };
+  }
+
+  const intervalSelect = $("#steam-interval-select");
+  if (intervalSelect) {
+    intervalSelect.onchange = () => {
+      if (state.settings?.steam) {
+        state.settings.steam.checkIntervalMinutes = Number(intervalSelect.value) || 10;
+        markDirty();
+        updateSteamBadges();
+      }
+    };
+  }
+}
+
 // ---------------- Sekmeler & Butonlar ----------------
 
 for (const btn of document.querySelectorAll(".tab-btn")) {
@@ -2189,6 +2547,7 @@ for (const btn of document.querySelectorAll(".tab-btn")) {
     $("#tab-welcome")?.classList.toggle("hidden", btn.dataset.tab !== "welcome");
     $("#tab-messages")?.classList.toggle("hidden", btn.dataset.tab !== "messages");
     $("#tab-feed")?.classList.toggle("hidden", btn.dataset.tab !== "feed");
+    $("#tab-steam")?.classList.toggle("hidden", btn.dataset.tab !== "steam");
     $("#page-title").textContent = btn.dataset.title || btn.textContent.trim();
     
     // Açık dropdownları kapat
@@ -2198,7 +2557,7 @@ for (const btn of document.querySelectorAll(".tab-btn")) {
     $("#main-content")?.scrollTo({ top: 0, behavior: "instant" });
 
     // Dashboard, Üyeler ve Mesaj Gönder sekmelerinde ana genel Kaydet butonuna gerek yok
-    const isSaveTab = btn.dataset.tab === "general" || btn.dataset.tab === "welcome" || btn.dataset.tab === "feed";
+    const isSaveTab = btn.dataset.tab === "general" || btn.dataset.tab === "welcome" || btn.dataset.tab === "feed" || btn.dataset.tab === "steam";
     const saveBtn = $("#save-btn");
     const saveStatus = $("#save-status");
     if (saveBtn) saveBtn.classList.toggle("hidden", !isSaveTab);
@@ -2213,11 +2572,21 @@ for (const btn of document.querySelectorAll(".tab-btn")) {
       updateFeedBadges();
       updateFeedPreview();
     }
+    if (btn.dataset.tab === "steam") {
+      fillSteamRoleSelect();
+      updateSteamBadges();
+      updateSteamPreview();
+    }
     if (btn.dataset.tab === "dashboard") loadDashboardStats();
     if (btn.dataset.tab === "members") loadMembers();
     if (btn.dataset.tab === "general") loadLogs();
   };
 }
+
+// Kenar çubuğu daraltma/genişletme butonu
+$("#sidebar-toggle")?.addEventListener("click", () => {
+  $("#sidebar")?.classList.toggle("collapsed");
+});
 
 async function save() {
   if (!state.selectedGuildId) {
@@ -2615,6 +2984,23 @@ async function loadDashboardStats() {
       if (feedChannelName) {
         const found = state.channels.find((c) => c.id === g.feedTargetChannelId);
         feedChannelName.textContent = found ? `Hedef Kanal: #${found.name}` : (g.feedTargetChannelId ? `Kanal ID: ${g.feedTargetChannelId}` : "Hedef Kanal: Seçilmedi");
+      }
+
+      const steamStatusBadge = $("#dash-steam-status-badge");
+      const steamChannelName = $("#dash-steam-channel-name");
+      if (steamStatusBadge) {
+        if (g.steamEnabled) {
+          steamStatusBadge.className = "text-xs font-bold px-2.5 py-1 rounded-full bg-[#FFE000]/15 text-[#FFE000] border border-[#FFE000]/40";
+          steamStatusBadge.textContent = "Aktif";
+        } else {
+          steamStatusBadge.className = "text-xs font-bold px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-500 border border-[#262626]";
+          steamStatusBadge.textContent = "Pasif";
+        }
+      }
+      if (steamChannelName) {
+        const found = state.channels.find((c) => c.id === g.steamChannelId);
+        const appInfo = g.steamAppId ? `App ID: ${g.steamAppId}` : "Oyun: Girilmedi";
+        steamChannelName.textContent = found ? `${appInfo} • #${found.name}` : `${appInfo} • Kanal: Seçilmedi`;
       }
     }
 
@@ -4001,11 +4387,28 @@ async function init() {
     if (guildSelector) {
       guildSelector.value = activeGuildId;
       createCustomSelect(guildSelector);
+      guildSelector.onchange = async () => {
+        const newGuildId = guildSelector.value;
+        if (!newGuildId || newGuildId === state.selectedGuildId) return;
+        state.selectedGuildId = newGuildId;
+        localStorage.setItem("selected_guild_id", newGuildId);
+
+        const [newSettings, _] = await Promise.all([
+          api(`/api/settings?guildId=${encodeURIComponent(newGuildId)}`).then((r) => r.json()),
+          loadGuildRoles(newGuildId),
+        ]);
+        state.settings = newSettings;
+        fillChannelSelects();
+        await fillSteamRoleSelect();
+        bindForms();
+        loadDashboardStats();
+      };
     }
 
     const [settings, bot] = await Promise.all([
       api(`/api/settings?guildId=${encodeURIComponent(activeGuildId)}`).then((r) => r.json()),
       api(`/api/bot?guildId=${encodeURIComponent(activeGuildId)}`).then((r) => r.json()),
+      loadGuildRoles(activeGuildId),
     ]);
     state.settings = settings;
     state.bot = bot;
@@ -4019,10 +4422,10 @@ async function init() {
     const badge = $("#bot-status-badge");
     if (badge) {
       if (bot.ready) {
-        badge.className = "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#1c1c1c] bg-[#23a55a] shadow-sm cursor-help";
+        badge.className = "sidebar-status-badge online";
         badge.title = "Çevrimiçi (Discord'a bağlı)";
       } else {
-        badge.className = "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#1c1c1c] bg-[#f23f43] shadow-sm cursor-help";
+        badge.className = "sidebar-status-badge offline";
         badge.title = "Bağlı Değil";
       }
     }
@@ -4038,6 +4441,7 @@ async function init() {
     initAuditLogControls();
     initFeedControls();
     initMembersControls();
+    initSteamControls();
     renderLayerList();
     renderProps();
     draw();

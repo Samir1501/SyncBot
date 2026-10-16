@@ -1,15 +1,17 @@
 import { Colors, EmbedBuilder, GuildMember, PartialGuildMember } from "discord.js";
-import { sendLog } from "../utils/logger.js";
-import { addActivity } from "../utils/activityTracker.js";
+import { activityRepository, type IActivityRepository } from "../repositories/activityRepository.js";
+import { auditLoggerService, type IAuditLogger } from "../services/logging/AuditLoggerService.js";
 
 export async function handleGuildMemberRemove(
-  member: GuildMember | PartialGuildMember
+  member: GuildMember | PartialGuildMember,
+  logger: IAuditLogger = auditLoggerService,
+  activityRepo: IActivityRepository = activityRepository
 ): Promise<void> {
   const userTag = member.user?.tag || member.id;
   const isBot = member.user?.bot || false;
 
   if (member.guild) {
-    addActivity({
+    activityRepo.add({
       guildId: member.guild.id,
       type: "member_leave",
       title: "Üye Ayrıldı",
@@ -31,35 +33,31 @@ export async function handleGuildMemberRemove(
     .setTimestamp();
 
   if (member.guild) {
-    await sendLog(
-      member.guild,
-      embed,
-      {
-        category: "members",
-        eventType: "memberLeave",
-        user: member.user
-          ? {
-              id: member.id,
-              tag: member.user.tag,
-              avatarUrl: member.user.displayAvatarURL(),
-              isBot,
-            }
-          : {
-              id: member.id,
-              tag: userTag,
-              isBot,
-            },
-        record: {
-          title: "Üye Ayrıldı",
-          description: `${userTag} sunucudan ayrıldı. Kalan üye: ${member.guild.memberCount}`,
-          details: {
-            tag: userTag,
+    await logger.sendLog(member.guild, embed, {
+      category: "members",
+      eventType: "memberLeave",
+      user: member.user
+        ? {
             id: member.id,
-            remainingMembers: member.guild.memberCount,
+            tag: member.user.tag,
+            avatarUrl: member.user.displayAvatarURL(),
+            isBot,
+          }
+        : {
+            id: member.id,
+            tag: userTag,
+            isBot,
           },
-          color: "#ef4444",
+      record: {
+        title: "Üye Ayrıldı",
+        description: `${userTag} sunucudan ayrıldı. Kalan üye: ${member.guild.memberCount}`,
+        details: {
+          tag: userTag,
+          id: member.id,
+          remainingMembers: member.guild.memberCount,
         },
-      }
-    );
+        color: "#ef4444",
+      },
+    });
   }
 }

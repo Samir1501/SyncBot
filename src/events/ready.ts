@@ -1,7 +1,7 @@
 import { ActivityType, Client, Colors, EmbedBuilder } from "discord.js";
-import { sendLog } from "../utils/logger.js";
+import { auditLoggerService, type IAuditLogger } from "../services/logging/AuditLoggerService.js";
 
-export function handleReady(client: Client): void {
+export function handleReady(client: Client, logger: IAuditLogger = auditLoggerService): void {
   console.log(`✅ [Giriş Başarılı] ${client.user?.tag} aktif!`);
   console.log(`📊 Bağlı Sunucu Sayısı: ${client.guilds.cache.size}`);
 
@@ -20,5 +20,5 @@ export function handleReady(client: Client): void {
     )
     .setTimestamp();
 
-  sendLog(client, readyEmbed);
+  void logger.sendLog(client, readyEmbed);
 }
