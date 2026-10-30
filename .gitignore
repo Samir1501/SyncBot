@@ -4,3 +4,6 @@ dist
 *.log
 data/
 *.md
+!GEMINI.md
+!GUNCELLEME_REHBERI.md
+!PROJECT_GRAPH.md

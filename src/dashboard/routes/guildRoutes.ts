@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { ChannelType, type Client } from "discord.js";
 import { statsService } from "../services/statsService.js";
+import { activityTrackerService } from "../../services/activity/ActivityTrackerService.js";
 
 export function createGuildRoutes(client: Client): Router {
   const router = Router();
@@ -15,15 +16,57 @@ export function createGuildRoutes(client: Client): Router {
     res.json(guilds);
   });
 
+  router.get("/api/invite", (_req, res) => {
+    const clientId = client.user?.id || "";
+    const inviteUrl = clientId
+      ? `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=8&scope=bot%20applications.commands`
+      : "";
+
+    res.json({
+      clientId,
+      botName: client.user?.username || "SyncBot",
+      botAvatar: client.user?.displayAvatarURL({ extension: "png", size: 128 }) || "",
+      inviteUrl,
+      permissions: "Administrator (Önerilen)",
+    });
+  });
+
   router.get("/api/bot", (req, res) => {
     const guildId = String(req.query.guildId || "");
-    res.json({ ready: client.isReady(), ...statsService.getSampleCardData(client, guildId) });
+    const clientId = client.user?.id || "";
+    const inviteUrl = clientId
+      ? `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=8&scope=bot%20applications.commands`
+      : "";
+
+    res.json({
+      ready: client.isReady(),
+      clientId,
+      inviteUrl,
+      ...statsService.getSampleCardData(client, guildId),
+    });
   });
 
   router.get("/api/stats", async (req, res) => {
     const guildId = String(req.query.guildId || "");
     const stats = await statsService.getDashboardStats(client, guildId);
     res.json(stats);
+  });
+
+  router.get("/api/stats/activity", async (req, res) => {
+    try {
+      const guildId = String(req.query.guildId || "");
+      if (!guildId) {
+        res.status(400).json({ error: "Lütfen bir sunucu belirtin (guildId eksik)." });
+        return;
+      }
+      const rawPeriod = String(req.query.period || "7d");
+      const period = rawPeriod === "24h" || rawPeriod === "30d" ? rawPeriod : "7d";
+      const analytics = await activityTrackerService.getActivityAnalytics(client, guildId, period);
+      res.json(analytics);
+    } catch (err: any) {
+      console.error("Aktivite analitiği hatası:", err);
+      res.status(500).json({ error: "Aktivite verileri alınamadı: " + err.message });
+    }
   });
 
   router.get("/api/channels", async (req, res) => {

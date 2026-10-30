@@ -2,6 +2,8 @@ import { Events, type Client, type ClientEvents } from "discord.js";
 import { handleWelcome } from "../welcome/sendWelcome.js";
 import { handleGuildBanAdd } from "./guildBanAdd.js";
 import { handleGuildBanRemove } from "./guildBanRemove.js";
+import { handleGuildCreate } from "./guildCreate.js";
+import { handleGuildDelete } from "./guildDelete.js";
 import { handleGuildMemberAdd } from "./guildMemberAdd.js";
 import { handleGuildMemberRemove } from "./guildMemberRemove.js";
 import { handleGuildMemberUpdate } from "./guildMemberUpdate.js";
@@ -15,13 +17,17 @@ import { handleVoiceStateUpdate } from "./voiceStateUpdate.js";
 export interface BotEventRegistration<K extends keyof ClientEvents = keyof ClientEvents> {
   event: K;
   once?: boolean;
-  execute: (...args: ClientEvents[K]) => Promise<void> | void;
+  execute: (...args: any[]) => Promise<void> | void;
 }
 
 function defineEvent<K extends keyof ClientEvents>(
-  registration: BotEventRegistration<K>
-): BotEventRegistration<K> {
-  return registration;
+  registration: {
+    event: K;
+    once?: boolean;
+    execute: (...args: ClientEvents[K]) => Promise<void> | void;
+  }
+): BotEventRegistration<any> {
+  return registration as BotEventRegistration<any>;
 }
 
 /**
@@ -33,6 +39,14 @@ export const botEventRegistry: BotEventRegistration<any>[] = [
     event: Events.ClientReady,
     once: true,
     execute: (client) => handleReady(client),
+  }),
+  defineEvent({
+    event: Events.GuildCreate,
+    execute: (guild) => handleGuildCreate(guild),
+  }),
+  defineEvent({
+    event: Events.GuildDelete,
+    execute: (guild) => handleGuildDelete(guild),
   }),
   defineEvent({
     event: Events.MessageCreate,

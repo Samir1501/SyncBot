@@ -1315,7 +1315,7 @@ function bindForms() {
     if (!el) return;
     el[prop] = obj[key] !== undefined ? obj[key] : "";
     el.oninput = el.onchange = () => {
-      obj[key] = el[prop];
+      obj[key] = el.type === "number" ? (el.value === "" ? 0 : Number(el.value)) : el[prop];
       markDirty();
       updateAuditLogBadges();
       updateFeedBadges();
@@ -2536,57 +2536,70 @@ function initSteamControls() {
   }
 }
 
-// ---------------- Sekmeler & Butonlar ----------------
+// ---------------- Sekmeler & Sayfa Yönlendiricisi (TabRouter) ----------------
 
-for (const btn of document.querySelectorAll(".tab-btn")) {
-  btn.onclick = () => {
-    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b === btn));
-    $("#tab-dashboard")?.classList.toggle("hidden", btn.dataset.tab !== "dashboard");
-    $("#tab-members")?.classList.toggle("hidden", btn.dataset.tab !== "members");
-    $("#tab-general")?.classList.toggle("hidden", btn.dataset.tab !== "general");
-    $("#tab-welcome")?.classList.toggle("hidden", btn.dataset.tab !== "welcome");
-    $("#tab-messages")?.classList.toggle("hidden", btn.dataset.tab !== "messages");
-    $("#tab-feed")?.classList.toggle("hidden", btn.dataset.tab !== "feed");
-    $("#tab-steam")?.classList.toggle("hidden", btn.dataset.tab !== "steam");
-    $("#page-title").textContent = btn.dataset.title || btn.textContent.trim();
-    
-    // Açık dropdownları kapat
-    document.querySelectorAll(".custom-select-wrapper.open").forEach((w) => w.classList.remove("open"));
+function initTabRouter() {
+  Navigation.TabRouter.register("dashboard", {
+    title: "Genel Bakış",
+    hasSave: false,
+    onEnter: () => loadDashboardStats(),
+  });
 
-    // Sekme değiştiğinde içeriği en üste sar
-    $("#main-content")?.scrollTo({ top: 0, behavior: "instant" });
+  Navigation.TabRouter.register("server-stats", {
+    title: "Aktiflik & Grafikler",
+    hasSave: false,
+    onEnter: () => loadServerDetailedStats(),
+  });
 
-    // Dashboard, Üyeler ve Mesaj Gönder sekmelerinde ana genel Kaydet butonuna gerek yok
-    const isSaveTab = btn.dataset.tab === "general" || btn.dataset.tab === "welcome" || btn.dataset.tab === "feed" || btn.dataset.tab === "steam";
-    const saveBtn = $("#save-btn");
-    const saveStatus = $("#save-status");
-    if (saveBtn) saveBtn.classList.toggle("hidden", !isSaveTab);
-    if (saveStatus) saveStatus.classList.toggle("hidden", !isSaveTab);
+  Navigation.TabRouter.register("members", {
+    title: "Sunucu Üyeleri",
+    hasSave: false,
+    onEnter: () => loadMembers(),
+  });
 
-    if (btn.dataset.tab === "welcome") {
+  Navigation.TabRouter.register("general", {
+    title: "Genel Ayarlar",
+    hasSave: true,
+    onEnter: () => loadLogs(),
+  });
+
+  Navigation.TabRouter.register("welcome", {
+    title: "Karşılama Kartı",
+    hasSave: true,
+    onEnter: () => {
       renderLayerList();
       renderProps();
       draw();
-    }
-    if (btn.dataset.tab === "feed") {
+    },
+  });
+
+  Navigation.TabRouter.register("feed", {
+    title: "Ana Sayfa Akışı",
+    hasSave: true,
+    onEnter: () => {
       updateFeedBadges();
       updateFeedPreview();
-    }
-    if (btn.dataset.tab === "steam") {
+    },
+  });
+
+  Navigation.TabRouter.register("messages", {
+    title: "Mesaj Gönder",
+    hasSave: false,
+    onEnter: null,
+  });
+
+  Navigation.TabRouter.register("steam", {
+    title: "Steam Güncellemeleri",
+    hasSave: true,
+    onEnter: () => {
       fillSteamRoleSelect();
       updateSteamBadges();
       updateSteamPreview();
-    }
-    if (btn.dataset.tab === "dashboard") loadDashboardStats();
-    if (btn.dataset.tab === "members") loadMembers();
-    if (btn.dataset.tab === "general") loadLogs();
-  };
-}
+    },
+  });
 
-// Kenar çubuğu daraltma/genişletme butonu
-$("#sidebar-toggle")?.addEventListener("click", () => {
-  $("#sidebar")?.classList.toggle("collapsed");
-});
+  Navigation.TabRouter.init("dashboard");
+}
 
 async function save() {
   if (!state.selectedGuildId) {
@@ -2627,13 +2640,12 @@ $("#server-preview-btn").onclick = async () => {
     const previewImg = $("#preview-img");
     if (previewImg.src.startsWith("blob:")) URL.revokeObjectURL(previewImg.src);
     previewImg.src = URL.createObjectURL(blob);
-    $("#preview-modal").classList.remove("hidden");
+    Navigation.ModalManager.open("preview-modal");
   } catch (err) {
     toast(err.message, "error");
   }
 };
-$("#preview-close").onclick = () => $("#preview-modal").classList.add("hidden");
-$("#preview-modal").onclick = (e) => { if (e.target.id === "preview-modal") $("#preview-modal").classList.add("hidden"); };
+$("#preview-close").onclick = () => Navigation.ModalManager.close("preview-modal");
 
 $("#test-btn").onclick = async () => {
   if (state.dirty && !(await save())) return;
@@ -2767,23 +2779,7 @@ if (sendMsgBtn) {
 }
 
 // ---------------- Kenar Çubuğu Aç/Kapat ----------------
-const sidebar = $("#sidebar");
-const sidebarToggleBtn = $("#sidebar-toggle");
-
-function setSidebarCollapsed(collapsed) {
-  sidebar.classList.toggle("collapsed", collapsed);
-  localStorage.setItem("sidebar_collapsed", collapsed ? "true" : "false");
-}
-
-if (sidebarToggleBtn) {
-  sidebarToggleBtn.onclick = () => {
-    setSidebarCollapsed(!sidebar.classList.contains("collapsed"));
-  };
-}
-
-if (localStorage.getItem("sidebar_collapsed") === "true") {
-  setSidebarCollapsed(true);
-}
+// Kenar çubuğu davranışı ve durumu Navigation.SidebarManager üzerinden tek elden yönetilir.
 
 window.addEventListener("beforeunload", (e) => {
   if (state.dirty) e.preventDefault();
@@ -3121,36 +3117,902 @@ if (dashRefreshBtn) {
   };
 }
 
+// ---------------- Sunucu Ekle / Botu Davet Et Modalı ----------------
+let botInviteUrl = "";
+
+async function fetchInviteInfo() {
+  try {
+    const res = await api("/api/invite");
+    const data = await res.json();
+    botInviteUrl = data.inviteUrl || "";
+    const linkBtn = $("#btn-discord-oauth-invite");
+    if (linkBtn && botInviteUrl) linkBtn.href = botInviteUrl;
+    const inputField = $("#invite-url-field");
+    if (inputField && botInviteUrl) inputField.value = botInviteUrl;
+
+    // Landing sayfası davet butonları ve bot profili
+    if (botInviteUrl) {
+      const headerInvite = $("#landing-header-invite-btn");
+      if (headerInvite) headerInvite.href = botInviteUrl;
+      const heroInvite = $("#landing-hero-invite-btn");
+      if (heroInvite) heroInvite.href = botInviteUrl;
+      const footerInvite = $("#landing-footer-invite-btn");
+      if (footerInvite) footerInvite.href = botInviteUrl;
+    }
+    if (data.botName) {
+      const landingName = $("#landing-bot-name");
+      if (landingName) landingName.textContent = data.botName;
+    }
+    if (data.botAvatar) {
+      const landingAvatar = $("#landing-bot-avatar");
+      if (landingAvatar) landingAvatar.src = data.botAvatar;
+    }
+    return data;
+  } catch (err) {
+    console.warn("Davet linki alınamadı:", err);
+    return null;
+  }
+}
+
+function openAddServerModal() {
+  fetchInviteInfo();
+  Navigation.ModalManager.open("add-server-modal");
+}
+
+function closeAddServerModal() {
+  Navigation.ModalManager.close("add-server-modal");
+}
+
+async function refreshGuildsList(showToast = true) {
+  try {
+    const prevGuildIds = new Set(state.guilds.map((g) => g.id));
+    const [guilds, channels] = await Promise.all([
+      api("/api/guilds").then((r) => r.json()),
+      api("/api/channels").then((r) => r.json()),
+    ]);
+    state.guilds = guilds;
+    state.channels = channels;
+
+    // Yeni eklenen sunucuyu tespit et
+    const newlyAdded = guilds.find((g) => !prevGuildIds.has(g.id));
+    if (newlyAdded) {
+      toast(`Yeni sunucu bağlandı: "${newlyAdded.name}"!`);
+      await switchGuild(newlyAdded.id);
+    } else if (!state.selectedGuildId || !guilds.some((g) => g.id === state.selectedGuildId)) {
+      if (guilds.length > 0) {
+        await switchGuild(guilds[0].id);
+      }
+    }
+
+    if (showToast) {
+      toast(`Sunucu listesi güncellendi (${guilds.length} sunucu bağlı).`);
+    }
+  } catch (err) {
+    toast(`Sunucu listesi güncellenemedi: ${err.message}`, "error");
+  }
+}
+
+function initAddServerControls() {
+  $("#btn-add-server")?.addEventListener("click", openAddServerModal);
+  $("#qa-add-server")?.addEventListener("click", openAddServerModal);
+  $("#add-server-close-btn")?.addEventListener("click", closeAddServerModal);
+  $("#add-server-footer-close-btn")?.addEventListener("click", closeAddServerModal);
+
+  $("#btn-copy-invite-link")?.addEventListener("click", () => {
+    const input = $("#invite-url-field");
+    const url = input?.value || botInviteUrl;
+    if (url && url !== "Yükleniyor...") {
+      copyTextToClipboard(url, "Bot davet bağlantısı panoya kopyalandı!");
+    } else {
+      toast("Davet bağlantısı henüz yüklenmedi.", "error");
+    }
+  });
+
+  $("#btn-refresh-guilds-modal")?.addEventListener("click", async () => {
+    const btn = $("#btn-refresh-guilds-modal");
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Aranıyor...';
+    }
+    await refreshGuildsList(true);
+    closeAddServerModal();
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-arrows-rotate mr-1"></i> Listeyi Yenile & Aç';
+    }
+  });
+}
+
+// ---------------- Discord OAuth2 & Sunucu Portalı ----------------
+state.auth = {
+  authenticated: false,
+  user: null,
+  guilds: [],
+  hasClientSecret: false,
+};
+state.portalFilter = "all";
+state.portalSearch = "";
+
+function setAppView(view) {
+  Navigation.ViewManager.setView(view);
+}
+
+function startDiscordLogin() {
+  if (state.auth?.hasClientSecret) {
+    window.location.href = "/api/auth/discord";
+  } else {
+    openOAuthSetupModal();
+  }
+}
+
+async function handleLogout() {
+  try {
+    await api("/api/auth/logout", { method: "POST" });
+    state.auth = {
+      authenticated: false,
+      user: null,
+      guilds: [],
+      hasClientSecret: Boolean(state.auth?.hasClientSecret),
+    };
+    setAppView("landing");
+    toast("Başarıyla çıkış yapıldı. Giriş ekranına yönlendirildiniz.");
+  } catch (err) {
+    toast(`Çıkış yapılamadı: ${err.message}`, "error");
+  }
+}
+
+async function checkAuthStatus() {
+  try {
+    const res = await api("/api/auth/me");
+    const data = await res.json();
+    state.auth = data;
+
+    const loginBtn = $("#btn-login-discord");
+    const userBadge = $("#user-profile-badge");
+    const userAvatar = $("#auth-user-avatar");
+    const userName = $("#auth-user-name");
+
+    if (data.authenticated && data.user) {
+      if (loginBtn) loginBtn.classList.add("hidden");
+      if (userBadge) userBadge.classList.remove("hidden");
+      if (userAvatar) userAvatar.src = data.user.avatarUrl;
+      if (userName) userName.textContent = data.user.username;
+      setAppView("dashboard");
+    } else {
+      if (loginBtn) loginBtn.classList.remove("hidden");
+      if (userBadge) userBadge.classList.add("hidden");
+      setAppView("landing");
+    }
+
+    return data;
+  } catch (err) {
+    console.warn("Giriş durumu sorgulanamadı:", err);
+    setAppView("landing");
+    return null;
+  }
+}
+
+async function openServersPortal() {
+  if (!state.auth.authenticated) {
+    if (state.auth.hasClientSecret) {
+      window.location.href = "/api/auth/discord";
+      return;
+    } else {
+      openOAuthSetupModal();
+      return;
+    }
+  }
+
+  Navigation.ModalManager.open("servers-portal-modal");
+  await refreshPortalGuilds();
+}
+
+function closeServersPortal() {
+  Navigation.ModalManager.close("servers-portal-modal");
+}
+
+function openOAuthSetupModal() {
+  Navigation.ModalManager.open("oauth-setup-modal");
+}
+
+function closeOAuthSetupModal() {
+  Navigation.ModalManager.close("oauth-setup-modal");
+}
+
+async function refreshPortalGuilds() {
+  const grid = $("#portal-guilds-grid");
+  if (grid) {
+    grid.innerHTML = `
+      <div class="col-span-full text-center py-12 text-zinc-500 text-xs">
+        <i class="fa-solid fa-spinner fa-spin text-xl text-[#FFE000] block mb-2"></i>
+        Sunucularınız kontrol ediliyor...
+      </div>
+    `;
+  }
+
+  await checkAuthStatus();
+  renderPortalGuilds();
+}
+
+function renderPortalGuilds() {
+  const grid = $("#portal-guilds-grid");
+  const countBadge = $("#portal-guilds-count-badge");
+  if (!grid) return;
+
+  const allGuilds = state.auth.guilds || [];
+  const search = (state.portalSearch || "").toLowerCase().trim();
+  const filter = state.portalFilter || "all";
+
+  const filtered = allGuilds.filter((g) => {
+    if (search && !g.name.toLowerCase().includes(search)) return false;
+    if (filter === "with-bot" && !g.hasBot) return false;
+    if (filter === "no-bot" && g.hasBot) return false;
+    return true;
+  });
+
+  if (countBadge) {
+    countBadge.textContent = `${filtered.length} / ${allGuilds.length} Sunucu`;
+  }
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-full text-center py-12">
+        <div class="w-12 h-12 rounded-2xl bg-zinc-800 text-zinc-500 flex items-center justify-center mx-auto text-xl mb-3">
+          <i class="fa-solid fa-inbox"></i>
+        </div>
+        <div class="text-sm font-semibold text-zinc-300">Uygun Sunucu Bulunamadı</div>
+        <div class="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+          ${search ? `"${escapeHtml(search)}" ile eşleşen bir sunucu bulunamadı.` : "Yönetici yetkisine sahip olduğunuz bir sunucu tespit edilemedi."}
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = filtered.map((g) => {
+    const initials = g.name.split(" ").map((w) => w[0]).join("").slice(0, 3).toUpperCase();
+    const iconHtml = g.iconUrl
+      ? `<img src="${g.iconUrl}" class="w-12 h-12 rounded-2xl bg-zinc-800 border border-[#262626] object-cover shrink-0 shadow-md" alt="" onerror="this.outerHTML='<div class=\\'w-12 h-12 rounded-2xl bg-zinc-800 border border-[#262626] flex items-center justify-center font-bold text-sm text-zinc-400 shrink-0\\'>${escapeHtml(initials)}</div>'" />`
+      : `<div class="w-12 h-12 rounded-2xl bg-zinc-800 border border-[#262626] flex items-center justify-center font-bold text-sm text-[#FFE000] shrink-0">${escapeHtml(initials)}</div>`;
+
+    const statusBadge = g.hasBot
+      ? `<span class="badge badge-green text-[10px] flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span> Bot Aktif</span>`
+      : `<span class="badge text-[10px] bg-zinc-800 text-zinc-400 border border-zinc-700">Bot Yok</span>`;
+
+    const roleBadge = g.isOwner
+      ? `<span class="badge badge-yellow text-[10px]"><i class="fa-solid fa-crown mr-1"></i> Kurucu</span>`
+      : `<span class="badge text-[10px] bg-zinc-800 text-sky-400 border border-sky-500/20"><i class="fa-solid fa-shield mr-1"></i> Yönetici</span>`;
+
+    const memberText = g.memberCount !== null ? `${g.memberCount} üye` : "Bağlı Değil";
+
+    const actionButton = g.hasBot
+      ? `<button type="button" class="btn btn-primary w-full portal-manage-btn" data-guild-id="${g.id}">
+          <i class="fa-solid fa-sliders mr-1.5"></i> Yönet
+        </button>`
+      : `<a href="${g.inviteUrl}" target="_blank" rel="noopener noreferrer" class="btn !bg-[#5865F2] hover:!bg-[#4752C4] !text-white w-full flex items-center justify-center gap-2 text-xs font-bold portal-invite-btn" data-guild-id="${g.id}">
+          <i class="fa-brands fa-discord text-base"></i> Sunucuya Ekle
+        </a>`;
+
+    return `
+      <div class="card p-4 space-y-4 bg-[#181818] border border-[#262626] hover:border-[#383838] transition flex flex-col justify-between group">
+        <div class="flex items-center gap-3 min-w-0">
+          ${iconHtml}
+          <div class="min-w-0 flex-1">
+            <h4 class="font-bold text-sm text-[#F1F1F1] group-hover:text-[#FFE000] transition truncate" title="${escapeHtml(g.name)}">
+              ${escapeHtml(g.name)}
+            </h4>
+            <div class="flex items-center gap-1.5 mt-1">
+              ${statusBadge}
+              ${roleBadge}
+            </div>
+            <div class="text-[11px] text-zinc-500 mt-1 truncate">
+              ${memberText}
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-[#262626]">
+          ${actionButton}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  // "Yönet" butonlarına tıklandığında sunucu değiştir ve modalı kapat
+  grid.querySelectorAll(".portal-manage-btn").forEach((btn) => {
+    btn.onclick = async () => {
+      const targetGuildId = btn.dataset.guildId;
+      if (targetGuildId) {
+        closeServersPortal();
+        await switchGuild(targetGuildId);
+        toast("Sunucu yönetim paneline geçildi!");
+      }
+    };
+  });
+
+  // "Sunucuya Ekle" butonuna basıldığında bot eklendikten sonra listeyi yenilemeyi kolaylaştır
+  grid.querySelectorAll(".portal-invite-btn").forEach((btn) => {
+    btn.onclick = () => {
+      toast("Discord yetkilendirme penceresi açıldı. Ekleme tamamlandığında 'Yenile' butonuna basabilirsiniz.");
+    };
+  });
+}
+
+function initAuthAndPortalControls() {
+  $("#btn-my-servers")?.addEventListener("click", openServersPortal);
+  $("#portal-close-btn")?.addEventListener("click", closeServersPortal);
+  $("#portal-footer-close-btn")?.addEventListener("click", closeServersPortal);
+  $("#portal-refresh-btn")?.addEventListener("click", refreshPortalGuilds);
+
+  $("#oauth-setup-close-btn")?.addEventListener("click", closeOAuthSetupModal);
+  $("#oauth-setup-footer-close-btn")?.addEventListener("click", closeOAuthSetupModal);
+
+  const portalModal = $("#servers-portal-modal");
+  if (portalModal) {
+    portalModal.addEventListener("click", (e) => {
+      if (e.target === portalModal) closeServersPortal();
+    });
+  }
+
+  // Landing Sayfası Butonları
+  $("#landing-header-login-btn")?.addEventListener("click", startDiscordLogin);
+  $("#landing-hero-login-btn")?.addEventListener("click", startDiscordLogin);
+
+  // Dashboard Giriş / Çıkış Butonları
+  $("#btn-login-discord")?.addEventListener("click", startDiscordLogin);
+  $("#btn-logout")?.addEventListener("click", handleLogout);
+
+  // Portal Arama
+  const portalSearchInput = $("#portal-search-input");
+  let portalSearchTimer = null;
+  if (portalSearchInput) {
+    portalSearchInput.addEventListener("input", () => {
+      clearTimeout(portalSearchTimer);
+      portalSearchTimer = setTimeout(() => {
+        state.portalSearch = portalSearchInput.value.trim();
+        renderPortalGuilds();
+      }, 150);
+    });
+  }
+
+  // Portal Filtre Butonları
+  document.querySelectorAll(".portal-filter-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".portal-filter-btn").forEach((b) => b.classList.remove("active", "btn-primary"));
+      btn.classList.add("active", "btn-primary");
+      state.portalFilter = btn.dataset.filter || "all";
+      renderPortalGuilds();
+    });
+  });
+
+  // URL query parametrelerini kontrol et (OAuth callback dönüşü)
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("open_servers") === "1" || params.get("auth") === "success") {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    setTimeout(() => {
+      openServersPortal();
+    }, 500);
+  } else if (params.get("oauth_setup_needed") === "1") {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    setTimeout(() => {
+      openOAuthSetupModal();
+    }, 500);
+  }
+}
+
 // Dashboard Modül Kartlarına Tıklandığında İlgili Sekmeye Geçiş
 const dashLogCard = $("#dash-log-module-card");
 if (dashLogCard) {
   dashLogCard.onclick = () => {
-    const tabBtn = document.querySelector('.tab-btn[data-tab="general"]');
-    if (tabBtn) tabBtn.click();
+    Navigation.TabRouter.navigateTo("general");
   };
 }
 
 const dashWelcomeCard = $("#dash-welcome-module-card");
 if (dashWelcomeCard) {
   dashWelcomeCard.onclick = () => {
-    const tabBtn = document.querySelector('.tab-btn[data-tab="welcome"]');
-    if (tabBtn) tabBtn.click();
+    Navigation.TabRouter.navigateTo("welcome");
   };
 }
 
 const dashFeedCard = $("#dash-feed-module-card");
 if (dashFeedCard) {
   dashFeedCard.onclick = () => {
-    const tabBtn = document.querySelector('.tab-btn[data-tab="feed"]');
-    if (tabBtn) tabBtn.click();
+    Navigation.TabRouter.navigateTo("feed");
   };
 }
+
+// ---------------- Sunucu Aktiflik & Grafik Analitiği ----------------
+let currentActivityPeriod = "7d";
+const activityCharts = {
+  timeline: null,
+  hourly: null,
+  weekday: null,
+  channels: null,
+  circulation: null,
+  voice: null,
+};
+
+async function loadServerDetailedStats() {
+  if (!state.selectedGuildId) return;
+  const refreshBtn = $("#ss-refresh-btn");
+  if (refreshBtn) {
+    refreshBtn.disabled = true;
+    refreshBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Yükleniyor...';
+  }
+
+  try {
+    const [statsRes, activityRes] = await Promise.all([
+      api(`/api/stats?guildId=${encodeURIComponent(state.selectedGuildId)}`).then((r) => r.json()).catch(() => ({})),
+      api(`/api/stats/activity?guildId=${encodeURIComponent(state.selectedGuildId)}&period=${currentActivityPeriod}`).then((r) => r.json()),
+    ]);
+    renderServerActivityAnalytics(activityRes, statsRes.guild);
+  } catch (err) {
+    console.error("Aktivite analitiği yüklenemedi:", err);
+    toast(`Aktiflik grafikleri alınamadı: ${err.message}`, "error");
+  } finally {
+    if (refreshBtn) {
+      refreshBtn.disabled = false;
+      refreshBtn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Yenile';
+    }
+  }
+}
+
+function renderServerActivityAnalytics(data, guildData) {
+  if (!data || !data.summary) return;
+  const s = data.summary;
+
+  // 1. Üst KPI Kartları
+  const avgEl = $("#ss-kpi-avg-hour");
+  if (avgEl) avgEl.textContent = `${s.avgPerHour} / sa`;
+
+  const totalInteractionsEl = $("#ss-kpi-total-interactions");
+  if (totalInteractionsEl) {
+    totalInteractionsEl.textContent = `${(s.totalMessages + s.totalVoiceEvents).toLocaleString()} toplam etkileşim`;
+  }
+
+  const peakHourEl = $("#ss-kpi-peak-hour");
+  if (peakHourEl) peakHourEl.textContent = s.peakHour || "—";
+
+  const busiestDayEl = $("#ss-kpi-busiest-day");
+  if (busiestDayEl) busiestDayEl.textContent = s.busiestDay || "—";
+
+  const voiceActiveEl = $("#ss-kpi-voice-active");
+  if (voiceActiveEl) voiceActiveEl.textContent = `${s.activeVoiceNow} Üye`;
+
+  const peakBadge = $("#ss-peak-hour-badge");
+  if (peakBadge) peakBadge.textContent = s.peakHour || "—";
+
+  const peakDayBadge = $("#ss-peak-day-badge");
+  if (peakDayBadge) peakDayBadge.textContent = s.busiestDay || "—";
+
+  const netBadge = $("#ss-net-change-badge");
+  if (netBadge) {
+    if (s.netMemberChange >= 0) {
+      netBadge.className = "badge badge-green";
+      netBadge.textContent = `Net +${s.netMemberChange}`;
+    } else {
+      netBadge.className = "badge badge-red";
+      netBadge.textContent = `Net ${s.netMemberChange}`;
+    }
+  }
+
+  // 2. Canlı Ses Odaları
+  const voiceSummary = $("#ss-voice-status-summary");
+  if (voiceSummary) {
+    voiceSummary.textContent = `${s.activeVoiceNow} aktif kullanıcı odalarda`;
+  }
+
+  const voiceChannelsList = $("#ss-active-voice-channels");
+  if (voiceChannelsList) {
+    const activeChannels = guildData?.activeVoiceChannels || [];
+    if (activeChannels.length === 0) {
+      voiceChannelsList.innerHTML = `
+        <div class="text-xs text-zinc-500 text-center py-8">
+          <i class="fa-solid fa-microphone-slash text-zinc-600 text-2xl block mb-2"></i>
+          Şu anda ses kanallarında aktif üye bulunmuyor.
+        </div>
+      `;
+    } else {
+      voiceChannelsList.innerHTML = activeChannels.map((vc) => `
+        <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#141414] border border-[#262626] hover:border-emerald-500/30 transition">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-xs shrink-0">
+              <i class="fa-solid fa-volume-high"></i>
+            </div>
+            <span class="font-semibold text-xs text-[#F1F1F1] truncate">${escapeHtml(vc.name)}</span>
+          </div>
+          <span class="badge badge-green shrink-0">
+            <i class="fa-solid fa-users mr-1"></i> ${vc.userCount} üye
+          </span>
+        </div>
+      `).join("");
+    }
+  }
+
+  // 3. Chart.js Kütüphanesi Yüklü mü Kontrolü
+  if (!window.Chart) {
+    console.warn("Chart.js yüklenemedi; grafikler çizilemiyor.");
+    return;
+  }
+
+  const defaultChartFont = { family: '"Segoe UI", sans-serif', size: 11 };
+  const chartGridStyle = { color: "rgba(255, 255, 255, 0.05)", drawBorder: false };
+  const chartTickStyle = { color: "#a1a1aa", font: defaultChartFont };
+
+  // GRAFİK 1: Zaman Bazlı Çizgi & Alan Grafiği (Timeline)
+  const ctxTimeline = document.getElementById("chart-activity-timeline")?.getContext("2d");
+  if (ctxTimeline) {
+    if (activityCharts.timeline) activityCharts.timeline.destroy();
+
+    const gradMsg = ctxTimeline.createLinearGradient(0, 0, 0, 280);
+    gradMsg.addColorStop(0, "rgba(255, 224, 0, 0.28)");
+    gradMsg.addColorStop(1, "rgba(255, 224, 0, 0.0)");
+
+    const gradVoice = ctxTimeline.createLinearGradient(0, 0, 0, 280);
+    gradVoice.addColorStop(0, "rgba(52, 211, 153, 0.22)");
+    gradVoice.addColorStop(1, "rgba(52, 211, 153, 0.0)");
+
+    activityCharts.timeline = new Chart(ctxTimeline, {
+      type: "line",
+      data: {
+        labels: data.timeline.labels,
+        datasets: [
+          {
+            label: "Mesaj Trafiği",
+            data: data.timeline.messages,
+            borderColor: "#FFE000",
+            backgroundColor: gradMsg,
+            fill: true,
+            tension: 0.35,
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointBackgroundColor: "#FFE000",
+          },
+          {
+            label: "Ses Odası",
+            data: data.timeline.voice,
+            borderColor: "#34d399",
+            backgroundColor: gradVoice,
+            fill: true,
+            tension: 0.35,
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointBackgroundColor: "#34d399",
+          },
+          {
+            label: "Üye Katılımı",
+            data: data.timeline.joins,
+            borderColor: "#38bdf8",
+            backgroundColor: "transparent",
+            fill: false,
+            tension: 0.3,
+            borderWidth: 1.5,
+            pointRadius: 2,
+            pointHoverRadius: 5,
+          },
+          {
+            label: "Ayrılanlar",
+            data: data.timeline.leaves,
+            borderColor: "#f87171",
+            borderDash: [4, 4],
+            backgroundColor: "transparent",
+            fill: false,
+            tension: 0.3,
+            borderWidth: 1.5,
+            pointRadius: 2,
+            pointHoverRadius: 5,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "#18181b",
+            borderColor: "#27272a",
+            borderWidth: 1,
+            titleColor: "#ffffff",
+            bodyColor: "#f4f4f5",
+            titleFont: { weight: "bold", size: 12 },
+            padding: 10,
+            cornerRadius: 8,
+          },
+        },
+        scales: {
+          x: { grid: chartGridStyle, ticks: chartTickStyle },
+          y: { grid: chartGridStyle, ticks: chartTickStyle, beginAtZero: true },
+        },
+      },
+    });
+  }
+
+  // GRAFİK 2: Saatlik Yoğunluk Isı Dağılımı (00:00 - 23:00)
+  const ctxHourly = document.getElementById("chart-hourly-profile")?.getContext("2d");
+  if (ctxHourly) {
+    if (activityCharts.hourly) activityCharts.hourly.destroy();
+
+    const maxVal = Math.max(...data.hourlyDistribution.counts, 1);
+    const barColors = data.hourlyDistribution.counts.map((val) => {
+      if (val >= maxVal * 0.75 && val > 0) return "#FFE000";
+      if (val >= maxVal * 0.4) return "rgba(255, 224, 0, 0.45)";
+      return "rgba(255, 255, 255, 0.12)";
+    });
+
+    activityCharts.hourly = new Chart(ctxHourly, {
+      type: "bar",
+      data: {
+        labels: data.hourlyDistribution.labels,
+        datasets: [
+          {
+            label: "Saatlik Toplam Hareket",
+            data: data.hourlyDistribution.counts,
+            backgroundColor: barColors,
+            borderRadius: 4,
+            borderSkipped: false,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "#18181b",
+            borderColor: "#27272a",
+            borderWidth: 1,
+            titleColor: "#ffffff",
+            bodyColor: "#f4f4f5",
+            padding: 10,
+            cornerRadius: 8,
+            callbacks: {
+              title: (items) => `Saat: ${items[0].label}`,
+              label: (item) => `Toplam Hareket: ${item.raw}`,
+            },
+          },
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { ...chartTickStyle, maxTicksLimit: 12 } },
+          y: { grid: chartGridStyle, ticks: chartTickStyle, beginAtZero: true },
+        },
+      },
+    });
+  }
+
+  // GRAFİK 3: Haftanın Günlerine Göre Etkileşim
+  const ctxWeekday = document.getElementById("chart-weekday-profile")?.getContext("2d");
+  if (ctxWeekday) {
+    if (activityCharts.weekday) activityCharts.weekday.destroy();
+
+    const maxDayVal = Math.max(...data.weekdayDistribution.counts, 1);
+    const dayColors = data.weekdayDistribution.counts.map((val) =>
+      val === maxDayVal && val > 0 ? "#38bdf8" : "rgba(56, 189, 248, 0.3)"
+    );
+
+    activityCharts.weekday = new Chart(ctxWeekday, {
+      type: "bar",
+      data: {
+        labels: data.weekdayDistribution.labels,
+        datasets: [
+          {
+            label: "Günlük Etkileşim",
+            data: data.weekdayDistribution.counts,
+            backgroundColor: dayColors,
+            borderRadius: 6,
+            borderSkipped: false,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "#18181b",
+            borderColor: "#27272a",
+            borderWidth: 1,
+            titleColor: "#ffffff",
+            bodyColor: "#f4f4f5",
+            padding: 10,
+            cornerRadius: 8,
+          },
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: chartTickStyle },
+          y: { grid: chartGridStyle, ticks: chartTickStyle, beginAtZero: true },
+        },
+      },
+    });
+  }
+
+  // GRAFİK 4: En Çok Mesaj Atılan Kanallar (Yatay Çubuk)
+  const ctxChannels = document.getElementById("chart-channels-traffic")?.getContext("2d");
+  if (ctxChannels) {
+    if (activityCharts.channels) activityCharts.channels.destroy();
+
+    const channelNames = data.topChannels.map((c) => c.name);
+    const channelCounts = data.topChannels.map((c) => c.count);
+
+    activityCharts.channels = new Chart(ctxChannels, {
+      type: "bar",
+      data: {
+        labels: channelNames.length ? channelNames : ["Veri bekleniyor"],
+        datasets: [
+          {
+            label: "Mesaj Sayısı",
+            data: channelCounts.length ? channelCounts : [0],
+            backgroundColor: "#FFE000",
+            borderRadius: 6,
+            borderSkipped: false,
+          },
+        ],
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "#18181b",
+            borderColor: "#27272a",
+            borderWidth: 1,
+            titleColor: "#ffffff",
+            bodyColor: "#f4f4f5",
+            padding: 10,
+            cornerRadius: 8,
+          },
+        },
+        scales: {
+          x: { grid: chartGridStyle, ticks: chartTickStyle, beginAtZero: true },
+          y: { grid: { display: false }, ticks: { ...chartTickStyle, font: { weight: "600", size: 12 } } },
+        },
+      },
+    });
+  }
+
+  // GRAFİK 5: Üye Sirkülasyon & Net Büyüme
+  const ctxCirc = document.getElementById("chart-member-circulation")?.getContext("2d");
+  if (ctxCirc) {
+    if (activityCharts.circulation) activityCharts.circulation.destroy();
+
+    activityCharts.circulation = new Chart(ctxCirc, {
+      type: "bar",
+      data: {
+        labels: data.memberGrowth.labels,
+        datasets: [
+          {
+            type: "bar",
+            label: "Yeni Katılanlar",
+            data: data.memberGrowth.joins,
+            backgroundColor: "rgba(34, 197, 94, 0.75)",
+            borderRadius: 4,
+          },
+          {
+            type: "bar",
+            label: "Ayrılanlar",
+            data: data.memberGrowth.leaves,
+            backgroundColor: "rgba(239, 68, 68, 0.75)",
+            borderRadius: 4,
+          },
+          {
+            type: "line",
+            label: "Net Değişim",
+            data: data.memberGrowth.net,
+            borderColor: "#38bdf8",
+            backgroundColor: "transparent",
+            borderWidth: 2,
+            tension: 0.3,
+            pointRadius: 3,
+            pointBackgroundColor: "#38bdf8",
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: {
+            display: true,
+            position: "top",
+            labels: { color: "#d4d4d8", font: defaultChartFont, boxWidth: 12, usePointStyle: true },
+          },
+          tooltip: {
+            backgroundColor: "#18181b",
+            borderColor: "#27272a",
+            borderWidth: 1,
+            titleColor: "#ffffff",
+            bodyColor: "#f4f4f5",
+            padding: 10,
+            cornerRadius: 8,
+          },
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: chartTickStyle },
+          y: { grid: chartGridStyle, ticks: chartTickStyle, beginAtZero: true },
+        },
+      },
+    });
+  }
+
+  // GRAFİK 6: Ses Odası Dağılımı (Doughnut)
+  const ctxVoice = document.getElementById("chart-voice-donut")?.getContext("2d");
+  if (ctxVoice) {
+    if (activityCharts.voice) activityCharts.voice.destroy();
+
+    const voiceLabels = data.voiceDistribution.map((v) => v.name);
+    const voiceCounts = data.voiceDistribution.map((v) => v.count);
+    const palette = ["#ec4899", "#a855f7", "#3b82f6", "#10b981", "#f59e0b", "#6366f1"];
+
+    activityCharts.voice = new Chart(ctxVoice, {
+      type: "doughnut",
+      data: {
+        labels: voiceLabels.length ? voiceLabels : ["Ses Odaları"],
+        datasets: [
+          {
+            data: voiceCounts.length ? voiceCounts : [1],
+            backgroundColor: voiceCounts.length ? palette.slice(0, voiceCounts.length) : ["#27272a"],
+            borderWidth: 2,
+            borderColor: "#1c1c1c",
+            hoverOffset: 4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "68%",
+        plugins: {
+          legend: {
+            display: true,
+            position: "right",
+            labels: { color: "#d4d4d8", font: defaultChartFont, boxWidth: 10 },
+          },
+          tooltip: {
+            backgroundColor: "#18181b",
+            borderColor: "#27272a",
+            borderWidth: 1,
+            titleColor: "#ffffff",
+            bodyColor: "#f4f4f5",
+            padding: 10,
+            cornerRadius: 8,
+          },
+        },
+      },
+    });
+  }
+}
+
+// Zaman Aralığı Butonları (Son 24 Saat, 7 Gün, 30 Gün)
+document.querySelectorAll(".ss-period-btn").forEach((btn) => {
+  btn.onclick = () => {
+    document.querySelectorAll(".ss-period-btn").forEach((b) => {
+      b.classList.remove("active", "btn-primary");
+    });
+    btn.classList.add("active", "btn-primary");
+    currentActivityPeriod = btn.dataset.period || "7d";
+    loadServerDetailedStats();
+  };
+});
+
+// Yenile Butonu Dinleyicisi
+$("#ss-refresh-btn")?.addEventListener("click", () => {
+  loadServerDetailedStats();
+  toast("Grafik verileri güncellendi.");
+});
 
 // ---------------- Sunucu Değiştirme ----------------
 async function switchGuild(guildId) {
   if (state.dirty) {
     if (!confirm("Kaydedilmemiş değişiklikler var. Sunucu değiştirmek istediğinize emin misiniz?")) {
-      $("#guild-selector").value = state.selectedGuildId;
       return;
     }
   }
@@ -3170,23 +4032,15 @@ async function switchGuild(guildId) {
   const selectedGuild = state.guilds.find((g) => g.id === guildId);
   const serverLabel = $("#bot-server");
   if (serverLabel) serverLabel.textContent = selectedGuild ? selectedGuild.name : bot.serverName || "Discord Bot";
-  if (guildSelector) createCustomSelect(guildSelector);
+  const headerBtnLabel = $("#active-server-name-btn");
+  if (headerBtnLabel) headerBtnLabel.textContent = selectedGuild ? selectedGuild.name : "Sunucularım";
 
   fillChannelSelects();
   bindForms();
   renderLayerList();
   renderProps();
   draw();
-  loadDashboardStats();
-  if (!$("#tab-general")?.classList.contains("hidden")) loadLogs();
-  if (!$("#tab-members")?.classList.contains("hidden")) loadMembers(true);
-}
-
-const guildSelector = $("#guild-selector");
-if (guildSelector) {
-  guildSelector.onchange = () => {
-    switchGuild(guildSelector.value);
-  };
+  Navigation.TabRouter.refreshCurrentTab();
 }
 
 // ---------------- Sunucu Üyeleri & Geniş Filtreleme Modülü ----------------
@@ -3363,12 +4217,11 @@ function openMemberModal(member) {
   const nickInput = $("#mdm-nickname-input");
   if (nickInput) nickInput.value = member.nickname || "";
 
-  modal.classList.remove("hidden");
+  Navigation.ModalManager.open("member-detail-modal");
 }
 
 function closeMemberModal() {
-  const modal = $("#member-detail-modal");
-  if (modal) modal.classList.add("hidden");
+  Navigation.ModalManager.close("member-detail-modal");
   state.selectedMember = null;
 }
 
@@ -4309,23 +5162,9 @@ function initMembersControls() {
     };
   });
 
-  // Modal İşlemleri
-  const modalCloseBtn = $("#mdm-close-btn");
-  const modalFooterClose = $("#mdm-footer-close-btn");
-  const memberModal = $("#member-detail-modal");
-
-  if (modalCloseBtn) modalCloseBtn.onclick = closeMemberModal;
-  if (modalFooterClose) modalFooterClose.onclick = closeMemberModal;
-  if (memberModal) {
-    memberModal.onclick = (e) => {
-      if (e.target === memberModal) closeMemberModal();
-    };
-  }
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && memberModal && !memberModal.classList.contains("hidden")) {
-      closeMemberModal();
-    }
-  });
+  // Modal Kapatma Butonları
+  $("#mdm-close-btn")?.addEventListener("click", closeMemberModal);
+  $("#mdm-footer-close-btn")?.addEventListener("click", closeMemberModal);
 
   // Modal Kopyalama Butonları
   $("#mdm-copy-id")?.addEventListener("click", () => {
@@ -4351,8 +5190,7 @@ function initMembersControls() {
   const statMembersCard = $("#stat-members-card");
   if (statMembersCard) {
     statMembersCard.onclick = () => {
-      const tabBtn = document.querySelector('.tab-btn[data-tab="members"]');
-      if (tabBtn) tabBtn.click();
+      Navigation.TabRouter.navigateTo("members");
     };
   }
 }
@@ -4360,7 +5198,16 @@ function initMembersControls() {
 // ---------------- Başlangıç ----------------
 
 async function init() {
+  // Navigasyon, Sidebar ve Sekmeleri en başta derhal hazırla
+  Navigation.SidebarManager?.init();
+  Navigation.ModalManager?.init();
+  initTabRouter();
+
   try {
+    initAuthAndPortalControls();
+    await checkAuthStatus();
+    await fetchInviteInfo();
+
     const [guilds, channels] = await Promise.all([
       api("/api/guilds").then((r) => r.json()),
       api("/api/channels").then((r) => r.json()),
@@ -4368,42 +5215,14 @@ async function init() {
     state.guilds = guilds;
     state.channels = channels;
 
-    // Sunucu seçici dropdown'ını doldur
-    if (guildSelector) {
-      guildSelector.innerHTML = "";
-      if (guilds.length === 0) {
-        guildSelector.add(new Option("Sunucu bulunamadı", ""));
-      } else {
-        for (const g of guilds) {
-          guildSelector.appendChild(new Option(`${g.name} (${g.memberCount} üye)`, g.id));
-        }
-      }
-    }
-
     // Önceden seçilmiş sunucu veya ilk sunucu
     const savedGuildId = localStorage.getItem("selected_guild_id");
     const activeGuildId = guilds.some((g) => g.id === savedGuildId) ? savedGuildId : (guilds[0]?.id || "");
     state.selectedGuildId = activeGuildId;
-    if (guildSelector) {
-      guildSelector.value = activeGuildId;
-      createCustomSelect(guildSelector);
-      guildSelector.onchange = async () => {
-        const newGuildId = guildSelector.value;
-        if (!newGuildId || newGuildId === state.selectedGuildId) return;
-        state.selectedGuildId = newGuildId;
-        localStorage.setItem("selected_guild_id", newGuildId);
 
-        const [newSettings, _] = await Promise.all([
-          api(`/api/settings?guildId=${encodeURIComponent(newGuildId)}`).then((r) => r.json()),
-          loadGuildRoles(newGuildId),
-        ]);
-        state.settings = newSettings;
-        fillChannelSelects();
-        await fillSteamRoleSelect();
-        bindForms();
-        loadDashboardStats();
-      };
-    }
+    const currentGuild = guilds.find((g) => g.id === activeGuildId);
+    const headerBtnLabel = $("#active-server-name-btn");
+    if (headerBtnLabel) headerBtnLabel.textContent = currentGuild ? currentGuild.name : "Sunucularım";
 
     const [settings, bot] = await Promise.all([
       api(`/api/settings?guildId=${encodeURIComponent(activeGuildId)}`).then((r) => r.json()),
@@ -4416,7 +5235,6 @@ async function init() {
     $("#bot-name").textContent = bot.username;
     $("#bot-avatar").src = bot.avatarUrl;
     const serverLabel = $("#bot-server");
-    const currentGuild = guilds.find((g) => g.id === activeGuildId);
     if (serverLabel) serverLabel.textContent = currentGuild ? currentGuild.name : bot.serverName || "Discord Bot";
 
     const badge = $("#bot-status-badge");
@@ -4430,23 +5248,20 @@ async function init() {
       }
     }
 
-    // Başlangıçta dashboard sayfası aktif olduğundan save butonunu gizle
-    const saveBtn = $("#save-btn");
-    const saveStatus = $("#save-status");
-    if (saveBtn) saveBtn.classList.add("hidden");
-    if (saveStatus) saveStatus.classList.add("hidden");
-
     fillChannelSelects();
     bindForms();
     initAuditLogControls();
     initFeedControls();
     initMembersControls();
     initSteamControls();
+    initAddServerControls();
     renderLayerList();
     renderProps();
     draw();
-    loadDashboardStats();
     initAllCustomSelects();
+
+    // Aktif sekmeyi veriler yüklendikten sonra tazele
+    Navigation.TabRouter.refreshCurrentTab();
   } catch (err) {
     toast(`Panel yüklenemedi: ${err.message}`, "error");
   }

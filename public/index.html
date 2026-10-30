@@ -18,14 +18,254 @@
     };
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" referrerpolicy="no-referrer" />
-  <link rel="stylesheet" href="/css/base.css?v=1.1" />
-  <link rel="stylesheet" href="/css/components.css?v=1.1" />
-  <link rel="stylesheet" href="/css/layout.css?v=1.1" />
+  <link rel="stylesheet" href="/css/base.css?v=2.0" />
+  <link rel="stylesheet" href="/css/components.css?v=2.0" />
+  <link rel="stylesheet" href="/css/layout.css?v=2.0" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <!-- FOUC / Anlık Parlama Önleyici -->
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem("syncbot_auth") === "1") {
+          document.documentElement.classList.add("auth-hint");
+        }
+        // Eski seanslardan kalan hint sınıfını temizle
+        document.documentElement.classList.remove("sidebar-collapsed-hint");
+      } catch (e) {}
+    })();
+
+    // Global Kenar Çubuğu Aç/Kapa Fonksiyonu (Dış bağımlılıksız & anında çalışır)
+    function toggleSidebar(e) {
+      if (e) {
+        if (typeof e.preventDefault === "function") e.preventDefault();
+        if (typeof e.stopPropagation === "function") e.stopPropagation();
+      }
+      const sidebar = document.getElementById("sidebar");
+      if (!sidebar) return;
+      const isCollapsed = sidebar.classList.toggle("collapsed");
+      document.documentElement.classList.remove("sidebar-collapsed-hint");
+      try {
+        localStorage.setItem("syncbot_sidebar_collapsed", isCollapsed ? "1" : "0");
+      } catch (err) {}
+    }
+    window.toggleSidebar = toggleSidebar;
+  </script>
+  <style>
+    html.auth-hint #app-landing-view {
+      display: none !important;
+    }
+    html.auth-hint #app-dashboard-layout {
+      display: flex !important;
+    }
+    #sidebar.collapsed {
+      width: 4.5rem !important;
+      min-width: 4.5rem !important;
+      max-width: 4.5rem !important;
+    }
+    #sidebar.collapsed .sidebar-text {
+      display: none !important;
+    }
+    #sidebar.collapsed .tab-btn {
+      justify-content: center !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
+    #sidebar.collapsed .tab-btn i {
+      margin: 0 !important;
+      font-size: 1.15rem !important;
+    }
+    #sidebar.collapsed #sidebar-profile {
+      justify-content: center !important;
+      padding-left: 0.5rem !important;
+      padding-right: 0.5rem !important;
+    }
+  </style>
 </head>
 <body class="bg-[#141414] text-[#F1F1F1] h-screen overflow-hidden flex">
 
-  <!-- Kenar Çubuğu -->
+  <!-- GİRİŞ / TANITIM (LANDING) SAYFASI (Giriş yapılmadığında veya Çıkış yapıldığında görüntülenir) -->
+  <div id="app-landing-view" class="w-full h-screen overflow-y-auto bg-[#0e0e10] flex flex-col text-[#F1F1F1] relative selection:bg-[#FFE000] selection:text-black">
+    <!-- Üst Işık & Blur Efektleri -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[360px] bg-gradient-to-b from-[#5865F2]/20 via-[#FFE000]/10 to-transparent blur-3xl pointer-events-none -z-0"></div>
+
+    <!-- Landing Header / Navbar -->
+    <header class="h-20 shrink-0 px-6 sm:px-12 flex items-center justify-between border-b border-[#222222] bg-[#141416]/80 backdrop-blur-md sticky top-0 z-20">
+      <div class="flex items-center gap-3.5">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#FFE000] to-amber-500 p-0.5 shadow-md shadow-[#FFE000]/10 flex items-center justify-center">
+          <img id="landing-bot-avatar" src="/favicon.ico" class="w-full h-full rounded-[10px] object-cover bg-zinc-900" alt="" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23FFE000\'><circle cx=\'12\' cy=\'12\' r=\'10\'/></svg>'" />
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="landing-bot-name" class="font-extrabold text-base tracking-tight text-[#F1F1F1]">SyncBot</span>
+            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FFE000]/10 text-[#FFE000] border border-[#FFE000]/25">v1.0</span>
+          </div>
+          <span class="text-[11px] text-emerald-400 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Çevrimiçi & Hazır
+          </span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a id="landing-header-invite-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn hidden sm:inline-flex" title="Botu Sunucuna Davet Et">
+          <i class="fa-solid fa-plus text-[#FFE000]"></i> <span>Sunucuya Ekle</span>
+        </a>
+        <button id="landing-header-login-btn" class="btn !bg-[#5865F2] hover:!bg-[#4752C4] !text-white font-bold flex items-center gap-1.5 shadow-md shadow-[#5865F2]/20">
+          <i class="fa-brands fa-discord text-base"></i> <span>Discord ile Giriş Yap</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hero Bölümü -->
+    <div class="flex-1 max-w-6xl w-full mx-auto px-6 py-12 sm:py-16 flex flex-col items-center text-center relative z-10 space-y-8">
+      
+      <!-- Üst Rozet -->
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FFE000]/10 border border-[#FFE000]/30 text-[#FFE000] text-xs font-semibold shadow-inner">
+        <i class="fa-solid fa-sparkles"></i> <span>Gelişmiş & Modern Discord Sunucu Yönetimi</span>
+      </div>
+
+      <!-- Ana Başlık & Açıklama -->
+      <div class="max-w-3xl space-y-4">
+        <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-[#F1F1F1] leading-[1.2]">
+          Discord Sunucunuzu <br />
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#FFE000] via-amber-300 to-yellow-500">Tek Panelden Yönetin</span>
+        </h1>
+        <p class="text-sm sm:text-base text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+          Gelişmiş denetim logları, canlı aktiflik grafikleri, şık karşılama kartları ve otomatik Steam güncellemeleri. Sunucunuzu yönetmek için hemen Discord ile giriş yapın.
+        </p>
+      </div>
+
+      <!-- Eyleme Geçirici Butonlar (CTA) -->
+      <div class="flex flex-wrap items-center justify-center gap-3.5 pt-2">
+        <button id="landing-hero-login-btn" class="btn !bg-[#5865F2] hover:!bg-[#4752C4] !text-white px-6 py-3 text-sm font-bold shadow-xl shadow-[#5865F2]/25 flex items-center gap-2">
+          <i class="fa-brands fa-discord text-base"></i> <span>Discord ile Giriş Yap</span>
+        </button>
+        <a id="landing-hero-invite-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn px-6 py-3 text-sm font-semibold border border-[#2b2b2b] hover:border-[#FFE000]/40 flex items-center gap-2">
+          <i class="fa-solid fa-plus text-[#FFE000]"></i> <span>Botu Sunucuna Ekle</span>
+        </a>
+      </div>
+
+      <!-- İstatistik Sayaçları (Social Proof) -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-4xl pt-8">
+        <div class="card p-4 bg-[#141416] border border-[#242426] text-center space-y-1">
+          <div class="text-2xl sm:text-3xl font-black text-[#FFE000]">7/24</div>
+          <div class="text-xs text-zinc-400">Kesintisiz Çalışma</div>
+        </div>
+        <div class="card p-4 bg-[#141416] border border-[#242426] text-center space-y-1">
+          <div class="text-2xl sm:text-3xl font-black text-emerald-400">0 ms</div>
+          <div class="text-xs text-zinc-400">Anlık Loglama</div>
+        </div>
+        <div class="card p-4 bg-[#141416] border border-[#242426] text-center space-y-1">
+          <div class="text-2xl sm:text-3xl font-black text-sky-400">Canvas</div>
+          <div class="text-xs text-zinc-400">Görsel Karşılama Kartı</div>
+        </div>
+        <div class="card p-4 bg-[#141416] border border-[#242426] text-center space-y-1">
+          <div class="text-2xl sm:text-3xl font-black text-purple-400">Steam API</div>
+          <div class="text-xs text-zinc-400">Otomatik Güncellemeler</div>
+        </div>
+      </div>
+
+      <!-- Öne Çıkan Özellikler Kartları -->
+      <div id="landing-features" class="w-full pt-10 space-y-6 text-left">
+        <div class="text-center space-y-1">
+          <h2 class="text-xl sm:text-2xl font-extrabold text-[#F1F1F1]">Neler Sunuyoruz?</h2>
+          <p class="text-xs text-zinc-400">Sunucunuzun tüm ihtiyaçlarını karşılayan güçlü modüller</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Özellik 1 -->
+          <div class="card p-5 bg-[#141416] border border-[#242426] hover:border-[#FFE000]/30 transition space-y-2.5">
+            <div class="w-9 h-9 rounded-xl bg-[#FFE000]/10 border border-[#FFE000]/25 text-[#FFE000] flex items-center justify-center text-base">
+              <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <h3 class="font-bold text-sm text-[#F1F1F1]">Aktiflik & Grafikler</h3>
+            <p class="text-xs text-zinc-400 leading-relaxed">
+              Saatlik mesaj yoğunluğu, ses odası dağılımı ve haftalık etkileşim trendlerini Chart.js grafiklerle izleyin.
+            </p>
+          </div>
+
+          <!-- Özellik 2 -->
+          <div class="card p-5 bg-[#141416] border border-[#242426] hover:border-emerald-500/30 transition space-y-2.5">
+            <div class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center justify-center text-base">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h3 class="font-bold text-sm text-[#F1F1F1]">Kapsamlı Denetim Logları</h3>
+            <p class="text-xs text-zinc-400 leading-relaxed">
+              Silinen ve düzenlenen mesajlar, ses kanalı hareketleri ve rol değişiklikleri özel embed formatında loglanır.
+            </p>
+          </div>
+
+          <!-- Özellik 3 -->
+          <div class="card p-5 bg-[#141416] border border-[#242426] hover:border-sky-500/30 transition space-y-2.5">
+            <div class="w-9 h-9 rounded-xl bg-sky-500/10 border border-sky-500/25 text-sky-400 flex items-center justify-center text-base">
+              <i class="fa-solid fa-palette"></i>
+            </div>
+            <h3 class="font-bold text-sm text-[#F1F1F1]">Katmanlı Karşılama Kartı</h3>
+            <p class="text-xs text-zinc-400 leading-relaxed">
+              Tarayıcı içi görsel editörle avatar halkaları, özel arka planlar ve karşılama mesajlarını dilediğiniz gibi tasarlayın.
+            </p>
+          </div>
+
+          <!-- Özellik 4 -->
+          <div class="card p-5 bg-[#141416] border border-[#242426] hover:border-amber-500/30 transition space-y-2.5">
+            <div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-400 flex items-center justify-center text-base">
+              <i class="fa-brands fa-steam-symbol"></i>
+            </div>
+            <h3 class="font-bold text-sm text-[#F1F1F1]">Steam Güncelleme Takibi</h3>
+            <p class="text-xs text-zinc-400 leading-relaxed">
+              CS2, Rust veya dilediğiniz Steam oyunlarının yama notlarını anında sunucunuzdaki duyuru kanalına iletin.
+            </p>
+          </div>
+
+          <!-- Özellik 5 -->
+          <div class="card p-5 bg-[#141416] border border-[#242426] hover:border-purple-500/30 transition space-y-2.5">
+            <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/25 text-purple-400 flex items-center justify-center text-base">
+              <i class="fa-solid fa-users-gear"></i>
+            </div>
+            <h3 class="font-bold text-sm text-[#F1F1F1]">Hızlı Üye Moderasyonu</h3>
+            <p class="text-xs text-zinc-400 leading-relaxed">
+              Üyeleri rollerine ve hesap yaşlarına göre filtreleyin, panelden doğrudan zamanaşımı ve takma ad işlemlerini yönetin.
+            </p>
+          </div>
+
+          <!-- Özellik 6 -->
+          <div class="card p-5 bg-[#141416] border border-[#242426] hover:border-[#5865F2]/40 transition space-y-2.5">
+            <div class="w-9 h-9 rounded-xl bg-[#5865F2]/10 border border-[#5865F2]/25 text-[#5865F2] flex items-center justify-center text-base">
+              <i class="fa-solid fa-server"></i>
+            </div>
+            <h3 class="font-bold text-sm text-[#F1F1F1]">Sunucu Yönetim Portalı</h3>
+            <p class="text-xs text-zinc-400 leading-relaxed">
+              Yönetici olduğunuz tüm sunucuları görün, bot ekli olanları hemen yönetin veya eksik sunuculara tek tıkla ekleyin.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-[#222222] bg-[#121214] py-6 px-6 sm:px-12 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
+      <div>
+        <span>SyncBot © 2026. Tüm hakları saklıdır.</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <a id="landing-footer-invite-btn" href="#" target="_blank" rel="noopener noreferrer" class="hover:text-[#FFE000] transition">
+          Bot Davet Bağlantısı
+        </a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ANA DASHBOARD & YÖNETİM PANELİ (Yalnızca Giriş yapıldığında görüntülenir) -->
+  <div id="app-dashboard-layout" class="w-full h-screen overflow-hidden flex hidden">
+    <!-- Kenar Çubuğu -->
   <aside id="sidebar">
+    <script>
+      try {
+        if (localStorage.getItem("syncbot_sidebar_collapsed") === "1") {
+          document.currentScript.parentElement.classList.add("collapsed");
+        }
+      } catch (e) {}
+    </script>
     <div id="sidebar-profile">
       <div class="sidebar-avatar-wrap">
         <img id="bot-avatar" class="sidebar-avatar" alt="" />
@@ -40,6 +280,10 @@
       <button class="tab-btn active" data-tab="dashboard" data-title="Genel Bakış" title="Genel Bakış">
         <i class="fa-solid fa-chart-pie"></i>
         <span class="sidebar-text">Genel Bakış</span>
+      </button>
+      <button class="tab-btn" data-tab="server-stats" data-title="Aktiflik & Grafikler" title="Aktiflik & Grafikler">
+        <i class="fa-solid fa-chart-line"></i>
+        <span class="sidebar-text">Aktiflik & Grafikler</span>
       </button>
       <button class="tab-btn" data-tab="members" data-title="Sunucu Üyeleri" title="Sunucu Üyeleri">
         <i class="fa-solid fa-users"></i>
@@ -73,16 +317,29 @@
     <header class="h-16 shrink-0 px-6 flex items-center justify-between border-b border-[#262626] bg-[#1c1c1c] z-10">
       <div class="flex items-center gap-4">
         <button id="sidebar-toggle" class="btn" title="Menüyü Aç/Kapat">
-          <i class="fa-solid fa-bars text-base"></i>
+          <i class="fa-solid fa-bars text-base pointer-events-none"></i>
         </button>
         <h1 id="page-title" class="font-semibold text-lg text-[#F1F1F1]">Genel Ayarlar</h1>
       </div>
-      <div class="flex items-center gap-3">
-        <!-- Sunucu Seçici -->
-        <div class="flex items-center gap-2">
-          <select id="guild-selector" class="w-56 text-sm font-semibold">
-            <option value="">Yükleniyor...</option>
-          </select>
+      <div class="flex items-center gap-2.5">
+        <button id="btn-my-servers" class="btn flex items-center gap-2" title="Sunucularım & Sunucu Değiştir">
+          <i class="fa-solid fa-server text-sm"></i>
+          <span id="active-server-name-btn" class="font-semibold text-xs text-[#F1F1F1] truncate max-w-[150px]">Sunucularım</span>
+          <i class="fa-solid fa-chevron-down text-[10px] text-zinc-500 ml-0.5"></i>
+        </button>
+
+        <!-- Discord Kullanıcı Giriş / Profil Alanı -->
+        <div id="auth-area" class="flex items-center">
+          <button id="btn-login-discord" class="btn !bg-[#5865F2] hover:!bg-[#4752C4] !text-white flex items-center gap-1.5 text-xs font-semibold shadow-sm" title="Discord ile Giriş Yap">
+            <i class="fa-brands fa-discord text-sm"></i> <span class="hidden sm:inline">Giriş Yap</span>
+          </button>
+          <div id="user-profile-badge" class="hidden flex items-center gap-2 bg-[#141414] border border-[#262626] rounded-lg px-2.5 py-1 text-xs">
+            <img id="auth-user-avatar" src="" class="w-6 h-6 rounded-full border border-[#262626] object-cover" alt="" />
+            <span id="auth-user-name" class="font-semibold text-[#F1F1F1] truncate max-w-[110px]">Kullanıcı</span>
+            <button id="btn-logout" class="text-zinc-500 hover:text-red-400 ml-1 transition" title="Çıkış Yap">
+              <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+          </div>
         </div>
 
         <span id="save-status" class="text-sm text-zinc-400"></span>
@@ -117,7 +374,7 @@
         </div>
 
         <!-- HIZLI EYLEMLER (QUICK ACTIONS) -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <button id="qa-send-msg" class="quick-action group">
             <div class="quick-action-icon text-[#FFE000]">
               <i class="fa-solid fa-paper-plane"></i>
@@ -135,6 +392,16 @@
             <div class="min-w-0">
               <div class="quick-action-title">Kart Tasarla</div>
               <div class="quick-action-subtitle">Karşılama kartı</div>
+            </div>
+          </button>
+
+          <button id="qa-add-server" class="quick-action group">
+            <div class="quick-action-icon text-[#FFE000]">
+              <i class="fa-solid fa-plus"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="quick-action-title group-hover:!text-[#FFE000]">Sunucu Ekle</div>
+              <div class="quick-action-subtitle">Botu davet et</div>
             </div>
           </button>
 
@@ -428,6 +695,232 @@
             </h3>
             <div id="dash-recent-members" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
               <div class="card-sub col-span-full text-xs text-zinc-500 text-center">Kayıtlı üye verisi bekleniyor.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUNUCU AKTİFLİK & GRAFİK ANALİTİĞİ SAYFASI -->
+      <section id="tab-server-stats" class="hidden max-w-7xl space-y-6">
+        <!-- 1. Üst Başlık & Zaman Aralığı Kontrolleri -->
+        <div class="card flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <div class="w-12 h-12 rounded-xl bg-[#FFE000]/10 border border-[#FFE000]/20 flex items-center justify-center text-[#FFE000] text-2xl shadow-sm shrink-0">
+              <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <h2 class="text-xl font-bold text-[#F1F1F1] truncate">Sunucu Aktiflik & Etkileşim Grafikleri</h2>
+                <span class="badge badge-yellow flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#FFE000] animate-pulse"></span> Canlı Analitik
+                </span>
+              </div>
+              <p class="text-xs text-zinc-400 mt-1">Sohbet trafiği, ses odası katılımları, tepe yoğunluk saatleri ve üye hareketliliği eğrileri.</p>
+            </div>
+          </div>
+
+          <!-- Zaman Aralığı Seçici & Yenile -->
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <div class="flex items-center bg-[#141414] p-1 rounded-lg border border-[#262626] gap-1">
+              <button type="button" class="btn btn-sm ss-period-btn" data-period="24h">Son 24 Saat</button>
+              <button type="button" class="btn btn-sm ss-period-btn btn-primary" data-period="7d">Son 7 Gün</button>
+              <button type="button" class="btn btn-sm ss-period-btn" data-period="30d">Son 30 Gün</button>
+            </div>
+            <button id="ss-refresh-btn" class="btn btn-sm" title="Grafik Verilerini Yenile">
+              <i class="fa-solid fa-arrows-rotate"></i> Yenile
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. 4 Adet Aktiflik Özet Göstergesi (KPIs) -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="stat-card">
+            <div>
+              <span class="stat-card-title">Ortalama Etkileşim</span>
+              <div id="ss-kpi-avg-hour" class="stat-card-value text-[#FFE000]">0 / sa</div>
+              <span id="ss-kpi-total-interactions" class="stat-card-sub">0 toplam etkileşim</span>
+            </div>
+            <div class="stat-card-icon !bg-[#FFE000]/10 !text-[#FFE000]">
+              <i class="fa-solid fa-bolt"></i>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div>
+              <span class="stat-card-title">Zirve Yoğunluk Saati</span>
+              <div id="ss-kpi-peak-hour" class="stat-card-value text-amber-400 text-lg leading-tight">—</div>
+              <span class="stat-card-sub">En yüksek etkileşim dilimi</span>
+            </div>
+            <div class="stat-card-icon !bg-amber-500/10 !text-amber-400">
+              <i class="fa-solid fa-fire"></i>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div>
+              <span class="stat-card-title">Haftalık Zirve Günü</span>
+              <div id="ss-kpi-busiest-day" class="stat-card-value text-sky-400 text-lg leading-tight">—</div>
+              <span class="stat-card-sub">En aktif gün profili</span>
+            </div>
+            <div class="stat-card-icon !bg-sky-500/10 !text-sky-400">
+              <i class="fa-solid fa-calendar-week"></i>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div>
+              <span class="stat-card-title">Seste Canlı Üyeler</span>
+              <div id="ss-kpi-voice-active" class="stat-card-value text-emerald-400">0</div>
+              <span class="stat-card-sub">Şu an ses odalarında</span>
+            </div>
+            <div class="stat-card-icon !bg-emerald-500/10 !text-emerald-400">
+              <i class="fa-solid fa-headphones"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Ana Grafik: Zaman Bazlı Sunucu Aktiflik Grafiği -->
+        <div class="card space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                <i class="fa-solid fa-wave-square text-[#FFE000]"></i> Zaman Bazlı Sunucu Aktiflik Grafiği
+              </h3>
+              <p class="text-xs text-zinc-400">Sohbet mesajları, ses kanalı hareketleri ve üye girişlerinin zaman eğrisi.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 text-xs">
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#FFE000]"></span> Mesaj Trafiği</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-400"></span> Ses Odası</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-sky-400"></span> Üye Katılımı</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-red-400"></span> Ayrılanlar</span>
+            </div>
+          </div>
+          <div class="h-80 w-full relative">
+            <canvas id="chart-activity-timeline"></canvas>
+          </div>
+        </div>
+
+        <!-- 4. İki Sütunlu 1. Grafik Izgarası: Saatlik Isı Profili & Haftanın Günleri -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Sol: Günün Saatlerine Göre Yoğunluk Dağılımı (00:00 - 23:00) -->
+          <div class="card space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                  <i class="fa-solid fa-clock text-amber-400"></i> Günün Saatlerine Göre Yoğunluk (00:00 - 23:00)
+                </h3>
+                <p class="text-xs text-zinc-400">Topluluğunuzun gün içinde en aktif olduğu saat aralıkları.</p>
+              </div>
+              <span class="chip-tag !text-[10px] !bg-amber-500/10 !text-amber-400 !border-amber-500/20 font-semibold">24 Saat Profili</span>
+            </div>
+            <div class="h-64 w-full relative">
+              <canvas id="chart-hourly-profile"></canvas>
+            </div>
+            <div class="flex items-center justify-between text-xs text-zinc-400 bg-[#141414] p-2.5 rounded-lg border border-[#262626]">
+              <span class="flex items-center gap-1.5">
+                <i class="fa-regular fa-sun text-amber-400"></i> Zirve Saat Dilimi: <b id="ss-peak-hour-badge" class="text-[#FFE000]">—</b>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <i class="fa-regular fa-moon text-indigo-400"></i> Sakin Aralık: <b class="text-zinc-300">03:00 - 07:00</b>
+              </span>
+            </div>
+          </div>
+
+          <!-- Sağ: Haftanın Günlerine Göre Etkileşim Dağılımı -->
+          <div class="card space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                  <i class="fa-solid fa-calendar-days text-sky-400"></i> Haftanın Günlerine Göre Etkileşim
+                </h3>
+                <p class="text-xs text-zinc-400">Hafta içi ve hafta sonu etkileşim dinamikleri.</p>
+              </div>
+              <span class="chip-tag !text-[10px] !bg-sky-500/10 !text-sky-400 !border-sky-500/20 font-semibold">7 Gün Dağılımı</span>
+            </div>
+            <div class="h-64 w-full relative">
+              <canvas id="chart-weekday-profile"></canvas>
+            </div>
+            <div class="flex items-center justify-between text-xs text-zinc-400 bg-[#141414] p-2.5 rounded-lg border border-[#262626]">
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-crown text-[#FFE000]"></i> En Aktif Gün: <b id="ss-peak-day-badge" class="text-sky-400">—</b>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-chart-simple text-zinc-400"></i> Dağılım: <b class="text-zinc-300">Haftalık Profil</b>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. İki Sütunlu 2. Grafik Izgarası: Kanal Trafiği & Üye Sirkülasyonu -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Sol: En Aktif Kanallar (Sohbet Trafiği) -->
+          <div class="card space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                  <i class="fa-solid fa-comments text-[#FFE000]"></i> En Aktif Kanallar (Sohbet Trafiği)
+                </h3>
+                <p class="text-xs text-zinc-400">En yoğun mesaj akışına sahip kanallar.</p>
+              </div>
+              <span class="text-xs text-zinc-500 font-medium">Sıralama</span>
+            </div>
+            <div class="h-64 w-full relative">
+              <canvas id="chart-channels-traffic"></canvas>
+            </div>
+          </div>
+
+          <!-- Sağ: Üye Sirkülasyon & Net Büyüme Eğrisi -->
+          <div class="card space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                  <i class="fa-solid fa-user-group text-emerald-400"></i> Üye Sirkülasyonu & Net Büyüme
+                </h3>
+                <p class="text-xs text-zinc-400">Sunucuya yeni katılan ve ayrılan üyelerin net dengesi.</p>
+              </div>
+              <span id="ss-net-change-badge" class="badge badge-green">Net +0</span>
+            </div>
+            <div class="h-64 w-full relative">
+              <canvas id="chart-member-circulation"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. İki Sütunlu 3. Grafik & Canlı Odalar Grubu: Ses Odası Kullanımı & Canlı Odalar -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Sol: Ses Odası Kullanım Dağılımı (Doughnut) -->
+          <div class="card space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                  <i class="fa-solid fa-microphone text-pink-400"></i> Ses Odası Kullanım Dağılımı
+                </h3>
+                <p class="text-xs text-zinc-400">Ses kanalları arasındaki oturum yoğunluğu payı.</p>
+              </div>
+            </div>
+            <div class="h-60 w-full relative flex items-center justify-center">
+              <canvas id="chart-voice-donut"></canvas>
+            </div>
+          </div>
+
+          <!-- Sağ: Canlı Ses Odaları & Katılımcılar -->
+          <div class="card space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+                  <i class="fa-solid fa-tower-broadcast text-emerald-400"></i> Anlık Canlı Ses Odaları
+                </h3>
+                <p id="ss-voice-status-summary" class="text-xs text-zinc-400">0 aktif kullanıcı odalarda</p>
+              </div>
+              <span class="badge badge-green flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span> Canlı
+              </span>
+            </div>
+            <div id="ss-active-voice-channels" class="space-y-2 mt-2">
+              <div class="text-xs text-zinc-500 text-center py-8">
+                <i class="fa-solid fa-microphone-slash text-zinc-600 text-2xl block mb-2"></i>
+                Şu anda ses kanallarında aktif üye bulunmuyor.
+              </div>
             </div>
           </div>
         </div>
@@ -1895,6 +2388,7 @@
       </section>
     </div>
   </main>
+  </div><!-- #app-dashboard-layout sonu -->
 
   <!-- Önizleme Penceresi -->
   <div id="preview-modal" class="modal-backdrop hidden">
@@ -2044,9 +2538,209 @@
     </div>
   </div>
 
+  <!-- SUNUCU KAYIT & BOTU DAVET ET MODALI -->
+  <div id="add-server-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#1c1c1c] border border-[#262626] rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+      <!-- Modal Header -->
+      <div class="p-5 border-b border-[#262626] bg-[#181818] flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#FFE000]/10 border border-[#FFE000]/25 text-[#FFE000] flex items-center justify-center text-lg">
+            <i class="fa-solid fa-server"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-[#F1F1F1]">Botu Sunucuna Ekle & Kaydet</h3>
+            <p class="text-xs text-zinc-400">SyncBot'u başka bir sunucuya ekleyin ve panele bağlayın</p>
+          </div>
+        </div>
+        <button id="add-server-close-btn" class="btn btn-sm !p-2 text-zinc-400 hover:text-white" title="Kapat">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 space-y-5 overflow-y-auto max-h-[75vh]">
+        <!-- 1. Adım: Yetkilendirme Butonu -->
+        <div class="card-sub p-4 space-y-3 bg-[#141414] border border-[#262626] rounded-xl text-center">
+          <span class="text-xs font-bold text-zinc-300 block uppercase tracking-wider">
+            1. Adım: Discord Üzerinden Yetkilendirin
+          </span>
+          <p class="text-xs text-zinc-400 leading-relaxed">
+            Botu yöneticisi veya yetkilisi olduğunuz herhangi bir Discord sunucusuna doğrudan eklemek için aşağıdaki bağlantıya tıklayın:
+          </p>
+          <a id="btn-discord-oauth-invite" href="#" target="_blank" rel="noopener noreferrer" class="btn !bg-[#5865F2] hover:!bg-[#4752C4] !text-white w-full flex items-center justify-center gap-2.5 py-3 text-sm font-bold shadow-lg shadow-[#5865F2]/25 transition">
+            <i class="fa-brands fa-discord text-xl"></i> Botu Sunucuna Ekle (Discord'da Aç)
+          </a>
+        </div>
+
+        <!-- 2. Adım: Hızlı Davet Linki Kopyalama -->
+        <div class="space-y-2">
+          <span class="field-label flex items-center justify-between">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-link text-[#FFE000]"></i> 2. Adım: Doğrudan Davet Bağlantısı</span>
+            <span class="text-[11px] text-zinc-500">Arkadaşlarınla paylaş</span>
+          </span>
+          <div class="flex items-center gap-2">
+            <input id="invite-url-field" type="text" readonly value="Yükleniyor..." class="w-full bg-[#141414] border border-[#262626] text-[#F1F1F1] rounded-lg px-3 py-2 text-xs font-mono select-all focus:border-[#FFE000] outline-none" />
+            <button id="btn-copy-invite-link" class="btn shrink-0" title="Panoya Kopyala">
+              <i class="fa-regular fa-copy"></i> Kopyala
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Adım: Otomatik Eşleşme & Yenileme -->
+        <div class="card-sub p-3.5 space-y-2 bg-[#141414] border border-[#262626] rounded-xl text-xs text-zinc-400">
+          <span class="font-bold text-[#F1F1F1] flex items-center gap-2 text-xs">
+            <i class="fa-solid fa-circle-check text-green-400"></i> Otomatik Kayıt & Bağımsız Ayarlar
+          </span>
+          <ul class="space-y-1.5 pl-4 list-disc text-[11px] text-zinc-400 leading-relaxed">
+            <li>Bot sunucuya katıldığında <b class="text-zinc-200">otomatik olarak karşılama mesajı</b> ve kurulum rehberi iletir.</li>
+            <li>Her sunucunun <b class="text-zinc-200">karşılama kartı, denetim logları ve istatistikleri</b> birbirinden tamamen bağımsızdır.</li>
+            <li>Botu ekledikten sonra aşağıdaki butona tıklayarak sunucu listesini güncelleyebilir ve yeni sunucunuza geçebilirsiniz.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-[#262626] bg-[#181818] flex items-center justify-between">
+        <span class="text-[11px] text-zinc-500 flex items-center gap-1">
+          <i class="fa-solid fa-shield-halved text-sky-400"></i> Yönetici (Admin) yetkisi önerilir
+        </span>
+        <div class="flex items-center gap-2">
+          <button id="btn-refresh-guilds-modal" class="btn btn-primary">
+            <i class="fa-solid fa-arrows-rotate mr-1"></i> Listeyi Yenile & Aç
+          </button>
+          <button id="add-server-footer-close-btn" class="btn">
+            Kapat
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUNUCULARIM / SUNUCU YÖNETİM PORTALI MODALI -->
+  <div id="servers-portal-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#1c1c1c] border border-[#262626] rounded-2xl max-w-4xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+      <!-- Modal Header -->
+      <div class="p-5 border-b border-[#262626] bg-[#181818] flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#5865F2]/15 border border-[#5865F2]/30 text-[#5865F2] flex items-center justify-center text-lg">
+            <i class="fa-solid fa-server"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
+              Sunucularınızı Yönetin
+              <span id="portal-guilds-count-badge" class="badge badge-yellow text-[11px]">0 Sunucu</span>
+            </h3>
+            <p class="text-xs text-zinc-400">Yönetici veya Sunucuyu Yönet yetkinizin olduğu sunucular listeleniyor</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="portal-refresh-btn" class="btn btn-sm" title="Sunucuları Yenile">
+            <i class="fa-solid fa-arrows-rotate"></i> Yenile
+          </button>
+          <button id="portal-close-btn" class="btn btn-sm !p-2 text-zinc-400 hover:text-white" title="Kapat">
+            <i class="fa-solid fa-xmark text-base"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Arama & Filtre Çubuğu -->
+      <div class="p-4 border-b border-[#262626] bg-[#141414] flex flex-wrap items-center justify-between gap-3">
+        <div class="relative flex-1 min-w-[220px]">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xs"></i>
+          <input id="portal-search-input" type="text" placeholder="Sunucu ara..." class="w-full bg-[#181818] border border-[#262626] text-[#F1F1F1] rounded-lg pl-8 pr-3 py-1.5 text-xs focus:border-[#FFE000] outline-none" />
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button type="button" class="btn btn-sm portal-filter-btn active" data-filter="all">Tümü</button>
+          <button type="button" class="btn btn-sm portal-filter-btn" data-filter="with-bot">Bot Ekli Olanlar</button>
+          <button type="button" class="btn btn-sm portal-filter-btn" data-filter="no-bot">Bot Olmayanlar</button>
+        </div>
+      </div>
+
+      <!-- Sunucu Kartları Izgarası (Grid) -->
+      <div class="p-6 overflow-y-auto flex-1 bg-[#141414]">
+        <div id="portal-guilds-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="col-span-full text-center py-12 text-zinc-500 text-xs">
+            <i class="fa-solid fa-spinner fa-spin text-xl text-[#FFE000] block mb-2"></i>
+            Sunucularınız yükleniyor...
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-[#262626] bg-[#181818] flex items-center justify-between text-xs">
+        <span class="text-zinc-500 flex items-center gap-1.5">
+          <i class="fa-solid fa-circle-info text-[#FFE000]"></i>
+          Bot olmayan sunucularda <b>"Sunucuya Ekle"</b> butonuna basarak Discord'da o sunucuyu doğrudan yetkilendirebilirsiniz.
+        </span>
+        <button id="portal-footer-close-btn" class="btn">
+          Kapat
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISCORD OAUTH2 CLIENT SECRET KURULUM REHBERİ MODALI -->
+  <div id="oauth-setup-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#1c1c1c] border border-[#262626] rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+      <div class="p-5 border-b border-[#262626] bg-[#181818] flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-key"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-[#F1F1F1]">Discord OAuth2 Kurulumu Gerekiyor</h3>
+            <p class="text-xs text-zinc-400">Discord ile giriş yapabilmek için Client Secret gereklidir</p>
+          </div>
+        </div>
+        <button id="oauth-setup-close-btn" class="btn btn-sm !p-2 text-zinc-400 hover:text-white" title="Kapat">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4 text-xs text-zinc-300 overflow-y-auto max-h-[70vh]">
+        <div class="card-sub p-3.5 space-y-2 bg-[#141414] border border-[#262626] rounded-xl">
+          <span class="font-bold text-[#F1F1F1] block text-xs">
+            1. Adım: Discord Developer Portal'dan Client Secret Alın
+          </span>
+          <p class="text-[11px] text-zinc-400 leading-relaxed">
+            <a href="https://discord.com/developers/applications" target="_blank" class="text-[#FFE000] underline font-semibold">Discord Developer Portal</a> ➔ Botunuz ➔ <b>OAuth2</b> sekmesine gidin.
+            <b>"Reset Secret"</b> butonuna basarak Client Secret kodunuzu kopyalayın.
+          </p>
+        </div>
+
+        <div class="card-sub p-3.5 space-y-2 bg-[#141414] border border-[#262626] rounded-xl">
+          <span class="font-bold text-[#F1F1F1] block text-xs">
+            2. Adım: .env Dosyasına Ekleyin
+          </span>
+          <p class="text-[11px] text-zinc-400 leading-relaxed">
+            Projenin ana dizinindeki <code class="text-[#FFE000] font-mono">.env</code> dosyasını açıp şu satırı ekleyin:
+          </p>
+          <pre class="bg-[#0f0f0f] border border-[#262626] p-2 rounded text-[11px] font-mono text-zinc-300 select-all overflow-x-auto">DISCORD_CLIENT_SECRET=kopyaladığınız_secret_kodu</pre>
+        </div>
+
+        <div class="card-sub p-3.5 space-y-2 bg-[#141414] border border-[#262626] rounded-xl">
+          <span class="font-bold text-[#F1F1F1] block text-xs">
+            3. Adım: Redirect URI Ekleyin
+          </span>
+          <p class="text-[11px] text-zinc-400 leading-relaxed">
+            Developer Portal ➔ <b>OAuth2 ➔ Redirects</b> alanına aşağıdaki adresi ekleyip kaydedin:
+          </p>
+          <pre class="bg-[#0f0f0f] border border-[#262626] p-2 rounded text-[11px] font-mono text-[#FFE000] select-all overflow-x-auto">http://127.0.0.1:3000/api/auth/discord/callback</pre>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-[#262626] bg-[#181818] flex items-center justify-end">
+        <button id="oauth-setup-footer-close-btn" class="btn">
+          Anladım, Kapat
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Bildirim -->
   <div id="toast" class="hidden fixed bottom-6 right-6 px-4 py-3 rounded shadow-lg text-white z-50"></div>
 
-  <script src="/app.js?v=4.0"></script>
+  <script src="/js/navigation.js?v=2.0"></script>
+  <script src="/app.js?v=5.0"></script>
 </body>
 </html>

@@ -17,6 +17,19 @@ export function mergeWithDefaults<T>(defaults: T, input: unknown): T {
   if (Array.isArray(defaults)) {
     return (Array.isArray(input) ? input : defaults) as T;
   }
+  if (typeof defaults === "number") {
+    if (typeof input === "number" && Number.isFinite(input)) return input as T;
+    if (typeof input === "string" && input.trim() !== "" && !isNaN(Number(input))) {
+      return Number(input) as T;
+    }
+    return defaults;
+  }
+  if (typeof defaults === "boolean") {
+    if (typeof input === "boolean") return input as T;
+    if (input === "true" || input === 1 || input === "1") return true as T;
+    if (input === "false" || input === 0 || input === "0") return false as T;
+    return defaults;
+  }
   return (typeof input === typeof defaults ? input : defaults) as T;
 }
 
@@ -73,8 +86,19 @@ export function sanitizeGuildSettings(input: unknown): GuildSettings {
   if (!Array.isArray(merged.feed?.sourceChannelIds)) {
     merged.feed.sourceChannelIds = [];
   }
-  merged.feed.previewLength = Math.min(Math.max(Math.round(Number(merged.feed.previewLength) || 200), 50), 1000);
-  merged.feed.minContentLength = Math.min(Math.max(Math.round(typeof merged.feed.minContentLength === "number" ? merged.feed.minContentLength : 1), 0), 200);
+  const rawPreview = (isPlainObject(input) && isPlainObject((input as any).feed))
+    ? (input as any).feed.previewLength
+    : merged.feed.previewLength;
+  merged.feed.previewLength = Math.min(Math.max(Math.round(Number(rawPreview) || 200), 50), 1000);
+
+  const rawMinLen = (isPlainObject(input) && isPlainObject((input as any).feed))
+    ? (input as any).feed.minContentLength
+    : merged.feed.minContentLength;
+  const parsedMinLen = Number(rawMinLen);
+  merged.feed.minContentLength = Number.isFinite(parsedMinLen)
+    ? Math.min(Math.max(Math.round(parsedMinLen), 0), 200)
+    : 1;
+
   if (!merged.feed.embedColor || typeof merged.feed.embedColor !== "string") {
     merged.feed.embedColor = "#FFE000";
   }

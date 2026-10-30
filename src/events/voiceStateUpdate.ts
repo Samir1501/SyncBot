@@ -1,6 +1,7 @@
 import { Colors, EmbedBuilder, GuildMember, VoiceState } from "discord.js";
 import type { LogUserSummary } from "../repositories/logRepository.js";
 import { auditLoggerService, type IAuditLogger } from "../services/logging/AuditLoggerService.js";
+import { activityTrackerService } from "../services/activity/ActivityTrackerService.js";
 
 export interface IVoiceStateStrategy {
   tryHandle(
@@ -184,6 +185,14 @@ export async function handleVoiceStateUpdate(
 ): Promise<void> {
   const member = newState.member || oldState.member;
   if (!member) return;
+
+  // Ses aktivitesini kaydet
+  if (oldState.channelId !== newState.channelId) {
+    const guildId = newState.guild?.id || oldState.guild?.id;
+    if (guildId) {
+      activityTrackerService.recordVoiceEvent(guildId, newState.channelId || oldState.channelId || undefined);
+    }
+  }
 
   const user: LogUserSummary = {
     id: member.id,

@@ -1,12 +1,15 @@
 import { Colors, EmbedBuilder, GuildMember } from "discord.js";
 import { activityRepository, type IActivityRepository } from "../repositories/activityRepository.js";
 import { auditLoggerService, type IAuditLogger } from "../services/logging/AuditLoggerService.js";
+import { activityTrackerService } from "../services/activity/ActivityTrackerService.js";
 
 export async function handleGuildMemberAdd(
   member: GuildMember,
   logger: IAuditLogger = auditLoggerService,
   activityRepo: IActivityRepository = activityRepository
 ): Promise<void> {
+  activityTrackerService.recordMemberEvent(member.guild.id, "join");
+
   activityRepo.add({
     guildId: member.guild.id,
     type: "member_join",

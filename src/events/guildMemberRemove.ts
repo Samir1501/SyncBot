@@ -1,6 +1,7 @@
 import { Colors, EmbedBuilder, GuildMember, PartialGuildMember } from "discord.js";
 import { activityRepository, type IActivityRepository } from "../repositories/activityRepository.js";
 import { auditLoggerService, type IAuditLogger } from "../services/logging/AuditLoggerService.js";
+import { activityTrackerService } from "../services/activity/ActivityTrackerService.js";
 
 export async function handleGuildMemberRemove(
   member: GuildMember | PartialGuildMember,
@@ -11,6 +12,8 @@ export async function handleGuildMemberRemove(
   const isBot = member.user?.bot || false;
 
   if (member.guild) {
+    activityTrackerService.recordMemberEvent(member.guild.id, "leave");
+
     activityRepo.add({
       guildId: member.guild.id,
       type: "member_leave",

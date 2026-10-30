@@ -7,9 +7,7 @@ import { logRepository } from "./repositories/logRepository.js";
 import { startSteamWatcher, stopSteamWatcher } from "./services/steamWatcher.js";
 
 // .env doğrulaması yap
-if (!validateConfig()) {
-  process.exit(1);
-}
+const isConfigValid = validateConfig();
 
 // Bot istemcisini oluştur ve olay dinleyicilerini (Event Registry) bağla
 const client = createBotClient();
@@ -51,9 +49,13 @@ process.once("SIGINT", shutdown);
 process.once("SIGTERM", shutdown);
 
 // Botu başlat
-client.login(config.token).catch((err) => {
-  console.error(
-    "❌ Bot giriş yapamadı! Token'ın doğruluğunu ve internet bağlantınızı kontrol edin."
-  );
-  console.error(err);
-});
+if (config.token) {
+  client.login(config.token).catch((err) => {
+    console.error(
+      "❌ Bot giriş yapamadı! Token'ın doğruluğunu ve internet bağlantınızı kontrol edin."
+    );
+    console.error(err);
+  });
+} else {
+  console.warn("⚠️ [Bot] .env dosyasında geçerli bir DISCORD_TOKEN tanımlanmadığı için Discord bağlantısı atlandı. Web paneli aktif.");
+}

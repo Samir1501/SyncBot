@@ -18,6 +18,11 @@ export const config = {
     host: process.env.DASHBOARD_HOST?.trim() || "127.0.0.1",
     password: process.env.DASHBOARD_PASSWORD?.trim() || "",
   },
+  oauth: {
+    clientId: process.env.DISCORD_CLIENT_ID?.trim() || "",
+    clientSecret: process.env.DISCORD_CLIENT_SECRET?.trim() || "",
+    redirectUri: process.env.DISCORD_REDIRECT_URI?.trim() || "",
+  },
   /** RAM optimizasyonu: discord.js mesaj önbelleği ayarları */
   cache: {
     /** Kanal başına bellekte tutulacak en fazla mesaj sayısı (discord.js varsayılanı 200) */

@@ -5,6 +5,7 @@ import type { Client } from "discord.js";
 import { config } from "../config.js";
 import { UPLOADS_DIR } from "../settings/defaults.js";
 import { basicAuth } from "./middleware/basicAuth.js";
+import { createAuthRoutes } from "./routes/authRoutes.js";
 import { createGuildRoutes } from "./routes/guildRoutes.js";
 import { createLogRoutes } from "./routes/logRoutes.js";
 import { createMemberRoutes } from "./routes/memberRoutes.js";
@@ -28,6 +29,7 @@ export function createDashboardApp(client: Client): Express {
   app.use("/uploads", express.static(UPLOADS_DIR));
 
   // Modüler API Rotaları
+  app.use(createAuthRoutes(client));
   app.use(createGuildRoutes(client));
   app.use(createSettingsRoutes());
   app.use(createWelcomeRoutes(client));
