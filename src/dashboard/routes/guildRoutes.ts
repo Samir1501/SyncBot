@@ -2,20 +2,12 @@ import { Router } from "express";
 import { ChannelType, type Client } from "discord.js";
 import { statsService } from "../services/statsService.js";
 import { activityTrackerService } from "../../services/activity/ActivityTrackerService.js";
+import { requireAuth, requireGuildPermission } from "../middleware/authMiddleware.js";
 
 export function createGuildRoutes(client: Client): Router {
   const router = Router();
 
-  router.get("/api/guilds", (_req, res) => {
-    const guilds = client.guilds.cache.map((g) => ({
-      id: g.id,
-      name: g.name,
-      icon: g.iconURL({ extension: "png", size: 128 }),
-      memberCount: g.memberCount,
-    }));
-    res.json(guilds);
-  });
-
+  // 1. Genel & Herkese Açık Uç Noktalar (Landing sayfası ve bot önizleme)
   router.get("/api/invite", (_req, res) => {
     const clientId = client.user?.id || "";
     const inviteUrl = clientId
@@ -46,13 +38,38 @@ export function createGuildRoutes(client: Client): Router {
     });
   });
 
-  router.get("/api/stats", async (req, res) => {
+  // 2. Giriş ve Yetki Gerektiren Uç Noktalar
+  // Kullanıcının yalnızca yetkili olduğu sunucuların listesini döner
+  router.get("/api/guilds", requireAuth, (req, res) => {
+    const session = req.userSession;
+    const manageableGuildIds = new Set(
+      session?.rawGuilds
+        ?.filter((g: any) => {
+          const isOwner = Boolean(g.owner);
+          const permBig = BigInt(g.permissions || "0");
+          return isOwner || (permBig & 0x8n) !== 0n || (permBig & 0x20n) !== 0n;
+        })
+        .map((g: any) => String(g.id)) || []
+    );
+
+    const guilds = client.guilds.cache
+      .filter((g) => !session || manageableGuildIds.has(g.id))
+      .map((g) => ({
+        id: g.id,
+        name: g.name,
+        icon: g.iconURL({ extension: "png", size: 128 }),
+        memberCount: g.memberCount,
+      }));
+    res.json(guilds);
+  });
+
+  router.get("/api/stats", requireAuth, requireGuildPermission, async (req, res) => {
     const guildId = String(req.query.guildId || "");
     const stats = await statsService.getDashboardStats(client, guildId);
     res.json(stats);
   });
 
-  router.get("/api/stats/activity", async (req, res) => {
+  router.get("/api/stats/activity", requireAuth, requireGuildPermission, async (req, res) => {
     try {
       const guildId = String(req.query.guildId || "");
       if (!guildId) {
@@ -69,7 +86,7 @@ export function createGuildRoutes(client: Client): Router {
     }
   });
 
-  router.get("/api/channels", async (req, res) => {
+  router.get("/api/channels", requireAuth, requireGuildPermission, async (req, res) => {
     const filterGuildId = String(req.query.guildId || "");
     const channels: {
       id: string;
@@ -110,7 +127,7 @@ export function createGuildRoutes(client: Client): Router {
     res.json(channels.sort((a, b) => a.guild.localeCompare(b.guild) || a.position - b.position));
   });
 
-  router.get("/api/roles", async (req, res) => {
+  router.get("/api/roles", requireAuth, requireGuildPermission, async (req, res) => {
     try {
       const guildId = String(req.query.guildId || "");
       if (!guildId) {

@@ -66,6 +66,7 @@ export class StatsService {
     let humanCount = 0;
     let activeVoiceMembersCount = 0;
     let timedOutMembersCount = 0;
+    let adminMembersCount = 0;
 
     if (guild) {
       botCount = guild.members.cache.filter((m) => m.user.bot).size;
@@ -76,6 +77,9 @@ export class StatsService {
       activeVoiceMembersCount = guild.members.cache.filter((m) => Boolean(m.voice?.channelId)).size;
       timedOutMembersCount = guild.members.cache.filter(
         (m) => Boolean(m.communicationDisabledUntilTimestamp && m.communicationDisabledUntilTimestamp > Date.now())
+      ).size;
+      adminMembersCount = guild.members.cache.filter(
+        (m) => m.permissions.has("Administrator")
       ).size;
     }
 
@@ -151,26 +155,11 @@ export class StatsService {
 
     const totalLogsCount = guild ? this.logRepo.query({ guildId: guild.id }).length : 0;
 
-    const totalMem = Math.round(os.totalmem() / 1024 / 1024);
-    const usedMem = Math.round(process.memoryUsage().rss / 1024 / 1024);
-    const memPercent = Math.min(100, Math.round((usedMem / totalMem) * 100));
-
     return {
       bot: {
-        username: client.user?.username || "Bot",
-        tag: client.user?.tag || "Bot",
-        avatarUrl: client.user?.displayAvatarURL({ extension: "png", size: 256 }) || "",
         ready: client.isReady(),
         ping: Math.round(client.ws.ping) || 0,
         uptimeSeconds: Math.floor(process.uptime()),
-        totalGuilds: client.guilds.cache.size,
-        totalUsers: client.guilds.cache.reduce((acc, g) => acc + g.memberCount, 0),
-        memoryMB: usedMem,
-        memoryTotalMB: totalMem,
-        memoryPercent: memPercent,
-        nodeVersion: process.version,
-        djsVersion,
-        platform: process.platform === "win32" ? "Windows" : process.platform,
       },
       guild: guild
         ? {
@@ -187,6 +176,7 @@ export class StatsService {
             botCount,
             activeVoiceMembersCount,
             timedOutMembersCount,
+            adminMembersCount,
             textChannelsCount,
             voiceChannelsCount,
             categoriesCount,

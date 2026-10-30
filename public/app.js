@@ -3026,36 +3026,37 @@ async function loadDashboardStats() {
       }
     }
 
-    // 7. Bot sistem bilgileri & Donanım
+    // 7. Sunucu Güvenlik & Bot Yanıt Durumu
+    if (data.guild) {
+      const g = data.guild;
+      const timedOutEl = $("#dash-timedout-count");
+      if (timedOutEl) timedOutEl.textContent = String(g.timedOutMembersCount || 0);
+
+      const adminsEl = $("#dash-admins-count");
+      if (adminsEl) adminsEl.textContent = String(g.adminMembersCount || 0);
+
+      const totalLogsEl = $("#dash-total-logs-count");
+      if (totalLogsEl) totalLogsEl.textContent = String(g.totalLogsCount || 0);
+    }
+
     if (data.bot) {
       const b = data.bot;
       const pingEl = $("#bot-ping");
       if (pingEl) pingEl.textContent = `${b.ping} ms`;
 
-      const pingDot = $("#bot-ping-dot");
-      if (pingDot) {
-        if (b.ping < 80) pingDot.className = "w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.7)]";
-        else if (b.ping < 180) pingDot.className = "w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.7)]";
-        else pingDot.className = "w-2 h-2 rounded-full bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.7)]";
+      const botStatusDot = $("#dash-bot-status-dot");
+      const botStatusText = $("#dash-bot-status-text");
+      if (botStatusDot && botStatusText) {
+        if (b.ready) {
+          botStatusDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]";
+          botStatusText.className = "info-tile-value !text-sm text-emerald-400";
+          botStatusText.textContent = "Çevrimiçi";
+        } else {
+          botStatusDot.className = "w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]";
+          botStatusText.className = "info-tile-value !text-sm text-red-400";
+          botStatusText.textContent = "Bağlı Değil";
+        }
       }
-
-      const memEl = $("#bot-memory");
-      if (memEl) memEl.textContent = `${b.memoryMB} MB`;
-
-      const guildsEl = $("#bot-total-guilds");
-      if (guildsEl) guildsEl.textContent = b.totalGuilds;
-
-      const uptimeEl = $("#bot-uptime");
-      if (uptimeEl) uptimeEl.textContent = formatUptime(b.uptimeSeconds);
-
-      const nodeVer = $("#bot-node-ver");
-      if (nodeVer) nodeVer.textContent = `Node: ${b.nodeVersion || "v22.x"}`;
-
-      const djsVer = $("#bot-djs-ver");
-      if (djsVer) djsVer.textContent = `discord.js: v${b.djsVersion || "14.17"}`;
-
-      const platformEl = $("#bot-platform");
-      if (platformEl) platformEl.textContent = b.platform || "Windows";
     }
   } catch (err) {
     console.error("Dashboard istatistikleri yüklenemedi:", err);

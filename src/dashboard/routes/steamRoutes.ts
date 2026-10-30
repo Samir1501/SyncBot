@@ -6,11 +6,12 @@ import {
   formatSteamAnnouncement,
 } from "../../services/steamService.js";
 import { checkGuildSteamUpdates } from "../../services/steamWatcher.js";
+import { requireAuth, requireGuildPermission } from "../middleware/authMiddleware.js";
 
 export function createSteamRoutes(client: Client): Router {
   const router = Router();
 
-  router.get("/api/steam/info", async (req, res) => {
+  router.get("/api/steam/info", requireAuth, async (req, res) => {
     try {
       const appId = String(req.query.appId || "").trim();
       if (!appId || !/^\d+$/.test(appId)) {
@@ -35,7 +36,7 @@ export function createSteamRoutes(client: Client): Router {
     }
   });
 
-  router.post("/api/steam/test", async (req, res) => {
+  router.post("/api/steam/test", requireAuth, requireGuildPermission, async (req, res) => {
     try {
       const guildId = String(req.query.guildId || req.body?.guildId || "");
       if (!guildId) {

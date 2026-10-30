@@ -639,37 +639,38 @@
             </div>
           </div>
 
-          <!-- Bot Sistem & Donanım Durumu -->
+          <!-- Sunucu Güvenlik & Denetim Durumu -->
           <div class="card space-y-4">
             <h3 class="font-bold text-base text-[#F1F1F1] flex items-center gap-2">
-              <i class="fa-solid fa-microchip text-[#FFE000]"></i> Bot & Sistem Durumu
+              <i class="fa-solid fa-shield-halved text-[#FFE000]"></i> Sunucu Güvenlik & Koruma Özeti
             </h3>
             <div class="grid grid-cols-2 gap-3">
               <div class="info-tile">
-                <span class="info-tile-label">
-                  <span>Gecikme (Ping)</span>
-                  <span id="bot-ping-dot" class="w-2 h-2 rounded-full bg-green-500"></span>
-                </span>
-                <div id="bot-ping" class="info-tile-value !text-lg">0 ms</div>
+                <span class="info-tile-label">Bot Bağlantısı</span>
+                <div class="flex items-center gap-2 mt-1">
+                  <span id="dash-bot-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                  <span id="dash-bot-status-text" class="info-tile-value !text-sm text-emerald-400">Çevrimiçi</span>
+                </div>
               </div>
               <div class="info-tile">
-                <span class="info-tile-label">Bellek (RAM)</span>
-                <div id="bot-memory" class="info-tile-value !text-lg">0 MB</div>
+                <span class="info-tile-label">Cezalı (Timeout)</span>
+                <div id="dash-timedout-count" class="info-tile-value !text-lg text-amber-400">0</div>
               </div>
               <div class="info-tile">
-                <span class="info-tile-label">Toplam Sunucu</span>
-                <div id="bot-total-guilds" class="info-tile-value !text-lg text-[#FFE000]">0</div>
+                <span class="info-tile-label">Yönetici Sayısı</span>
+                <div id="dash-admins-count" class="info-tile-value !text-lg text-sky-400">0</div>
               </div>
               <div class="info-tile">
-                <span class="info-tile-label">Çalışma Süresi</span>
-                <div id="bot-uptime" class="info-tile-value !text-lg">0s</div>
+                <span class="info-tile-label">Toplam Denetim Kaydı</span>
+                <div id="dash-total-logs-count" class="info-tile-value !text-lg text-[#FFE000]">0</div>
               </div>
             </div>
-            <!-- Minik Sistem Rozetleri -->
+            <!-- Bot Gecikme Bilgisi -->
             <div class="flex items-center justify-between pt-1 text-[11px] text-zinc-500 border-t border-[#262626]">
-              <span id="bot-node-ver">Node: v22.x</span>
-              <span id="bot-djs-ver">discord.js: v14.17</span>
-              <span id="bot-platform">Windows</span>
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-signal text-[10px]"></i> Yanıt Süresi: <span id="bot-ping" class="text-zinc-300 font-semibold font-mono">0 ms</span>
+              </span>
+              <span class="text-zinc-500">Güvenlik Modülü Aktif</span>
             </div>
           </div>
         </div>

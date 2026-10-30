@@ -2,11 +2,12 @@ import { Router } from "express";
 import type { Client } from "discord.js";
 import { memberQueryService } from "../services/memberQueryService.js";
 import { memberModerationService } from "../services/moderationStrategies.js";
+import { requireAuth, requireGuildPermission } from "../middleware/authMiddleware.js";
 
 export function createMemberRoutes(client: Client): Router {
   const router = Router();
 
-  router.get("/api/members", async (req, res) => {
+  router.get("/api/members", requireAuth, requireGuildPermission, async (req, res) => {
     try {
       const guildId = String(req.query.guildId || "");
       if (!guildId) {
@@ -32,7 +33,7 @@ export function createMemberRoutes(client: Client): Router {
     }
   });
 
-  router.post("/api/members/action", async (req, res) => {
+  router.post("/api/members/action", requireAuth, requireGuildPermission, async (req, res) => {
     try {
       const { guildId, memberId, action, durationMinutes, nickname, reason } = req.body || {};
       if (!guildId || !memberId || !action) {

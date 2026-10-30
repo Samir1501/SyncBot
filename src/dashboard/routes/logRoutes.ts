@@ -2,11 +2,12 @@ import { Router } from "express";
 import { EmbedBuilder, type Client } from "discord.js";
 import { logRepository } from "../../repositories/logRepository.js";
 import { auditLoggerService } from "../../services/logging/AuditLoggerService.js";
+import { requireAuth, requireGuildPermission } from "../middleware/authMiddleware.js";
 
 export function createLogRoutes(client: Client): Router {
   const router = Router();
 
-  router.get("/api/logs", (req, res) => {
+  router.get("/api/logs", requireAuth, requireGuildPermission, (req, res) => {
     const guildId = String(req.query.guildId || "");
     const search = String(req.query.search || "");
     const category = String(req.query.category || "");
@@ -24,13 +25,13 @@ export function createLogRoutes(client: Client): Router {
     res.json({ logs });
   });
 
-  router.post("/api/logs/clear", (req, res) => {
+  router.post("/api/logs/clear", requireAuth, requireGuildPermission, (req, res) => {
     const guildId = String(req.query.guildId || req.body?.guildId || "");
     logRepository.clear(guildId || undefined);
     res.json({ ok: true });
   });
 
-  router.post("/api/logs/test", async (req, res) => {
+  router.post("/api/logs/test", requireAuth, requireGuildPermission, async (req, res) => {
     try {
       const guildId = String(req.query.guildId || req.body?.guildId || "");
       if (!guildId) {

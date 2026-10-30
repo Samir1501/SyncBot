@@ -2,11 +2,12 @@ import { Router } from "express";
 import type { Client } from "discord.js";
 import { activityRepository } from "../../repositories/activityRepository.js";
 import { feedService } from "../../services/feed/FeedService.js";
+import { requireAuth, requireGuildPermission } from "../middleware/authMiddleware.js";
 
 export function createMessageRoutes(client: Client): Router {
   const router = Router();
 
-  router.post("/api/messages/send", async (req, res) => {
+  router.post("/api/messages/send", requireAuth, async (req, res) => {
     try {
       const { channelId, content, isEmbed, embedTitle, embedColor, embedDescription } =
         req.body || {};
@@ -20,6 +21,17 @@ export function createMessageRoutes(client: Client): Router {
       if (!channel || channel.isDMBased() || !channel.isTextBased()) {
         res.status(404).json({ error: "Kanal bulunamadı veya bota mesaj gönderme izni yok." });
         return;
+      }
+
+      // Kanalın ait olduğu sunucuda kullanıcının yetkisi var mı doğrula
+      if (req.userSession && !channel.guild.ownerId.includes(req.userSession.user.id)) {
+        const userGuild = req.userSession.rawGuilds?.find((g: any) => String(g.id) === channel.guild.id);
+        const permBig = BigInt(userGuild?.permissions || "0");
+        const hasPerm = Boolean(userGuild?.owner) || (permBig & 0x8n) !== 0n || (permBig & 0x20n) !== 0n;
+        if (!hasPerm) {
+          res.status(403).json({ error: "Bu kanala mesaj göndermek için sunucuda yönetici yetkiniz olmalıdır." });
+          return;
+        }
       }
 
       if (isEmbed) {
@@ -74,7 +86,7 @@ export function createMessageRoutes(client: Client): Router {
     }
   });
 
-  router.post("/api/feed/test", async (req, res) => {
+  router.post("/api/feed/test", requireAuth, requireGuildPermission, async (req, res) => {
     try {
       const guildId = String(req.query.guildId || req.body?.guildId || "");
       if (!guildId) {

@@ -21,15 +21,15 @@ export interface ManageableGuildItem {
   inviteUrl: string;
 }
 
-interface UserSession {
+export interface UserSession {
   user: DiscordAuthUser;
   rawGuilds: any[];
   expiresAt: number;
 }
 
-const sessionStore = new Map<string, UserSession>();
+export const sessionStore = new Map<string, UserSession>();
 
-function parseCookies(req: Request): Record<string, string> {
+export function parseCookies(req: Request): Record<string, string> {
   const list: Record<string, string> = {};
   const cookieHeader = req.headers.cookie;
   if (!cookieHeader) return list;
@@ -40,6 +40,18 @@ function parseCookies(req: Request): Record<string, string> {
     list[name] = decodeURIComponent(rawVal.join("=").trim());
   }
   return list;
+}
+
+export function getSessionByCookie(req: Request): UserSession | null {
+  const cookies = parseCookies(req);
+  const sessionId = cookies["syncbot_session"];
+  if (!sessionId) return null;
+  const session = sessionStore.get(sessionId);
+  if (!session || session.expiresAt < Date.now()) {
+    if (session) sessionStore.delete(sessionId);
+    return null;
+  }
+  return session;
 }
 
 export function createAuthRoutes(client: Client): Router {

@@ -23,6 +23,7 @@ export function createDashboardApp(client: Client): Express {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
   const app = express();
+  app.set("trust proxy", 1);
   app.use(basicAuth);
   app.use(express.json({ limit: "10mb" }));
   app.use(express.static(PUBLIC_DIR));

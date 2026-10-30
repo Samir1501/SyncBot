@@ -6,11 +6,12 @@ import { sanitizeGuildSettings } from "../../settings/sanitizer.js";
 import { renderWelcomeCard } from "../../welcome/cardRenderer.js";
 import { sendWelcome } from "../../welcome/sendWelcome.js";
 import { statsService } from "../services/statsService.js";
+import { requireAuth, requireGuildPermission } from "../middleware/authMiddleware.js";
 
 export function createWelcomeRoutes(client: Client): Router {
   const router = Router();
 
-  router.post("/api/preview", async (req, res) => {
+  router.post("/api/preview", requireAuth, async (req, res) => {
     try {
       const guildId = String(req.query.guildId || req.body?.guildId || "");
       const card = sanitizeGuildSettings({ welcome: { card: req.body?.card } }).welcome.card;
@@ -21,7 +22,7 @@ export function createWelcomeRoutes(client: Client): Router {
     }
   });
 
-  router.post("/api/welcome/test", async (req, res) => {
+  router.post("/api/welcome/test", requireAuth, requireGuildPermission, async (req, res) => {
     const guildId = String(req.query.guildId || req.body?.guildId || "");
     const { welcome } = settingsRepository.getGuildSettings(guildId);
     try {

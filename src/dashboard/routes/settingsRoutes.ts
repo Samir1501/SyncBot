@@ -4,16 +4,17 @@ import path from "node:path";
 import { Router } from "express";
 import { UPLOADS_DIR } from "../../settings/defaults.js";
 import { settingsRepository } from "../../settings/repository.js";
+import { requireAuth, requireGuildPermission } from "../middleware/authMiddleware.js";
 
 export function createSettingsRoutes(): Router {
   const router = Router();
 
-  router.get("/api/settings", (req, res) => {
+  router.get("/api/settings", requireAuth, requireGuildPermission, (req, res) => {
     const guildId = String(req.query.guildId || "");
     res.json(settingsRepository.getGuildSettings(guildId || null));
   });
 
-  router.put("/api/settings", (req, res) => {
+  router.put("/api/settings", requireAuth, requireGuildPermission, (req, res) => {
     const guildId = String(req.query.guildId || req.body?.guildId || "");
     if (!guildId) {
       res.status(400).json({ error: "Lütfen bir sunucu belirtin (guildId eksik)." });
@@ -22,7 +23,7 @@ export function createSettingsRoutes(): Router {
     res.json(settingsRepository.saveGuildSettings(guildId, req.body));
   });
 
-  router.post("/api/upload", (req, res) => {
+  router.post("/api/upload", requireAuth, (req, res) => {
     const match = /^data:image\/(png|jpeg|webp|gif);base64,(.+)$/.exec(
       String(req.body?.dataUrl ?? "")
     );
